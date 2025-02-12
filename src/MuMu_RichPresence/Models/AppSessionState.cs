@@ -6,5 +6,5 @@ public enum AppSessionState
     Stopping,
     Stopped,
     Starting,
-    Running,
+    Focused,
 }

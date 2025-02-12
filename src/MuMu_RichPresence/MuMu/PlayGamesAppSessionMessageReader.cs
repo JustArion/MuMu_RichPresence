@@ -16,8 +16,8 @@ public class PlayGamesAppSessionMessageReader(string filePath) : IDisposable
 
     private bool _started;
     private long _lastStreamPosition;
-    private readonly PlayGamesLogWatcher _logWatcher = new(filePath);
-    public event EventHandler<PlayGamesSessionInfo>? OnSessionInfoReceived;
+    private readonly LogWatcher _logWatcher = new(filePath);
+    public event EventHandler<MuMuSessionInfo>? OnSessionInfoReceived;
 
     public void StartAsync()
     {
@@ -63,7 +63,7 @@ public class PlayGamesAppSessionMessageReader(string filePath) : IDisposable
     private async Task CatchUpAsync(FileLock fileLock)
     {
         var reader = fileLock.Reader;
-        IReadOnlyList<PlayGamesSessionInfo> sessions;
+        IReadOnlyList<MuMuSessionInfo> sessions;
         // We read the old entries (To check if there's a game currently running)
         using (Warn.OnLongerThan(TimeSpan.FromSeconds(2), "Catch-Up took unusually long"))
             sessions = await GetAllSessionInfos(fileLock);
@@ -73,7 +73,7 @@ public class PlayGamesAppSessionMessageReader(string filePath) : IDisposable
             ? sessions[^1]
             : null;
 
-        if (last is { AppState: AppSessionState.Running })
+        if (last is { AppState: AppSessionState.Focused })
         {
             Log.Verbose("Caught up (Processed {EventsProcessed} events), emitting {SessionInfo}", sessions.Count, last);
             OnSessionInfoReceived?.Invoke(this, last);
@@ -144,11 +144,11 @@ public class PlayGamesAppSessionMessageReader(string filePath) : IDisposable
     /// <summary>
     /// The method ensures that a Rich Presence will be enabled if a game is running before this program started.
     /// </summary>
-    internal async Task<IReadOnlyList<PlayGamesSessionInfo>> GetAllSessionInfos(FileLock fileLock)
+    internal async Task<IReadOnlyList<MuMuSessionInfo>> GetAllSessionInfos(FileLock fileLock)
     {
         var reader = fileLock.Reader;
         Log.Verbose("Catching up...");
-        var sessions = new List<PlayGamesSessionInfo>(20);
+        var sessions = new List<MuMuSessionInfo>(20);
         reader.BaseStream.Seek(0, SeekOrigin.Begin);
         _initialLinesRead = 0;
 
@@ -158,7 +158,7 @@ public class PlayGamesAppSessionMessageReader(string filePath) : IDisposable
             if (string.IsNullOrWhiteSpace(line))
                 continue;
 
-            PlayGamesSessionInfo? sessionInfo = null;
+            MuMuSessionInfo? sessionInfo = null;
             if (line.Contains("AppSessionModule: sessions updated:"))
             {
                 var appSessionMessage = await ExtractLogEntry(reader, line);
@@ -185,7 +185,7 @@ public class PlayGamesAppSessionMessageReader(string filePath) : IDisposable
         if (string.IsNullOrWhiteSpace(line))
             return;
 
-        PlayGamesSessionInfo? sessionInfo = null;
+        MuMuSessionInfo? sessionInfo = null;
         if (line.Contains("AppSessionModule: sessions updated:"))
         {
             // This delay is needed to let the GPG finish writing the entry to the file as its a multi-line log

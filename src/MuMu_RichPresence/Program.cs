@@ -60,34 +60,11 @@ internal static class Program
 
     private static CancellationTokenSource _cts = new();
 
-    private static void SessionInfoReceived(object? sender, PlayGamesSessionInfo sessionInfo) => Task.Run(() => SetPresenceFromSessionInfoAsync(sessionInfo));
+    private static void SessionInfoReceived(object? sender, MuMuSessionInfo sessionInfo) => Task.Run(() => SetPresenceFromSessionInfoAsync(sessionInfo));
 
-    private static void SubscribeToAppExit(string processName, EventHandler onExit, CancellationToken ctsToken)
-    {
-        var process = Process.GetProcessesByName(processName).OrderBy(x => x.StartTime).FirstOrDefault();
-        if (process is null)
-        {
-            Log.Warning("Process {ProcessName} not found", processName);
-            return;
-        }
-
-        try
-        {
-            process.EnableRaisingEvents = true;
-            process.Exited += onExit;
-            ctsToken.Register(() => process.Exited -= onExit);
-
-            Log.Information("Subscribed to app exit for {ProcessName}", $"{processName}.exe");
-        }
-        catch (AccessViolationException e)
-        {
-            Log.Error(e, "Failed to subscribe to app exit");
-        }
-
-    }
 
     private static AppSessionState _currentAppState;
-    private static async ValueTask SetPresenceFromSessionInfoAsync(PlayGamesSessionInfo sessionInfo)
+    private static async ValueTask SetPresenceFromSessionInfoAsync(MuMuSessionInfo sessionInfo)
     {
         if (_currentAppState == sessionInfo.AppState)
             return;
@@ -102,12 +79,12 @@ internal static class Program
         // If the state went from Starting -> Started we don't do anything
         // If the state went from anything -> Starting / Started we subscribe to the app exit
         // This should prevent a double subscribe if weird app orders start appearing (Running -> Starting)
-        if (_currentAppState is not (AppSessionState.Starting or AppSessionState.Running) && sessionInfo.AppState is AppSessionState.Starting or AppSessionState.Running)
+        if (_currentAppState is not (AppSessionState.Starting or AppSessionState.Focused) && sessionInfo.AppState is AppSessionState.Starting or AppSessionState.Focused)
         {
             _cts = new ();
-            SubscribeToAppExit("MuMuPlayer", (_, _) =>
+            ProcessExit.Subscribe("MuMuPlayer", exitCode =>
             {
-                Log.Information("MuMuPlayer.exe has exited");
+                Log.Information("[{ExitCode}] MuMuPlayer.exe has exited", exitCode);
                 var previousAppState = _currentAppState;
                 _currentAppState = AppSessionState.Stopped;
                 Log.Information("App State Changed from {PreviousAppState} -> {CurrentAppState}", previousAppState, _currentAppState);
@@ -131,7 +108,7 @@ internal static class Program
                     }
                 });
                 break;
-            case AppSessionState.Running:
+            case AppSessionState.Focused:
                 await SetPresenceFor(sessionInfo, new()
                 {
                     Timestamps = new Timestamps(sessionInfo.StartTime.DateTime)
@@ -146,7 +123,7 @@ internal static class Program
         }
     }
 
-    private static void ClearPresenceFor(PlayGamesSessionInfo sessionInfo)
+    private static void ClearPresenceFor(MuMuSessionInfo sessionInfo)
     {
         Log.Information("Clearing Rich Presence for {GameTitle}", sessionInfo.Title);
 
@@ -154,9 +131,9 @@ internal static class Program
     }
 
     private static RichPresence? _currentPresence;
-    private static async Task SetPresenceFor(PlayGamesSessionInfo sessionInfo, RichPresence presence)
+    private static async Task SetPresenceFor(MuMuSessionInfo sessionInfo, RichPresence presence)
     {
-        var iconUrl = await PlayGamesAppIconScraper.TryGetIconLinkAsync(sessionInfo.PackageName);
+        var iconUrl = await PlayStoreAppIconScraper.TryGetIconLinkAsync(sessionInfo.PackageName);
 
         presence.Details ??= sessionInfo.Title;
 
