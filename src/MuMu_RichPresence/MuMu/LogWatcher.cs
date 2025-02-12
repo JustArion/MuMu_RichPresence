@@ -67,9 +67,7 @@ public class LogWatcher : IDisposable
             var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(100));
 
             while (await timer.WaitForNextTickAsync(_pokeCTS.Token))
-            {
-                await using var a = FileLock.Aquire(file.FullName);
-            }
+                file.LastAccessTime = DateTime.Now;
 
         }, _pokeCTS.Token);
     }
