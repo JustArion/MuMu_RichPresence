@@ -1,9 +1,13 @@
-﻿namespace Dawn.MuMu.RichPresence.PlayGames;
+﻿using System.Diagnostics.CodeAnalysis;
 
-public class PlayGamesLogWatcher : IDisposable
+namespace Dawn.MuMu.RichPresence.PlayGames;
+
+public class LogWatcher : IDisposable
 {
     private FileSystemWatcher? _logFileWatcher;
-    public PlayGamesLogWatcher(string filePath)
+
+    [SuppressMessage("ReSharper", "RemoveRedundantBraces")]
+    public LogWatcher(string filePath)
     {
         var fi = new FileInfo(filePath);
         if (fi.Directory is { Exists: true })

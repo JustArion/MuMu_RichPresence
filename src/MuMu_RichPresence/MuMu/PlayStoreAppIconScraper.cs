@@ -4,7 +4,7 @@ namespace Dawn.MuMu.RichPresence.PlayGames;
 
 using System.Text.RegularExpressions;
 
-public static partial class PlayGamesAppIconScraper
+public static partial class PlayStoreAppIconScraper
 {
     private static readonly ConcurrentDictionary<string, string> _iconLinks = new();
     public static async ValueTask<string> TryGetIconLinkAsync(string packageName)
