@@ -4,7 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -42,6 +42,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Other Packages">
+    <PackageReference Include="DynamicData" Version="9.1.1" />
     <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
     <PackageReference Include="Vanara.PInvoke.Kernel32" Version="4.0.4" />
     <PackageReference Include="DiscordRichPresence" Version="1.2.1.24" />

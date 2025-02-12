@@ -1,10 +1,11 @@
 ﻿namespace Dawn.MuMu.RichPresence.Domain;
 
-public enum AppSessionState
+public enum AppState
 {
     None,
     Stopping,
     Stopped,
-    Starting,
+    Started,
+    Unfocused,
     Focused,
 }

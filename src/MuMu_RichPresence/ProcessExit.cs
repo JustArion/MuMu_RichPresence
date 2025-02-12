@@ -21,9 +21,13 @@ internal static class ProcessExit
 
                 process.EnableRaisingEvents = true;
                 process.Exited += del;
-                cts.Register(() => process.Exited -= del);
+                cts.Register(() =>
+                {
+                    process.Exited -= del;
+                    Log.Verbose("Unsubscribed from app exit for {ProcessName}", $"{process.ProcessName}.exe");
+                });
 
-                Log.Information("Subscribed to app exit for {ProcessName}", $"{process.ProcessName}.exe");
+                Log.Verbose("Subscribed to app exit for {ProcessName}", $"{process.ProcessName}.exe");
             }
             catch (AccessViolationException e)
             {
@@ -45,9 +49,9 @@ internal static class ProcessExit
             }
 
         }
-        catch (ArgumentException e)
+        catch (ArgumentException)
         {
-            Log.Warning(e, "Failed to subscribe to app exit, the app with Id '{Pid}' is probably not running", processId);
+            // app is not running
         }
     }
 
@@ -70,9 +74,13 @@ internal static class ProcessExit
 
             process.EnableRaisingEvents = true;
             process.Exited += del;
-            cts.Register(() => process.Exited -= del);
+            cts.Register(() =>
+            {
+                process.Exited -= del;
+                Log.Verbose("Unsubscribed from app exit for {ProcessName}", $"{processName}.exe");
+            });
 
-            Log.Information("Subscribed to app exit for {ProcessName}", $"{processName}.exe");
+            Log.Verbose("Subscribed to app exit for {ProcessName}", $"{processName}.exe");
         }
         catch (AccessViolationException e)
         {

@@ -1,18 +1,20 @@
 ﻿namespace MuMu_RichPresence.Tests.Unit;
 
+using System.Collections.ObjectModel;
 using Dawn.MuMu.RichPresence.Domain;
 using Dawn.MuMu.RichPresence.PlayGames;
 using FluentAssertions;
+using Serilog;
 
-[TestFixture(TestOf = typeof(PlayGamesAppSessionMessageReader))]
+[TestFixture(TestOf = typeof(MuMuPlayerLogReader))]
 public class AppSessionMessageReaderTests
 {
     [SetUp]
     public void SetUp()
     {
-        _sut = new PlayGamesAppSessionMessageReader("Assets/Service.log");
+        _sut = new MuMuPlayerLogReader("Assets/shell.log");
     }
-    private PlayGamesAppSessionMessageReader _sut;
+    private MuMuPlayerLogReader _sut;
 
 
     [TearDown]
@@ -32,64 +34,59 @@ public class AppSessionMessageReaderTests
     {
         // Arrange
         await using var fileLock = _sut.AquireFileLock();
+        var sessions = new ObservableCollection<MuMuSessionLifetime>();
+        var graveyard = new ObservableCollection<MuMuSessionLifetime>();
         
         // Act
-        var sessionInfos = await _sut.GetAllSessionInfos(fileLock);
+        await _sut.GetAllSessionInfos(fileLock, sessions, graveyard);
 
         // Assert
-        sessionInfos.Count.Should().Be(137);
+        sessions.Count.Should().Be(2);
+
+        graveyard.Count.Should().Be(6);
     }
 
     [Test]
-    public async Task FirstSession_ShouldBe_DefenseDerby()
+    public async Task FirstGame_ShouldBe_Triglav()
     {
         // Arrange
         await using var fileLock = _sut.AquireFileLock();
+        var sessions = new ObservableCollection<MuMuSessionLifetime>();
+        var graveyard = new ObservableCollection<MuMuSessionLifetime>();
         
         // Act
-        var sessionInfos = await _sut.GetAllSessionInfos(fileLock);
+        await _sut.GetAllSessionInfos(fileLock, sessions, graveyard);
 
         // Assert
-        sessionInfos.Should().HaveCountGreaterThanOrEqualTo(1);
-        
-        var first = sessionInfos[0];
+        var playedGames = graveyard.Where(x => !MuMuLifetimeChecker.IsSystemLevelPackage(x.PackageName)).ToArray();
+        playedGames.Should().HaveCountGreaterThanOrEqualTo(1);
 
-        first.Title.Should().Be("Defense Derby");
-        first.PackageName.Should().Be("com.krafton.defensederby");
-        first.AppState.Should().Be(AppSessionState.Starting);
-    }
-    
-    [Test]
-    public async Task LastSession_ShouldBe_StoppedArknights()
-    {
-        // Arrange
-        await using var fileLock = _sut.AquireFileLock();
-        
-        // Act
-        var sessionInfos = await _sut.GetAllSessionInfos(fileLock);
+        var first = playedGames.First();
 
-        // Assert
-        sessionInfos.Should().HaveCountGreaterThanOrEqualTo(1);
-        
-        var last = sessionInfos[^1];
-
-        last.Title.Should().Be("Arknights");
-        last.PackageName.Should().Be("com.YoStarEN.Arknights");
-        last.AppState.Should().Be(AppSessionState.Stopped);
+        first.Title.Should().Be("Triglav");
+        first.PackageName.Should().Be("com.SmokymonkeyS.Triglav");
+        first.AppState.Value.Should().Be(AppState.Stopped);
     }
     
     [Test]
-    public async Task StartingSessions_ShouldHave_NoStartTime()
+    public async Task LastGame_ShouldBe_NightOfTheFullMoon()
     {
         // Arrange
         await using var fileLock = _sut.AquireFileLock();
+        var sessions = new ObservableCollection<MuMuSessionLifetime>();
+        var graveyard = new ObservableCollection<MuMuSessionLifetime>();
         
         // Act
-        var sessionInfos = (await _sut.GetAllSessionInfos(fileLock))
-            .Where(x => x.AppState == AppSessionState.Starting);
+        await _sut.GetAllSessionInfos(fileLock, sessions, graveyard);
 
         // Assert
-        sessionInfos.Should().AllSatisfy(x => x.StartTime.Should().BeExactly(default));
-    } 
+        var playedGames = graveyard.Where(x => !MuMuLifetimeChecker.IsSystemLevelPackage(x.PackageName)).ToArray();
+        playedGames.Should().HaveCountGreaterThanOrEqualTo(1);
 
+        var last = playedGames.Last();
+
+        last.Title.Should().Be("Night of the Full Moon");
+        last.PackageName.Should().Be("com.ztgame.yyzy");
+        last.AppState.Value.Should().Be(AppState.Stopped);
+    }
 }

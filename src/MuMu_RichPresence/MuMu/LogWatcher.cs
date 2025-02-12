@@ -1,18 +1,22 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Dawn.MuMu.RichPresence.PlayGames.FileOperations;
 
 namespace Dawn.MuMu.RichPresence.PlayGames;
 
 public class LogWatcher : IDisposable
 {
+    private readonly string _filePath;
     private FileSystemWatcher? _logFileWatcher;
+    private CancellationTokenSource _pokeCTS = new();
 
     [SuppressMessage("ReSharper", "RemoveRedundantBraces")]
     public LogWatcher(string filePath)
     {
+        _filePath = filePath;
         var fi = new FileInfo(filePath);
         if (fi.Directory is { Exists: true })
         {
-            CreateLogWatcher(filePath);
+            CreateLogWatcher();
             return;
         }
 
@@ -38,20 +42,36 @@ public class LogWatcher : IDisposable
             }
             Log.Information("'{LogPath}' is now present, will start watching", filePath);
 
-            CreateLogWatcher(filePath);
+            CreateLogWatcher();
         }, TaskCreationOptions.LongRunning);
     }
 
-    private void CreateLogWatcher(string filePath)
+    private void CreateLogWatcher()
     {
+        var file = new FileInfo(_filePath);
+
         _logFileWatcher = new();
-        _logFileWatcher.Path = Path.GetDirectoryName(filePath)!;
-        _logFileWatcher.Filter = Path.GetFileName(filePath);
-        _logFileWatcher.NotifyFilter = NotifyFilters.LastWrite;
+        _logFileWatcher.Path = file.Directory?.FullName ?? ".";
+        _logFileWatcher.Filter = file.Name;
+        _logFileWatcher.NotifyFilter = NotifyFilters.Size;
         _logFileWatcher.Changed += (_, args) => FileChanged?.Invoke(this, args);
         _logFileWatcher.Error += (_, args) => Error?.Invoke(this, args);
 
         _logFileWatcher.EnableRaisingEvents = _shouldRaiseEvents;
+
+        Log.Verbose("Log Watcher created!");
+
+        Log.Verbose("MuMu logs are fully buffered. We need to poke the logs for the watcher to register an update, poking every 100ms");
+        Task.Run(async () =>
+        {
+            var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(100));
+
+            while (await timer.WaitForNextTickAsync(_pokeCTS.Token))
+            {
+                await using var a = FileLock.Aquire(file.FullName);
+            }
+
+        }, _pokeCTS.Token);
     }
 
     public event EventHandler<FileSystemEventArgs>? FileChanged;
@@ -69,8 +89,11 @@ public class LogWatcher : IDisposable
             return;
         }
 
-        Task.Run(onInitialize);
-        _logFileWatcher.EnableRaisingEvents = true;
+        Task.Run(onInitialize).ContinueWith(_ =>
+        {
+            _logFileWatcher.EnableRaisingEvents = true;
+            Log.Information("Watching for changes on file {FilePath}", _filePath);
+        });
     }
 
     public void Stop()
@@ -87,6 +110,7 @@ public class LogWatcher : IDisposable
     public void Dispose()
     {
         GC.SuppressFinalize(this);
+        _pokeCTS.Cancel();
 
         if (_logFileWatcher == null)
             return;

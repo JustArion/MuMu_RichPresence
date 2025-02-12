@@ -1,23 +1,23 @@
 ﻿// #define LOG_APP_SESSION_MESSAGES
 
+using System.Collections.ObjectModel;
 using Dawn.MuMu.RichPresence.Domain;
 using Dawn.MuMu.RichPresence.PlayGames.FileOperations;
 using Dawn.Serilog.CustomEnrichers;
 
 namespace Dawn.MuMu.RichPresence.PlayGames;
 
-using System.Text;
 using global::Serilog;
-using FileAccess = System.IO.FileAccess;
 
-public class PlayGamesAppSessionMessageReader(string filePath) : IDisposable
+public class MuMuPlayerLogReader(string filePath) : IDisposable
 {
-    private readonly ILogger _logger = Log.ForContext<PlayGamesAppSessionMessageReader>();
+    private readonly ILogger _logger = Log.ForContext<MuMuPlayerLogReader>();
 
     private bool _started;
     private long _lastStreamPosition;
     private readonly LogWatcher _logWatcher = new(filePath);
-    public event EventHandler<MuMuSessionInfo>? OnSessionInfoReceived;
+    public ObservableCollection<MuMuSessionLifetime> Sessions { get; } = [];
+    public ObservableCollection<MuMuSessionLifetime> SessionGraveyard { get; } = [];
 
     public void StartAsync()
     {
@@ -63,21 +63,21 @@ public class PlayGamesAppSessionMessageReader(string filePath) : IDisposable
     private async Task CatchUpAsync(FileLock fileLock)
     {
         var reader = fileLock.Reader;
-        IReadOnlyList<MuMuSessionInfo> sessions;
+        var sessions = new ObservableCollection<MuMuSessionLifetime>();
         // We read the old entries (To check if there's a game currently running)
         using (Warn.OnLongerThan(TimeSpan.FromSeconds(2), "Catch-Up took unusually long"))
-            sessions = await GetAllSessionInfos(fileLock);
+            await GetAllSessionInfos(fileLock, sessions, SessionGraveyard);
         _lastStreamPosition = reader.BaseStream.Position;
 
-        var last = sessions.Count > 0
-            ? sessions[^1]
-            : null;
+        var processedEvents = Sessions.Select(x => x.PackageLifetimeEntries.Count).Sum() + SessionGraveyard.Select(x => x.PackageLifetimeEntries.Count).Sum();
 
-        if (last is { AppState: AppSessionState.Focused })
-        {
-            Log.Verbose("Caught up (Processed {EventsProcessed} events), emitting {SessionInfo}", sessions.Count, last);
-            OnSessionInfoReceived?.Invoke(this, last);
-        }
+        Sessions.Clear();
+        foreach (var session in sessions)
+            Sessions.Add(session);
+
+        if (sessions.FirstOrDefault(x => x.AppState.Value is AppState.Focused or AppState.Started)
+            is { } lifetime)
+            Log.Verbose("Caught up (Processed {EventsProcessed} events), emitting {SessionInfo}", processedEvents, lifetime);
         else
             Log.Verbose("Caught up, no games are currently running (Processed {EventsProcessed} events)", sessions.Count);
 
@@ -121,7 +121,11 @@ public class PlayGamesAppSessionMessageReader(string filePath) : IDisposable
                 var line = await reader.ReadLineAsync();
 
                 _lastStreamPosition = reader.BaseStream.Position;
-                await ProcessLogChunkAsync(line, reader);
+
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
+
+                MuMuLifetimeChecker.MutateLifetime(line, Sessions, SessionGraveyard);
             }
         }
         catch (Exception e)
@@ -144,11 +148,10 @@ public class PlayGamesAppSessionMessageReader(string filePath) : IDisposable
     /// <summary>
     /// The method ensures that a Rich Presence will be enabled if a game is running before this program started.
     /// </summary>
-    internal async Task<IReadOnlyList<MuMuSessionInfo>> GetAllSessionInfos(FileLock fileLock)
+    internal async Task GetAllSessionInfos(FileLock fileLock, ObservableCollection<MuMuSessionLifetime> activeLifetimes, ObservableCollection<MuMuSessionLifetime> graveyard)
     {
         var reader = fileLock.Reader;
         Log.Verbose("Catching up...");
-        var sessions = new List<MuMuSessionInfo>(20);
         reader.BaseStream.Seek(0, SeekOrigin.Begin);
         _initialLinesRead = 0;
 
@@ -158,75 +161,8 @@ public class PlayGamesAppSessionMessageReader(string filePath) : IDisposable
             if (string.IsNullOrWhiteSpace(line))
                 continue;
 
-            MuMuSessionInfo? sessionInfo = null;
-            if (line.Contains("AppSessionModule: sessions updated:"))
-            {
-                var appSessionMessage = await ExtractLogEntry(reader, line);
-                sessionInfo = AppSessionInfoBuilder.BuildFromAppSession(appSessionMessage);
-
-            }
-            else if (line.Contains("Emulator state updated:"))
-            {
-                var appSessionMessage = await ExtractLogEntry(reader, line);
-                sessionInfo = AppSessionInfoBuilder.Build(appSessionMessage);
-            }
-
-            if (sessionInfo == null)
-                continue;
-
-            sessions.Add(sessionInfo);
+            MuMuLifetimeChecker.MutateLifetime(line, activeLifetimes, graveyard);
         }
-
-        return sessions;
-    }
-
-    private async Task ProcessLogChunkAsync(string? line, StreamReader reader)
-    {
-        if (string.IsNullOrWhiteSpace(line))
-            return;
-
-        MuMuSessionInfo? sessionInfo = null;
-        if (line.Contains("AppSessionModule: sessions updated:"))
-        {
-            // This delay is needed to let the GPG finish writing the entry to the file as its a multi-line log
-            await Task.Delay(TimeSpan.FromMilliseconds(100));
-            var appSessionMessage = await ExtractLogEntry(reader, line, false);
-            sessionInfo = AppSessionInfoBuilder.BuildFromAppSession(appSessionMessage);
-
-        }
-        else if (line.Contains("Emulator state updated:"))
-        {
-            // This delay is needed to let the GPG finish writing the entry to the file as its a multi-line log
-            await Task.Delay(TimeSpan.FromMilliseconds(100));
-
-            var appSessionMessage = await ExtractLogEntry(reader, line, false);
-            sessionInfo = AppSessionInfoBuilder.Build(appSessionMessage);
-        }
-
-        if (sessionInfo == null)
-            return;
-
-        OnSessionInfoReceived?.Invoke(this, sessionInfo);
-    }
-
-    private async Task<string> ExtractLogEntry(StreamReader reader, string line, bool increment = true)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine(line);
-        line = await ReadLineAsync(reader, false);
-
-        while (!string.IsNullOrWhiteSpace(line) && line != "}")
-        {
-            sb.AppendLine(line);
-            line = await ReadLineAsync(reader, increment);
-        }
-
-        sb.AppendLine("}");
-        var appSessionMessage = sb.ToString();
-        #if LOG_APP_SESSION_MESSAGES
-        _logger.Debug("Received AppSession Message: \n{Line}", appSessionMessage);
-        #endif
-        return appSessionMessage;
     }
 
     public void Stop()
