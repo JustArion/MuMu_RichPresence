@@ -2,16 +2,16 @@
     - Connects to named pipe (`discord-ipc-{0}`)
         - Handled by Nuget package [DiscordRichPresence](https://www.nuget.org/packages/DiscordRichPresence)
     - `Write Access`
-        - Writes a single Log File to the `PlayGames RichPresence.exe` directory
-            - `PlayGames RichPresence.log`
-        - _Can_ create a single registry key (`\HKCU\Software\Microsoft\Windows\CurrentVersion\Run\PlayGames RichPresence`)
+        - Writes a single Log File to the `MuMu RichPresence.exe` directory
+            - `MuMu RichPresence.log`
+        - _Can_ create a single registry key (`\HKCU\Software\Microsoft\Windows\CurrentVersion\Run\MuMu RichPresence`)
             - Default is off, configurable by the user
     - `Read Access`
-        - Reads the file (`AppData/Local/Google/Play Games/Service.log`) if it exists
+        - Reads the file (`Logs/shell.log`) if it exists
             - See [Technical-Document](technical-1.md)
-        - Reads directory changes for a single directory (`AppData/Local/Google/Play Games/`)
-            - The "File System Watcher" watches for changes on `Service.log` only
-        - Reads a single registry key (`\HKCU\Software\Microsoft\Windows\CurrentVersion\Run\PlayGames RichPresence`)
+        - Reads directory changes for a single directory (`Logs/`)
+            - The "File System Watcher" watches for changes on `shell.log` only
+        - Reads a single registry key (`\HKCU\Software\Microsoft\Windows\CurrentVersion\Run\MuMu RichPresence`)
             - Run on Startup
 - `Network`
     - `Upload Access`

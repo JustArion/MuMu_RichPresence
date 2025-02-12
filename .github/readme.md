@@ -1,6 +1,6 @@
 > [!NOTE]
+> - The project has a [sister-repo](https://github.com/JustArion/PlayGames_RichPresence) for `Google Play Games`
 > - Additional options available in the Tray Icon
-> - Play Games Developer Emulator is also supported
 
 ## Table of Contents
 - [Requirements](#requirements)
@@ -36,12 +36,12 @@ Enabling `Run on Startup` clones the current launch arguments and runs it as tha
 | --seq-url=               | http://localhost:9999 | Seq Logging Platform                                                                       |
 | --bind-to=               |         `N/A`         | Binds this process to another process' ID. When the other process exits, this one does too |
 | --extended-logging       |         `N/A`         | File Log Level: Verbose (From Warning)                                                     |
-| --rp-disabled-on-start   |         `N/A`         | Rich Presence is Disabled for *Play Games*                                                 |
+| --rp-disabled-on-start   |         `N/A`         | Rich Presence is Disabled for *MuMu Emulator*                                              |
 | --no-file-logging        |         `N/A`         | Disables logging to the file (Located in the current directory)                            |
 
 **Launch Args Example**
 
-`& '.\PlayGames RichPresence.exe' --extended-logging --seq-url=http://localhost:9999`
+`& '.\MuMu RichPresence.exe' --extended-logging --seq-url=http://localhost:9999`
 
 ---
 ### Previews
@@ -63,13 +63,13 @@ Enabling `Run on Startup` clones the current launch arguments and runs it as tha
 
 **Manual**
 ```ps1
-git clone https://github.com/JustArion/PlayGames_RichPresence && cd "PlayGames_RichPresence"
+git clone https://github.com/JustArion/MuMu_RichPresence && cd "MuMu_RichPresence"
 dotnet publish .\src\PlayGamesRichPresence\ --runtime win-x64 --output ./bin/
 ```
 
 **Makefile**
 ```ps1
-git clone https://github.com/JustArion/PlayGames_RichPresence && cd "PlayGames_RichPresence"
+git clone https://github.com/JustArion/MuMu_RichPresence && cd "MuMu_RichPresence"
 make build
 ```
 
