@@ -10,7 +10,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>MuMu_RichPresence</AssemblyName>
     <RootNamespace>Dawn.MuMu.RichPresence</RootNamespace>
-    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+    <ApplicationIcon>Assets\AppIcon_Blue.ico</ApplicationIcon>
     <Company>https://github.com/JustArion</Company>
   </PropertyGroup>
 
@@ -43,7 +43,7 @@
 
   <ItemGroup Label="Other Packages">
     <PackageReference Include="DynamicData" Version="9.1.1" />
-    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
+    <PackageReference Include="securifybv.ShellLink" Version="0.1.0" />
     <PackageReference Include="Vanara.PInvoke.Kernel32" Version="4.0.4" />
     <PackageReference Include="DiscordRichPresence" Version="1.2.1.24" />
   </ItemGroup>
