@@ -1,4 +1,6 @@
-﻿namespace Dawn.MuMu.RichPresence.Logging;
+﻿using System.Runtime.Versioning;
+
+namespace Dawn.MuMu.RichPresence.Logging;
 
 using global::Serilog;
 using global::Serilog.Core;
@@ -16,6 +18,12 @@ internal static class ApplicationLogs
     #endif
     private static bool _initialized;
 
+    [SupportedOSPlatform("windows")]
+    private static void AttachParent()
+    {
+        if (AttachConsole(ATTACH_PARENT_PROCESS))
+            Console.WriteLine("[*] Attached Console to Parent");
+    }
     public static void Initialize()
     {
         if (_initialized)
@@ -23,8 +31,7 @@ internal static class ApplicationLogs
 
         _initialized = true;
 
-        if (AttachConsole(ATTACH_PARENT_PROCESS))
-            Console.WriteLine("[*] Attached Console to Parent");
+        AttachParent();
 
         if (!Console.IsOutputRedirected)
         {
