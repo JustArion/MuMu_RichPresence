@@ -9,10 +9,10 @@ using global::Serilog.Core;
 
 public class RichPresenceHandler : IDisposable
 {
-    private const string DEFAULT_APPLICATION_ID = "1204167311922167860";
+    private const string DEFAULT_APPLICATION_ID = "1339586347576328293";
 
     private readonly Logger _logger = (Logger)Log.ForContext<RichPresenceHandler>();
-    private DiscordRpcClient _client = null!;
+    private DiscordRpcClient _client;
     private RichPresence? _currentPresence;
 
     public RichPresenceHandler()
@@ -35,23 +35,33 @@ public class RichPresenceHandler : IDisposable
     }
 
 
-    public void SetPresence(RichPresence? presence)
+    public bool SetPresence(RichPresence? presence)
     {
         if (!ApplicationFeatures.GetFeature(x => x.RichPresenceEnabled))
-            return;
+        {
+            _logger.Verbose("Rich Presence is disabled");
+            return false;
+        }
 
         if (Interlocked.Exchange(ref _currentPresence, presence) == presence)
-            return;
+        {
+            _logger.Verbose("Ignoring duplicate presence update");
+            return false;
+        }
 
         if (presence != null)
             Log.Information("Setting Rich Presence for {GameTitle}", presence.Details);
 
         _client.SetPresence(presence);
+        return true;
     }
 
     public void RemovePresence()
     {
-        Interlocked.Exchange(ref _currentPresence, null);
+        var presence = Interlocked.Exchange(ref _currentPresence, null);
+        if (presence != null)
+            Log.Information("Clearing Rich Presence for {PresenceTitle}", presence.Details);
+
         _client.ClearPresence();
     }
 
