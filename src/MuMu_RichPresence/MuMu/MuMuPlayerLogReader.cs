@@ -1,6 +1,7 @@
 ﻿// #define LOG_APP_SESSION_MESSAGES
 
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using Dawn.MuMu.RichPresence.Domain;
 using Dawn.MuMu.RichPresence.PlayGames.FileOperations;
 using Dawn.Serilog.CustomEnrichers;
@@ -62,6 +63,7 @@ public class MuMuPlayerLogReader(string filePath) : IDisposable
 
     private async Task CatchUpAsync(FileLock fileLock)
     {
+        var ts = Stopwatch.GetTimestamp();
         var reader = fileLock.Reader;
         var sessions = new ObservableCollection<MuMuSessionLifetime>();
         // We read the old entries (To check if there's a game currently running)
@@ -77,9 +79,9 @@ public class MuMuPlayerLogReader(string filePath) : IDisposable
 
         if (sessions.FirstOrDefault(x => x.AppState.Value is AppState.Focused or AppState.Started)
             is { } lifetime)
-            Log.Verbose("Caught up (Processed {EventsProcessed} events), emitting {SessionInfo}", processedEvents, lifetime);
+            Log.Verbose("Caught up in {ExecutionDuration:F}ms (Processed {EventsProcessed} events), emitting {SessionInfo}", Stopwatch.GetElapsedTime(ts).TotalMilliseconds, processedEvents, lifetime);
         else
-            Log.Verbose("Caught up, no games are currently running (Processed {EventsProcessed} events)", sessions.Count);
+            Log.Verbose("Caught up {ExecutionDuration:F}ms, no games are currently running (Processed {EventsProcessed} events)", Stopwatch.GetElapsedTime(ts).TotalMilliseconds, sessions.Count);
 
         Log.Debug("CatchUp: Stream position is currently at {Position}", reader.BaseStream.Position);
         Log.Debug("CatchUp: Read {Lines} lines", _initialLinesRead);
