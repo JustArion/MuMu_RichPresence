@@ -84,7 +84,8 @@ internal static partial class MuMuLifetimeChecker
             if (existingLifetime.AppState.Value != AppState.Focused)
                 existingLifetime.AppState.Value = AppState.Started;
             existingLifetime.SessionSubscriptions = cts;
-            existingLifetime.StartTime = approximateStartTime;
+            if (existingLifetime.StartTime == default)
+               existingLifetime.StartTime = approximateStartTime;
         }
         existingLifetime.PackageLifetimeEntries.Add(info);
 
@@ -94,7 +95,7 @@ internal static partial class MuMuLifetimeChecker
             Log.Debug("{PackageName} has exited", packageName);
         }, cts.Token);
 
-        Log.Verbose("{StartTime} | App Launched: {PackageName}", approximateStartTime, packageName);
+        // Log.Verbose("{StartTime} | App Launched: {PackageName}", approximateStartTime, packageName);
     }
 
     private static void CreateTabCloseEvent(string packageName, ObservableCollection<MuMuSessionLifetime> lifetimes, ObservableCollection<MuMuSessionLifetime> graveyard)
@@ -141,9 +142,9 @@ internal static partial class MuMuLifetimeChecker
     {
         var today = DateTimeOffset.Now.Date;
 
-        return today.Add(startTime) > DateTimeOffset.Now
+        return (today.Add(startTime) > DateTimeOffset.Now
             ? today.Add(startTime).AddDays(-1)
-            : today.Add(startTime);
+            : today.Add(startTime)).ToUniversalTime();
     }
 
     private static bool IsAppLaunchEvent(string info, out string packageName, out TimeSpan startTime, out int processId)
