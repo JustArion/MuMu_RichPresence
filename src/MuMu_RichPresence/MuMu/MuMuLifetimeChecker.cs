@@ -21,7 +21,7 @@ internal static partial class MuMuLifetimeChecker
     private static partial class ShellRegexes
     {
         // [00:45:31.968 13508/13680][info][:] OnFocusOnApp Called: id=task:22, packageName=com.SmokymonkeyS.Triglav, appName=Triglav
-        [GeneratedRegex("OnFocusOnApp Called:.+?packageName=(?'PackageName'.+?), appName=(?'Title'.+?)$", RegexOptions.Multiline)]
+        [GeneratedRegex("\\[(?'StartTime'.+?) .+?OnFocusOnApp Called:.+?packageName=(?'PackageName'.+?), appName=(?'Title'.+?)$", RegexOptions.Multiline)]
         internal static partial Regex FocusedAppRegex();
 
         // [00:45:31.970 13508/11972][info][:] [Gateway] onAppLaunch: package=com.SmokymonkeyS.Triglav code= msg=
@@ -49,8 +49,8 @@ internal static partial class MuMuLifetimeChecker
                 return;
             }
 
-            if (IsFocusEvent(info, out packageName, out var title))
-                CreateFocusEvent(info, packageName, title, lifetimes);
+            if (IsFocusEvent(info, out packageName, out var title, out startTime))
+                CreateFocusEvent(info, packageName, title, startTime, lifetimes);
 
         }
         catch (Exception e)
@@ -81,9 +81,12 @@ internal static partial class MuMuLifetimeChecker
         else
         {
             existingLifetime.SessionSubscriptions?.Cancel();
+
             if (existingLifetime.AppState.Value != AppState.Focused)
                 existingLifetime.AppState.Value = AppState.Started;
+
             existingLifetime.SessionSubscriptions = cts;
+
             if (existingLifetime.StartTime == default)
                existingLifetime.StartTime = approximateStartTime;
         }
@@ -92,10 +95,10 @@ internal static partial class MuMuLifetimeChecker
         ProcessExit.Subscribe(pid, _ =>
         {
             lifetimes.Remove(existingLifetime);
-            Log.Debug("{PackageName} has exited", packageName);
+            Log.Debug("MuMu Player has exited");
         }, cts.Token);
 
-        // Log.Verbose("{StartTime} | App Launched: {PackageName}", approximateStartTime, packageName);
+        // Log.Verbose("[{StartTime:hh:mm}] App Launched: {PackageName}", existingLifetime.StartTime.ToLocalTime(), packageName);
     }
 
     private static void CreateTabCloseEvent(string packageName, ObservableCollection<MuMuSessionLifetime> lifetimes, ObservableCollection<MuMuSessionLifetime> graveyard)
@@ -112,10 +115,10 @@ internal static partial class MuMuLifetimeChecker
         lifetimes.Remove(existingLifetime);
         graveyard.Add(existingLifetime);
 
-        Log.Verbose("{StartTime} | Tab Closed: {PackageName}", existingLifetime.StartTime, packageName);
+        Log.Verbose("[{StartTime:hh:mm}] Tab Closed: {Title} ({PackageName})", existingLifetime.StartTime.ToLocalTime(), existingLifetime.Title, packageName);
     }
 
-    private static void CreateFocusEvent(string info, string packageName, string title, ObservableCollection<MuMuSessionLifetime> lifetimes)
+    private static void CreateFocusEvent(string info, string packageName, string title, TimeSpan time, ObservableCollection<MuMuSessionLifetime> lifetimes)
     {
         var existingLifetime = lifetimes.FirstOrDefault(x => x.PackageName == packageName);
         if (existingLifetime == null)
@@ -125,12 +128,17 @@ internal static partial class MuMuLifetimeChecker
         }
         existingLifetime.PackageLifetimeEntries.Add(info);
 
+        if (existingLifetime.StartTime == default)
+            existingLifetime.StartTime = GetApproximateStartTime(time);
+
         existingLifetime.Title = title;
-        foreach (var lifetime in lifetimes)
+        foreach (var lifetime in lifetimes.Where(x => x != existingLifetime))
             lifetime.AppState.Value = AppState.Unfocused;
+
         existingLifetime.AppState.Value = AppState.Focused;
 
-        Log.Verbose("{StartTime} | Focused: {PackageName} | {Title}", existingLifetime.StartTime, packageName, title);
+
+        Log.Verbose("[{StartTime:hh:mm}] Focused: {Title} ({PackageName})", existingLifetime.StartTime.ToLocalTime(), title, packageName);
     }
 
     // The log format is "00:45:31.968" which is a timespan, not a timestamp
@@ -182,10 +190,11 @@ internal static partial class MuMuLifetimeChecker
         return true;
     }
 
-    private static bool IsFocusEvent(string info, out string packageName, out string title)
+    private static bool IsFocusEvent(string info, out string packageName, out string title, out TimeSpan timeSpan)
     {
         packageName = string.Empty;
         title = string.Empty;
+        timeSpan = TimeSpan.Zero;
 
         var match = ShellRegexes.FocusedAppRegex().Match(info);
         if (!match.Success)
@@ -193,8 +202,9 @@ internal static partial class MuMuLifetimeChecker
 
         packageName = match.Groups["PackageName"].Value;
         title = match.Groups["Title"].Value;
+        var startTimeString = match.Groups["StartTime"].Value;
 
-        return true;
+        return TimeSpan.TryParse(startTimeString, out timeSpan);
     }
 
     public static bool IsSystemLevelPackage(string packageName) => SystemLevelPackageHints.Any(packageName.StartsWith);
