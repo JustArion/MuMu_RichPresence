@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Runtime.CompilerServices;
 using Dawn.MuMu.RichPresence.Logging;
 using Dawn.MuMu.RichPresence.PlayGames;
 using DynamicData.Binding;
@@ -22,18 +23,19 @@ internal static class Program
     private static RichPresence_Tray _trayIcon = null!;
     private static RichPresenceHandler _richPresenceHandler = null!;
     private static ProcessBinding? _processBinding;
-    private static MuMuPlayerLogReader _logReader;
-    private const string FILE_PATH = @"shell.log";
-    private static readonly string _filePath = Path.Combine("D:\\Games\\MuMuPlayerGlobal-12.0\\vms\\MuMuPlayerGlobal-12.0-0\\logs", FILE_PATH);
+    private static MuMuPlayerLogReader _logReader = null!;
+    private static string _filePath = null!;
 
     [STAThread]
-    private static void Main(string[] args)
+    private static async Task Main(string[] args)
     {
         Arguments = new(args);
 
         ApplicationLogs.Initialize();
 
         SingleInstanceApplication.Ensure();
+
+        _filePath = await GetOrWaitForFilePath();
 
         _richPresenceHandler = new();
         _logReader = new MuMuPlayerLogReader(_filePath);
@@ -53,6 +55,8 @@ internal static class Program
         _processBinding?.Dispose();
     }
 
+    private static async Task<string> GetOrWaitForFilePath() => await Pathfinder.GetOrWaitForFilePath();
+
     private static void ReaderSessionsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         try
@@ -69,10 +73,10 @@ internal static class Program
                     if (MuMuLifetimeChecker.IsSystemLevelPackage(lifetime.PackageName))
                         continue;
 
-                    lifetime.AppState.WhenPropertyChanged(entry => entry.Value).Subscribe(_ =>
+                    lifetime.AppState.WhenPropertyChanged(entry => entry.Value).Subscribe(a =>
                     {
                         Task.Run(() => UpdatePresenceIfNecessary(_logReader));
-                        Log.Verbose("Updating from AppState Subscription");
+                        Log.Verbose("Updating from AppState Subscription ({State})", a.Value);
                     });
                 }
             }
@@ -89,16 +93,19 @@ internal static class Program
 
         if (focusedApp == null)
         {
-            ClearPresenceFor(reader.SessionGraveyard.Last());
+            _richPresenceHandler.RemovePresence();
             Log.Debug("No focused app found, clearing presence");
             return;
         }
 
-        await SetPresenceFor(focusedApp, new()
+        if (Process.GetProcessesByName("MuMuPlayer").Length == 0)
         {
-            Timestamps = new Timestamps(focusedApp.StartTime.DateTime)
-        });
-        Log.Information("Presence updated for {SessionTitle}", focusedApp);
+            Log.Debug("Emulator is not running, likely a log-artifact, MuMuPlayer.exe ({SessionTitle})", focusedApp.Title);
+            return;
+        }
+
+        if (await SetPresenceFor(focusedApp, new() { Timestamps = new Timestamps(focusedApp.StartTime.DateTime) }))
+            Log.Debug("Presence updated for {SessionTitle}", focusedApp);
     }
 
     private static MuMuSessionLifetime? GetFocusedApp(ObservableCollection<MuMuSessionLifetime> sessions)
@@ -127,80 +134,8 @@ internal static class Program
         _richPresenceHandler.RemovePresence();
     }
 
-    private static CancellationTokenSource _cts = new();
-
-    private static void SessionInfoReceived(object? sender, MuMuSessionLifetime sessionLifetime) => Task.Run(() => SetPresenceFromSessionInfoAsync(sessionLifetime));
-
-
-    private static AppState _currentAppState;
-    private static async ValueTask SetPresenceFromSessionInfoAsync(MuMuSessionLifetime sessionLifetime)
-    {
-        if (_currentAppState == sessionLifetime.AppState)
-            return;
-
-        if (Process.GetProcessesByName("MuMuPlayer").Length == 0)
-        {
-            Log.Debug("Emulator is not running, likely a log-artifact, crosvm.exe ({SessionTitle})", sessionLifetime.Title);
-            return;
-        }
-
-        // This is a bit of a loaded if statement. Let me break it down a bit
-        // If the state went from Starting -> Started we don't do anything
-        // If the state went from anything -> Starting / Started we subscribe to the app exit
-        // This should prevent a double subscribe if weird app orders start appearing (Running -> Starting)
-        if (_currentAppState is not (AppState.Started or AppState.Focused) && sessionLifetime.AppState.Value is AppState.Started or AppState.Focused)
-        {
-            _cts = new ();
-            ProcessExit.Subscribe("MuMuPlayer", exitCode =>
-            {
-                Log.Information("[{ExitCode}] MuMuPlayer.exe has exited", exitCode);
-                var previousAppState = _currentAppState;
-                _currentAppState = AppState.Stopped;
-                Log.Information("App State Changed from {PreviousAppState} -> {CurrentAppState}", previousAppState, _currentAppState);
-                ClearPresenceFor(sessionLifetime);
-            }, _cts.Token);
-        }
-
-
-
-        Log.Information("App State Changed from {PreviousAppState} -> {CurrentAppState} | {Timestamp}", _currentAppState, sessionLifetime.AppState.Value, sessionLifetime.StartTime);
-        _currentAppState = sessionLifetime.AppState;
-
-        switch (sessionLifetime.AppState.Value)
-        {
-            case AppState.Started:
-                await SetPresenceFor(sessionLifetime, new()
-                {
-                    Assets = new()
-                    {
-                        LargeImageText = "Starting up..."
-                    }
-                });
-                break;
-            case AppState.Focused:
-                await SetPresenceFor(sessionLifetime, new()
-                {
-                    Timestamps = new Timestamps(sessionLifetime.StartTime.DateTime)
-                });
-                break;
-            case AppState.Stopping or AppState.Stopped or AppState.Unfocused:
-                await _cts.CancelAsync();
-                ClearPresenceFor(sessionLifetime);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-    }
-
-    private static void ClearPresenceFor(MuMuSessionLifetime sessionLifetime)
-    {
-        Log.Information("Clearing Rich Presence for {GameTitle}", sessionLifetime.Title);
-
-        _richPresenceHandler.RemovePresence();
-    }
-
     private static RichPresence? _currentPresence;
-    private static async Task SetPresenceFor(MuMuSessionLifetime sessionLifetime, RichPresence presence)
+    private static async Task<bool> SetPresenceFor(MuMuSessionLifetime sessionLifetime, RichPresence presence)
     {
         var iconUrl = await PlayStoreAppIconScraper.TryGetIconLinkAsync(sessionLifetime.PackageName);
 
@@ -217,7 +152,11 @@ internal static class Program
                 };
         }
 
-        _richPresenceHandler.SetPresence(presence);
-        _currentPresence = presence;
+        var retVal = _richPresenceHandler.SetPresence(presence);
+
+        if (retVal)
+            _currentPresence = presence;
+
+        return retVal;
     }
 }
