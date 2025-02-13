@@ -24,10 +24,10 @@ internal static class ProcessExit
                 cts.Register(() =>
                 {
                     process.Exited -= del;
-                    Log.Verbose("Unsubscribed from app exit for {ProcessName}", $"{process.ProcessName}.exe");
+                    // Log.Verbose("Unsubscribed from app exit for {ProcessName}", $"{process.ProcessName}.exe");
                 });
 
-                Log.Verbose("Subscribed to app exit for {ProcessName}", $"{process.ProcessName}.exe");
+                // Log.Verbose("Subscribed to app exit for {ProcessName}", $"{process.ProcessName}.exe");
             }
             catch (AccessViolationException e)
             {
@@ -77,10 +77,10 @@ internal static class ProcessExit
             cts.Register(() =>
             {
                 process.Exited -= del;
-                Log.Verbose("Unsubscribed from app exit for {ProcessName}", $"{processName}.exe");
+                // Log.Verbose("Unsubscribed from app exit for {ProcessName}", $"{processName}.exe");
             });
 
-            Log.Verbose("Subscribed to app exit for {ProcessName}", $"{processName}.exe");
+            // Log.Verbose("Subscribed to app exit for {ProcessName}", $"{processName}.exe");
         }
         catch (AccessViolationException e)
         {
