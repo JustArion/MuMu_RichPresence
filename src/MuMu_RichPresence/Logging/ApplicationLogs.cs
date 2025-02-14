@@ -3,7 +3,6 @@
 namespace Dawn.MuMu.RichPresence.Logging;
 
 using global::Serilog;
-using global::Serilog.Core;
 using global::Serilog.Events;
 using Serilog.CustomEnrichers;
 using Serilog.Themes;

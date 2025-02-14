@@ -2,7 +2,6 @@
 
 namespace Dawn.MuMu.RichPresence.Tray;
 
-using System.Linq.Expressions;
 using global::Serilog;
 using WinForms.ContextMenu;
 
