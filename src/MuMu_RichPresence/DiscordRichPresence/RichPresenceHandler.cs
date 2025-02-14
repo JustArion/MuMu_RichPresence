@@ -34,7 +34,6 @@ public class RichPresenceHandler : IDisposable
         _client.OnPresenceUpdate += OnPresenceUpdate;
     }
 
-
     public bool SetPresence(RichPresence? presence)
     {
         if (!ApplicationFeatures.GetFeature(x => x.RichPresenceEnabled))
@@ -43,15 +42,10 @@ public class RichPresenceHandler : IDisposable
             return false;
         }
 
-        if (Interlocked.Exchange(ref _currentPresence, presence) == presence)
-        {
-            _logger.Verbose("Ignoring duplicate presence update");
-            return false;
-        }
-
         if (presence != null)
             Log.Information("Setting Rich Presence for {GameTitle}", presence.Details);
 
+        _currentPresence = presence;
         _client.SetPresence(presence);
         return true;
     }
