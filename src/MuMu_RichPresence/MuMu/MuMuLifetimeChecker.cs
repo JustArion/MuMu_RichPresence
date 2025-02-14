@@ -1,6 +1,4 @@
-﻿
-using System.Collections.Concurrent;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 
 namespace Dawn.MuMu.RichPresence.PlayGames;
 
@@ -132,11 +130,10 @@ internal static partial class MuMuLifetimeChecker
             existingLifetime.StartTime = GetApproximateStartTime(time);
 
         existingLifetime.Title = title;
-        foreach (var lifetime in lifetimes.Where(x => x != existingLifetime))
-            lifetime.AppState.Value = AppState.Unfocused;
 
         existingLifetime.AppState.Value = AppState.Focused;
-
+        foreach (var lifetime in lifetimes.Where(x => x != existingLifetime))
+            lifetime.AppState.Value = AppState.Unfocused;
 
         Log.Verbose("[{StartTime:hh:mm}] Focused: {Title} ({PackageName})", existingLifetime.StartTime.ToLocalTime(), title, packageName);
     }

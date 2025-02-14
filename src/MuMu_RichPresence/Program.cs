@@ -1,9 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
-using System.Reactive;
-using System.Reactive.Linq;
-using System.Runtime.CompilerServices;
 using Dawn.MuMu.RichPresence.Logging;
 using Dawn.MuMu.RichPresence.PlayGames;
 using DynamicData.Binding;
@@ -75,8 +72,11 @@ internal static class Program
 
                     lifetime.AppState.WhenPropertyChanged(entry => entry.Value).Subscribe(a =>
                     {
-                        Task.Run(() => UpdatePresenceIfNecessary(_logReader));
-                        Log.Verbose("Updating from AppState Subscription ({State})", a.Value);
+
+                        if (a.Value == AppState.Focused)
+                            Task.Run(() => UpdatePresenceIfNecessary(_logReader, lifetime));
+                        else
+                            Task.Run(() => UpdatePresenceIfNecessary(_logReader));
                     });
                 }
             }
@@ -87,9 +87,9 @@ internal static class Program
         }
     }
 
-    private static async Task UpdatePresenceIfNecessary(MuMuPlayerLogReader reader)
+    private static async Task UpdatePresenceIfNecessary(MuMuPlayerLogReader reader, MuMuSessionLifetime? focusedApp = null)
     {
-        var focusedApp = GetFocusedApp(reader.Sessions);
+        focusedApp ??= GetFocusedApp(reader.Sessions);
 
         if (focusedApp == null)
         {
@@ -135,8 +135,13 @@ internal static class Program
     }
 
     private static RichPresence? _currentPresence;
+    private static volatile MuMuSessionLifetime? _focusedLifetime;
     private static async Task<bool> SetPresenceFor(MuMuSessionLifetime sessionLifetime, RichPresence presence)
     {
+        // A race condition is possible here, so we use Interlocked.Exchange
+        if (Interlocked.Exchange(ref _focusedLifetime, sessionLifetime) == sessionLifetime)
+            return false;
+
         var iconUrl = await PlayStoreAppIconScraper.TryGetIconLinkAsync(sessionLifetime.PackageName);
 
         presence.Details ??= sessionLifetime.Title;
