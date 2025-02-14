@@ -10,20 +10,26 @@ public static partial class PlayStoreAppIconScraper
 {
     private static readonly AsyncRetryPolicy<string> _retryPolicy = Policy<string>
         .Handle<Exception>()
-        .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt) - 1));
+        .WaitAndRetryAsync(MAX_RETRIES, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt) - 1));
+    private static readonly HttpClient _client = new();
 
+    private const int MAX_RETRIES = 3;
     private static readonly ConcurrentDictionary<string, string> _iconLinks = new();
     public static async ValueTask<string> TryGetIconLinkAsync(string packageName)
     {
         if (_iconLinks.TryGetValue(packageName, out var link))
             return link;
 
+        var i = 0;
         var response = await _retryPolicy.ExecuteAndCaptureAsync(async () =>
         {
-            using var client = new HttpClient();
+            if (i++ == 0)
+                Log.Information("Getting icon for {PackageName}", packageName);
+            else
+                Log.Information("({RetryCount}/{Retries}) Getting icon for {PackageName}", i, MAX_RETRIES, packageName);
 
             var storePageContent =
-                await client.GetStringAsync($"https://play.google.com/store/apps/details?id={packageName}");
+                await _client.GetStringAsync($"https://play.google.com/store/apps/details?id={packageName}");
 
             var match = GetImageRegex().Match(storePageContent);
 
