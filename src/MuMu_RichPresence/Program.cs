@@ -134,8 +134,8 @@ internal static class Program
         _richPresenceHandler.RemovePresence();
     }
 
-    private static RichPresence? _currentPresence;
-    private static volatile MuMuSessionLifetime? _focusedLifetime;
+    private static volatile RichPresence? _currentPresence;
+    private static MuMuSessionLifetime? _focusedLifetime;
     private static async Task<bool> SetPresenceFor(MuMuSessionLifetime sessionLifetime, RichPresence presence)
     {
         // A race condition is possible here, so we use Interlocked.Exchange
