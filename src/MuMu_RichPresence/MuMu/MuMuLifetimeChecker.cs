@@ -92,7 +92,12 @@ internal static partial class MuMuLifetimeChecker
 
         ProcessExit.Subscribe(pid, _ =>
         {
-            lifetimes.Remove(existingLifetime);
+            try
+            {
+                lifetimes.Remove(existingLifetime);
+            }
+            catch { }
+
             Log.Debug("MuMu Player has exited");
         }, cts.Token);
 
