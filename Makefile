@@ -1,6 +1,6 @@
 ﻿build:
 	git submodule update
-	dotnet publish ./src/PlayGames_RichPresence/ --runtime win-x64 --output ./bin/
+	dotnet publish ./src/MuMu_RichPresence/ --runtime win-x64 --output ./bin/
 	
 help:
 	@echo "Usage: make <target>"
