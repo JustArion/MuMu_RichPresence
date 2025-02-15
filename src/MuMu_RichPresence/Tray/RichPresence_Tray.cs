@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Dawn.MuMu.RichPresence.Models;
 
 namespace Dawn.MuMu.RichPresence.Tray;
 

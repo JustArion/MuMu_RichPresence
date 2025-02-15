@@ -1,10 +1,9 @@
 ﻿namespace MuMu_RichPresence.Tests.Unit;
 
 using System.Collections.ObjectModel;
-using Dawn.MuMu.RichPresence.Domain;
-using Dawn.MuMu.RichPresence.PlayGames;
+using Dawn.MuMu.RichPresence;
+using Dawn.MuMu.RichPresence.Models;
 using FluentAssertions;
-using Serilog;
 
 [TestFixture(TestOf = typeof(MuMuPlayerLogReader))]
 public class AppSessionMessageReaderTests
@@ -58,7 +57,7 @@ public class AppSessionMessageReaderTests
         await _sut.GetAllSessionInfos(fileLock, sessions, graveyard);
 
         // Assert
-        var playedGames = graveyard.Where(x => !MuMuLifetimeChecker.IsSystemLevelPackage(x.PackageName)).ToArray();
+        var playedGames = graveyard.Where(x => !MuMuLifetimeParser.IsSystemLevelPackage(x.PackageName)).ToArray();
         playedGames.Should().HaveCountGreaterThanOrEqualTo(1);
 
         var first = playedGames.First();
@@ -80,7 +79,7 @@ public class AppSessionMessageReaderTests
         await _sut.GetAllSessionInfos(fileLock, sessions, graveyard);
 
         // Assert
-        var playedGames = graveyard.Where(x => !MuMuLifetimeChecker.IsSystemLevelPackage(x.PackageName)).ToArray();
+        var playedGames = graveyard.Where(x => !MuMuLifetimeParser.IsSystemLevelPackage(x.PackageName)).ToArray();
         playedGames.Should().HaveCountGreaterThanOrEqualTo(1);
 
         var last = playedGames.Last();

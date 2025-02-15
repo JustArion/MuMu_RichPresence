@@ -2,11 +2,11 @@
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using Dawn.MuMu.RichPresence.Domain;
-using Dawn.MuMu.RichPresence.PlayGames.FileOperations;
+using Dawn.MuMu.RichPresence.Models;
+using Dawn.MuMu.RichPresence.Tools;
 using Dawn.Serilog.CustomEnrichers;
 
-namespace Dawn.MuMu.RichPresence.PlayGames;
+namespace Dawn.MuMu.RichPresence;
 
 using global::Serilog;
 
@@ -127,7 +127,7 @@ public class MuMuPlayerLogReader(string filePath) : IDisposable
                 if (string.IsNullOrWhiteSpace(line))
                     continue;
 
-                MuMuLifetimeChecker.MutateLifetime(line, Sessions, SessionGraveyard);
+                MuMuLifetimeParser.MutateLifetime(line, Sessions, SessionGraveyard);
             }
         }
         catch (Exception e)
@@ -163,7 +163,7 @@ public class MuMuPlayerLogReader(string filePath) : IDisposable
             if (string.IsNullOrWhiteSpace(line))
                 continue;
 
-            MuMuLifetimeChecker.MutateLifetime(line, activeLifetimes, graveyard);
+            MuMuLifetimeParser.MutateLifetime(line, activeLifetimes, graveyard);
         }
     }
 

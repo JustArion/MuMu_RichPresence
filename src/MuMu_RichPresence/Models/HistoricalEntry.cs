@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using DynamicData.Binding;
 
-namespace Dawn.MuMu.RichPresence.Domain;
+namespace Dawn.MuMu.RichPresence.Models;
 
 public sealed class HistoricalEntry<TEntry> : INotifyPropertyChanged where TEntry : notnull
 {

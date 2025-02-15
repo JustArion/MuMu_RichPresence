@@ -1,7 +1,7 @@
 ﻿namespace MuMu_RichPresence.Tests.Unit;
 
 using System.Web;
-using Dawn.MuMu.RichPresence.PlayGames;
+using Dawn.MuMu.RichPresence;
 using FluentAssertions;
 
 [TestFixture(TestOf = typeof(PlayStoreAppIconScraper))]
@@ -15,8 +15,8 @@ public class IconScraperTests
         foreach (var appPackage in _appPackages)
         {
             var link = await PlayStoreAppIconScraper.TryGetIconLinkAsync(appPackage);
-            // Assert
 
+            // Assert
             link.Should().NotBeNullOrEmpty();
             
             Uri.TryCreate(link, UriKind.Absolute, out var uri).Should().BeTrue();

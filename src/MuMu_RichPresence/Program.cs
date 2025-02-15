@@ -2,14 +2,14 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using Dawn.MuMu.RichPresence.Logging;
-using Dawn.MuMu.RichPresence.PlayGames;
+using Dawn.MuMu.RichPresence.Models;
+using Dawn.MuMu.RichPresence.Tools;
 using DynamicData.Binding;
 
 namespace Dawn.MuMu.RichPresence;
 
 using DiscordRichPresence;
 using DiscordRPC;
-using Domain;
 using global::Serilog;
 using Tray;
 
@@ -29,6 +29,8 @@ internal static class Program
         Arguments = new(args);
 
         ApplicationLogs.Initialize();
+
+        await AutoUpdate.Velopack();
 
         SingleInstanceApplication.Ensure();
 
@@ -67,7 +69,7 @@ internal static class Program
 
                 foreach (var lifetime in e.NewItems.Cast<MuMuSessionLifetime>())
                 {
-                    if (MuMuLifetimeChecker.IsSystemLevelPackage(lifetime.PackageName))
+                    if (MuMuLifetimeParser.IsSystemLevelPackage(lifetime.PackageName))
                         continue;
 
                     lifetime.AppState.WhenPropertyChanged(entry => entry.Value).Subscribe(a =>
@@ -112,7 +114,7 @@ internal static class Program
     {
         foreach (var session in sessions)
         {
-            if (MuMuLifetimeChecker.IsSystemLevelPackage(session.PackageName))
+            if (MuMuLifetimeParser.IsSystemLevelPackage(session.PackageName))
                 continue;
 
             if (session.AppState.Value is AppState.Focused or AppState.Started)

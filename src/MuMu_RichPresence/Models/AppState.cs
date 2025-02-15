@@ -1,4 +1,4 @@
-﻿namespace Dawn.MuMu.RichPresence.Domain;
+﻿namespace Dawn.MuMu.RichPresence.Models;
 
 public enum AppState
 {

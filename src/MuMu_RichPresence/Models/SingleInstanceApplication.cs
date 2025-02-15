@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Text;
 
-namespace Dawn.MuMu.RichPresence;
+namespace Dawn.MuMu.RichPresence.Models;
 
 public static class SingleInstanceApplication
 {

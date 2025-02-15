@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Versioning;
 using Shortcut = ShellLink.Shortcut;
 
-namespace Dawn.MuMu.RichPresence;
+namespace Dawn.MuMu.RichPresence.Tools;
 
 internal static class Pathfinder
 {

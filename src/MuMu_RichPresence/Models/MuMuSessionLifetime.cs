@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-namespace Dawn.MuMu.RichPresence.Domain;
+namespace Dawn.MuMu.RichPresence.Models;
 
 public sealed record MuMuSessionLifetime : INotifyPropertyChanged
 {

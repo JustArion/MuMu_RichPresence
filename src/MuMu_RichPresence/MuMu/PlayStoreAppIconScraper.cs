@@ -2,7 +2,7 @@
 using Polly;
 using Polly.Retry;
 
-namespace Dawn.MuMu.RichPresence.PlayGames;
+namespace Dawn.MuMu.RichPresence;
 
 using System.Text.RegularExpressions;
 

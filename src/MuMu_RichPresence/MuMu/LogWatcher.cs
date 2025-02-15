@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace Dawn.MuMu.RichPresence.PlayGames;
+namespace Dawn.MuMu.RichPresence;
 
 public class LogWatcher : IDisposable
 {

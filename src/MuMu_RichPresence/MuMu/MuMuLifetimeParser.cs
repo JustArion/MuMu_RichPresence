@@ -1,13 +1,14 @@
 ﻿using System.Collections.ObjectModel;
+using Dawn.MuMu.RichPresence.Models;
+using Dawn.MuMu.RichPresence.Tools;
 
-namespace Dawn.MuMu.RichPresence.PlayGames;
+namespace Dawn.MuMu.RichPresence;
 
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Domain;
 using global::Serilog;
 
-internal static partial class MuMuLifetimeChecker
+internal static partial class MuMuLifetimeParser
 {
     private static readonly string[] SystemLevelPackageHints =
         [

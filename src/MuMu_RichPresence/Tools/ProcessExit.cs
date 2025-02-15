@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace Dawn.MuMu.RichPresence;
+namespace Dawn.MuMu.RichPresence.Tools;
 
 internal static class ProcessExit
 {
