@@ -1,8 +1,12 @@
 ﻿install_velopack:
 	dotnet tool update -g vpk
 
-velopack: build
+velopack: clean build
 	vpk pack -u 'MuMu-RichPresence' -v '1.1.0' -e 'MuMu RichPresence.exe' -o 'velopack' --packTitle 'MuMu - Rich Presence' -p 'bin'
+
+clean:
+	del /s /q bin
+	del /s /q velopack
 
 build:
 	git submodule init
