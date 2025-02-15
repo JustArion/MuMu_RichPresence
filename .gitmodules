@@ -1,0 +1,3 @@
+[submodule "src/RiotTrayContextTheme"]
+	path = src/RiotTrayContextTheme
+	url = https://github.com/JustArion/RiotTrayContextTheme
