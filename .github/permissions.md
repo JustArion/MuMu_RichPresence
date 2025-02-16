@@ -19,6 +19,7 @@
 - `Network`
     - `Download Access`
         - _Can_ download updates from `https://github.com/JustArion/MuMu_RichPresence`
+            - Handled by Nuget package [Velopack](https://www.nuget.org/packages/Velopack)
         - Accesses the site `https://play.google.com/store/apps/details?id=`
     - `Upload Access`
         - Sends telemetry (`http://localhost:9999`)
