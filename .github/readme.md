@@ -4,6 +4,7 @@
 
 ## Table of Contents
 - [Requirements](#requirements)
+- [Installation](#installation)
 - [Tray Options](#tray-options)
 - [Auto-Startup](#auto-startup)
 - [Custom Launch Args](#custom-launch-args)
@@ -13,6 +14,18 @@
 
 ### Requirements
 [.NET 8.0.X Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) (x64)
+
+---
+### Installation
+- Standalone
+    - No Auto Update
+- Portable
+    - Auto Update
+- Setup
+    - Auto Update
+    - Shortcut in Start Menu
+    - Can be uninstalled by right clicking uninstall in Start Menu
+    - Installed in `%appdata%/Local`
 
 ---
 ### Tray Options
