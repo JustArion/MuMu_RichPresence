@@ -14,9 +14,9 @@ internal static class AutoUpdate
         .WaitAndRetryAsync(MAX_RETRIES, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt) - 1));
     internal static async Task Velopack()
     {
-        VelopackApp.Build().Run(new SerilogToMicrosoftLogger(Log.Logger));
+        VelopackApp.Build().Run(new VelopackUpdateLogger(Log.Logger));
 
-        var manager = new UpdateManager(new GithubSource("https://github.com/JustArion/PlayGames_RichPresence", null, false));
+        var manager = new UpdateManager(new GithubSource("https://github.com/JustArion/MuMu_RichPresence", null, false));
 
         if (manager.IsInstalled)
             Log.Information("The Velopack Update Manager is present");

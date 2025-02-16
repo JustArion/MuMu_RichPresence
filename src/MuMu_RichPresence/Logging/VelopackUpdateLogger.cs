@@ -5,7 +5,7 @@ using ILogger = Serilog.ILogger;
 namespace Dawn.MuMu.RichPresence.Logging;
 
 [SuppressMessage("ReSharper", "TemplateIsNotCompileTimeConstantProblem")]
-public class SerilogToMicrosoftLogger(ILogger logger) : Microsoft.Extensions.Logging.ILogger
+public class VelopackUpdateLogger(ILogger logger) : Microsoft.Extensions.Logging.ILogger
 {
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
