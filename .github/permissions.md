@@ -7,6 +7,9 @@
         - _Can_ create a single registry key (`\HKCU\Software\Microsoft\Windows\CurrentVersion\Run\MuMu RichPresence`)
             - Default is off, configurable by the user
     - `Read Access`
+        - Reads Start Menu shortcuts for `MuMu Player*`
+        - Walks the directory of the file found previously (`MuMu Player*`)
+            - `../vms/???/logs/shell.log`
         - Reads the file (`Logs/shell.log`) if it exists
             - See [Technical-Document](technical-1.md)
         - Reads directory changes for a single directory (`Logs/`)
@@ -14,10 +17,14 @@
         - Reads a single registry key (`\HKCU\Software\Microsoft\Windows\CurrentVersion\Run\MuMu RichPresence`)
             - Run on Startup
 - `Network`
+    - `Download Access`
+        - _Can_ download updates from `https://github.com/JustArion/MuMu_RichPresence`
+        - Accesses the site `https://play.google.com/store/apps/details?id=`
     - `Upload Access`
         - Sends telemetry (`http://localhost:9999`)
             - Configurable by the user / command line, Handled by Nuget package [Serilog.Sinks.Seq](https://www.nuget.org/packages/Serilog.Sinks.Seq) & external application ([Seq](https://datalust.co/seq))
 - `Process`
     - `Read Access`
-      - Queries for common information from multiple processes with the same name (`crosvm.exe`)
-        - Clears Rich Presence when process is forcibly killed
+        - Looks for the file path of process `MuMuPlayer.exe`
+        - Checks how many processes of`MuMuPlayer.exe` are running
+            - Clears Rich Presence when process ends
