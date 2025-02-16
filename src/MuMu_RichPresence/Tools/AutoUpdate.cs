@@ -14,32 +14,42 @@ internal static class AutoUpdate
         .WaitAndRetryAsync(MAX_RETRIES, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt) - 1));
     internal static async Task Velopack()
     {
-        VelopackApp.Build().Run(new VelopackUpdateLogger(Log.Logger));
-
-        var manager = new UpdateManager(new GithubSource("https://github.com/JustArion/MuMu_RichPresence", null, false));
-
-        if (manager.IsInstalled)
-            Log.Information("The Velopack Update Manager is present");
-        else
+        try
         {
-            Log.Information("The Velopack Update Manager is not present");
-            return;
+            VelopackApp.Build().Run(new VelopackUpdateLogger(Log.Logger));
+
+            var manager =
+                new UpdateManager(new GithubSource("https://github.com/JustArion/MuMu_RichPresence", null, false));
+
+            if (manager.IsInstalled)
+                Log.Information("The Velopack Update Manager is present");
+            else
+            {
+                Log.Information("The Velopack Update Manager is not present");
+                return;
+            }
+
+            var response = await _retryPolicy.ExecuteAndCaptureAsync(async () => await manager.CheckForUpdatesAsync());
+            if (response.Outcome == OutcomeType.Failure)
+            {
+                Log.Error(response.FinalException, "Failed to check for updates");
+                return;
+            }
+
+            var version = response.Result;
+            if (version == null)
+                return;
+
+            await manager.DownloadUpdatesAsync(version);
+
+            Log.Information("Updates are ready to be installed and will be applied on next restart ({Version})",
+                version.TargetFullRelease.Version);
+            // manager.ApplyUpdatesAndRestart(version);
+        }
+        catch (Exception e)
+        {
+            Log.Error(e, "Failed to update using Velopack");
         }
 
-        var response = await _retryPolicy.ExecuteAndCaptureAsync(async () => await manager.CheckForUpdatesAsync());
-        if (response.Outcome == OutcomeType.Failure)
-        {
-            Log.Error(response.FinalException, "Failed to check for updates");
-            return;
-        }
-
-        var version = response.Result;
-        if (version == null)
-            return;
-
-        await manager.DownloadUpdatesAsync(version);
-
-        Log.Information("Updates are ready to be installed and will be applied on next restart ({Version})", version.TargetFullRelease.Version);
-        // manager.ApplyUpdatesAndRestart(version);
     }
 }
