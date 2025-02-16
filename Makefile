@@ -2,7 +2,7 @@
 	dotnet tool update -g vpk
 
 velopack: clean build
-	vpk pack -u 'MuMu-RichPresence' -v '1.1.1' -e 'MuMu RichPresence Standalone.exe' -o 'velopack' --packTitle 'MuMu - Rich Presence' -p 'bin'
+	vpk pack -u 'MuMu-RichPresence' -v '1.1.1' -e 'MuMu RichPresence Standalone.exe' -o 'velopack' --packTitle 'MuMu - Rich Presence' -p 'bin' --shortcuts 'StartMenuRoot'
 
 clean:
 	del /s /q bin
