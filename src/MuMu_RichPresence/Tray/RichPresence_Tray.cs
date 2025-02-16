@@ -144,7 +144,7 @@ public class RichPresence_Tray
 
     private ToolStripItem[] Header()
     {
-        var header = new ToolStripMenuItem("Play Games Rich Presence");
+        var header = new ToolStripMenuItem("MuMu Player Rich Presence");
         header.Enabled = false;
 
         var separator = new ToolStripSeparator();
