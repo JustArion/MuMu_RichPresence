@@ -107,6 +107,7 @@ internal static class Program
         if (Process.GetProcessesByName("MuMuPlayer").Length == 0)
         {
             Log.Debug("Emulator is not running, likely a log-artifact, MuMuPlayer.exe ({SessionTitle})", focusedApp.Title);
+            _richPresenceHandler.RemovePresence();
             return;
         }
 

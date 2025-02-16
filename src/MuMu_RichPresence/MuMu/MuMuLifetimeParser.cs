@@ -38,7 +38,7 @@ internal static partial class MuMuLifetimeParser
         {
             if (IsAppLaunchEvent(info, out var packageName, out var startTime, out var pid))
             {
-                CreateAppLaunchEvent(info, packageName, startTime, pid, lifetimes);
+                CreateAppLaunchEvent(info, packageName, startTime, pid, lifetimes, graveyard);
                 return;
             }
 
@@ -58,7 +58,7 @@ internal static partial class MuMuLifetimeParser
         }
     }
 
-    private static void CreateAppLaunchEvent(string info, string packageName, TimeSpan startTime, int pid, ObservableCollection<MuMuSessionLifetime> lifetimes)
+    private static void CreateAppLaunchEvent(string info, string packageName, TimeSpan startTime, int pid, ObservableCollection<MuMuSessionLifetime> lifetimes, ObservableCollection<MuMuSessionLifetime> graveyard)
     {
         var cts = new CancellationTokenSource();
 
@@ -96,6 +96,7 @@ internal static partial class MuMuLifetimeParser
             try
             {
                 lifetimes.Remove(existingLifetime);
+                graveyard.Add(existingLifetime);
             }
             catch { }
 
