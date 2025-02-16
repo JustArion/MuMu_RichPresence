@@ -9,7 +9,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <!--    Don't change this without changing the same in the Makefile and readme.md -->
-    <AssemblyName>MuMu RichPresence - Standalone</AssemblyName>
+    <AssemblyName>MuMu RichPresence Standalone</AssemblyName>
     <RootNamespace>Dawn.MuMu.RichPresence</RootNamespace>
     <ApplicationIcon>Assets\AppIcon_Blue.ico</ApplicationIcon>
     <Company>https://github.com/JustArion</Company>

@@ -66,7 +66,17 @@ Enabling `Run on Startup` clones the current launch arguments and runs it as tha
 git clone https://github.com/JustArion/MuMu_RichPresence && cd "MuMu_RichPresence"
 git submodule init
 git submodule update
-dotnet publish .\src\PlayGamesRichPresence\ --runtime win-x64 --output ./bin/
+dotnet publish .\src\MuMu_RichPresence\ --runtime win-x64 --output ./bin/
+```
+
+**with Auto-Update**
+```ps1
+git clone https://github.com/JustArion/MuMu_RichPresence && cd "MuMu_RichPresence"
+git submodule init
+git submodule update
+dotnet publish .\src\MuMu_RichPresence\ --runtime win-x64 --output ./bin/
+vpk pack -packId 'MuMu-RichPresence' -v '1.0.0' --outputDir 'velopack' --mainExe 'MuMu RichPresence Standalone.exe' --packDir 'bin'
+echo "Successfully built to 'velopack'"
 ```
 
 **Makefile**
