@@ -28,9 +28,13 @@ internal static class Program
     {
         Arguments = new(args);
 
-        ApplicationLogs.Initialize();
+        ApplicationLogs.Initialize(false);
 
-        await AutoUpdate.Velopack();
+        var supportsVelopack = await AutoUpdate.Velopack();
+
+        if (supportsVelopack)
+            ApplicationLogs.Initialize(true);
+        ApplicationLogs.ListenToEvents();
 
         SingleInstanceApplication.Ensure();
 

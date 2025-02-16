@@ -65,8 +65,4 @@
     </AssemblyAttribute>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="FileOperations\" />
-  </ItemGroup>
-
 </Project>
