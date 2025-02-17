@@ -4,7 +4,7 @@ using System.Web;
 using Dawn.MuMu.RichPresence;
 using FluentAssertions;
 
-[TestFixture(TestOf = typeof(PlayStoreAppIconScraper))]
+[TestFixture(TestOf = typeof(PlayStoreWebScraper))]
 public class IconScraperTests
 {
     private static readonly string[] _appPackages = ["com.YoStarEN.Arknights", "com.krafton.defensederby"];
@@ -14,7 +14,7 @@ public class IconScraperTests
         // Act
         foreach (var appPackage in _appPackages)
         {
-            var link = await PlayStoreAppIconScraper.TryGetIconLinkAsync(appPackage);
+            var link = await PlayStoreWebScraper.TryGetInfoAsync(appPackage);
 
             // Assert
             link.Should().NotBeNullOrEmpty();

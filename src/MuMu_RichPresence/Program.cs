@@ -64,6 +64,8 @@ internal static class Program
     {
         try
         {
+            Log.Debug("[{ChangeType}] Session Updated", e.Action);
+
             if (e.Action != NotifyCollectionChangedAction.Add)
                 Task.Run(() => UpdatePresenceIfNecessary(_logReader));
             else
@@ -73,7 +75,7 @@ internal static class Program
 
                 foreach (var lifetime in e.NewItems.Cast<MuMuSessionLifetime>())
                 {
-                    if (MuMuLifetimeParser.IsSystemLevelPackage(lifetime.PackageName))
+                    if (AppLifetimeParser.IsSystemLevelPackage(lifetime.PackageName))
                         continue;
 
                     lifetime.AppState.WhenPropertyChanged(entry => entry.Value).Subscribe(a =>
@@ -83,6 +85,8 @@ internal static class Program
                             Task.Run(() => UpdatePresenceIfNecessary(_logReader, lifetime));
                         else
                             Task.Run(() => UpdatePresenceIfNecessary(_logReader));
+
+                        Log.Debug("Updating from AppState Change {NewState}", a.Value);
                     });
                 }
             }
@@ -99,15 +103,15 @@ internal static class Program
 
         if (focusedApp == null)
         {
-            _richPresenceHandler.RemovePresence();
             Log.Debug("No focused app found, clearing presence");
+            RemovePresence();
             return;
         }
 
         if (Process.GetProcessesByName("MuMuPlayer").Length == 0)
         {
-            Log.Debug("Emulator is not running, likely a log-artifact, MuMuPlayer.exe ({SessionTitle})", focusedApp.Title);
-            _richPresenceHandler.RemovePresence();
+            Log.Debug("Emulator is not running, likely an old entry ({SessionTitle})", focusedApp.Title);
+            RemovePresence();
             return;
         }
 
@@ -119,7 +123,7 @@ internal static class Program
     {
         foreach (var session in sessions)
         {
-            if (MuMuLifetimeParser.IsSystemLevelPackage(session.PackageName))
+            if (AppLifetimeParser.IsSystemLevelPackage(session.PackageName))
                 continue;
 
             if (session.AppState.Value is AppState.Focused or AppState.Started)
@@ -141,6 +145,14 @@ internal static class Program
         _richPresenceHandler.RemovePresence();
     }
 
+    private static void RemovePresence()
+    {
+        if (Interlocked.Exchange(ref _focusedLifetime, null) == null)
+            return;
+
+        _richPresenceHandler.RemovePresence();
+    }
+
     private static volatile RichPresence? _currentPresence;
     private static MuMuSessionLifetime? _focusedLifetime;
     private static async Task<bool> SetPresenceFor(MuMuSessionLifetime sessionLifetime, RichPresence presence)
@@ -149,7 +161,7 @@ internal static class Program
         if (Interlocked.Exchange(ref _focusedLifetime, sessionLifetime) == sessionLifetime)
             return false;
 
-        var iconUrl = await PlayStoreAppIconScraper.TryGetIconLinkAsync(sessionLifetime.PackageName);
+        var iconUrl = await PlayStoreWebScraper.TryGetInfoAsync(sessionLifetime.PackageName);
 
         presence.Details ??= sessionLifetime.Title;
 

@@ -63,29 +63,39 @@ public class MuMuPlayerLogReader(string filePath) : IDisposable
 
     private async Task CatchUpAsync(FileLock fileLock)
     {
-        var ts = Stopwatch.GetTimestamp();
-        var reader = fileLock.Reader;
-        var sessions = new ObservableCollection<MuMuSessionLifetime>();
-        // We read the old entries (To check if there's a game currently running)
-        using (Warn.OnLongerThan(TimeSpan.FromSeconds(2), "Catch-Up took unusually long"))
-            await GetAllSessionInfos(fileLock, sessions, SessionGraveyard);
-        _lastStreamPosition = reader.BaseStream.Position;
+        try
+        {
+            var ts = Stopwatch.GetTimestamp();
+            var reader = fileLock.Reader;
+            var sessions = new ObservableCollection<MuMuSessionLifetime>();
+            // We read the old entries (To check if there's a game currently running)
+            using (Warn.OnLongerThan(TimeSpan.FromSeconds(2), "Catch-Up took unusually long"))
+                await GetAllSessionInfos(fileLock, sessions, SessionGraveyard);
+            _lastStreamPosition = reader.BaseStream.Position;
 
-        var processedEvents = Sessions.Select(x => x.PackageLifetimeEntries.Count).Sum() + SessionGraveyard.Select(x => x.PackageLifetimeEntries.Count).Sum();
+            var processedEvents = Sessions.Select(x => x.PackageLifetimeEntries.Count).Sum() +
+                                  SessionGraveyard.Select(x => x.PackageLifetimeEntries.Count).Sum();
 
-        Sessions.Clear();
-        foreach (var session in sessions)
-            Sessions.Add(session);
+            Sessions.Clear();
+            foreach (var session in sessions)
+                Sessions.Add(session);
 
-        if (sessions.FirstOrDefault(x => x.AppState.Value is AppState.Focused or AppState.Started)
-            is { } lifetime)
-            Log.Verbose("Caught up in {ExecutionDuration:F}ms (Processed {EventsProcessed} events), emitting {SessionInfo}", Stopwatch.GetElapsedTime(ts).TotalMilliseconds, processedEvents, lifetime);
-        else
-            Log.Verbose("Caught up {ExecutionDuration:F}ms, no games are currently running (Processed {EventsProcessed} events)", Stopwatch.GetElapsedTime(ts).TotalMilliseconds, sessions.Count);
+            if (sessions.FirstOrDefault(x => x.AppState.Value is AppState.Focused or AppState.Started) is { } lifetime)
+                Log.Verbose(
+                    "Caught up in {ExecutionDuration:F}ms (Processed {EventsProcessed} events), emitting {SessionInfo}",
+                    Stopwatch.GetElapsedTime(ts).TotalMilliseconds, processedEvents, lifetime);
+            else
+                Log.Verbose(
+                    "Caught up in {ExecutionDuration:F}ms, no games are currently running (Processed {EventsProcessed} events)",
+                    Stopwatch.GetElapsedTime(ts).TotalMilliseconds, sessions.Count);
 
-        Log.Debug("CatchUp: Stream position is currently at {Position}", reader.BaseStream.Position);
-        Log.Debug("CatchUp: Read {Lines} lines", _initialLinesRead);
-        Log.Debug("CatchUp: File Size is currently {FileSizeMb} MB", Math.Round(reader.BaseStream.Length / Math.Pow(1024, 2), 0));
+            Log.Debug("CatchUp: Read {Lines} lines ({FileSize} mb)[{Position}]", _initialLinesRead,
+                Math.Round(reader.BaseStream.Length / Math.Pow(1024, 2), 0), reader.BaseStream.Position);
+        }
+        catch (Exception e)
+        {
+            _logger.Error(e, "Failed to read the file {FilePath}", filePath);
+        }
     }
 
     private void LogFileWatcherOnError(object? _, ErrorEventArgs e) => _logger.Error(e.GetException(), "File watcher error");
@@ -111,6 +121,7 @@ public class MuMuPlayerLogReader(string filePath) : IDisposable
             {
                 Log.Verbose("{Path} file was truncated, resetting stream position", filePath);
                 await CatchUpAsync(fileLock);
+                Log.Information("Log file reset, Looks like MuMu Player is starting up");
                 return;
             }
 
@@ -127,7 +138,7 @@ public class MuMuPlayerLogReader(string filePath) : IDisposable
                 if (string.IsNullOrWhiteSpace(line))
                     continue;
 
-                MuMuLifetimeParser.MutateLifetime(line, Sessions, SessionGraveyard);
+                AppLifetimeParser.MutateLifetime(line, Sessions, SessionGraveyard);
             }
         }
         catch (Exception e)
@@ -153,7 +164,6 @@ public class MuMuPlayerLogReader(string filePath) : IDisposable
     internal async Task GetAllSessionInfos(FileLock fileLock, ObservableCollection<MuMuSessionLifetime> activeLifetimes, ObservableCollection<MuMuSessionLifetime> graveyard)
     {
         var reader = fileLock.Reader;
-        Log.Verbose("Catching up...");
         reader.BaseStream.Seek(0, SeekOrigin.Begin);
         _initialLinesRead = 0;
 
@@ -163,7 +173,7 @@ public class MuMuPlayerLogReader(string filePath) : IDisposable
             if (string.IsNullOrWhiteSpace(line))
                 continue;
 
-            MuMuLifetimeParser.MutateLifetime(line, activeLifetimes, graveyard);
+            AppLifetimeParser.MutateLifetime(line, activeLifetimes, graveyard);
         }
     }
 

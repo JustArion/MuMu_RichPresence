@@ -6,7 +6,7 @@ namespace Dawn.MuMu.RichPresence;
 
 using System.Text.RegularExpressions;
 
-public static partial class PlayStoreAppIconScraper
+public static partial class PlayStoreWebScraper
 {
     private static readonly AsyncRetryPolicy<string> _retryPolicy = Policy<string>
         .Handle<Exception>()
@@ -15,7 +15,7 @@ public static partial class PlayStoreAppIconScraper
 
     private const int MAX_RETRIES = 3;
     private static readonly ConcurrentDictionary<string, string> _iconLinks = new();
-    public static async ValueTask<string> TryGetIconLinkAsync(string packageName)
+    public static async ValueTask<string> TryGetInfoAsync(string packageName)
     {
         if (_iconLinks.TryGetValue(packageName, out var link))
             return link;

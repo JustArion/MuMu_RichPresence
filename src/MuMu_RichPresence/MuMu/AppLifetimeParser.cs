@@ -8,7 +8,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using global::Serilog;
 
-internal static partial class MuMuLifetimeParser
+internal static partial class AppLifetimeParser
 {
     private static readonly string[] SystemLevelPackageHints =
         [
@@ -96,11 +96,11 @@ internal static partial class MuMuLifetimeParser
             try
             {
                 lifetimes.Remove(existingLifetime);
+                Log.Debug("The gravekeeper has come for {LifetimePackageName}, MuMu Player has exited", existingLifetime.PackageName);
                 graveyard.Add(existingLifetime);
             }
             catch { }
 
-            Log.Debug("MuMu Player has exited");
         }, cts.Token);
 
         // Log.Verbose("[{StartTime:hh:mm}] App Launched: {PackageName}", existingLifetime.StartTime.ToLocalTime(), packageName);
@@ -142,7 +142,7 @@ internal static partial class MuMuLifetimeParser
         foreach (var lifetime in lifetimes.Where(x => x != existingLifetime))
             lifetime.AppState.Value = AppState.Unfocused;
 
-        Log.Verbose("[{StartTime:hh:mm}] Focused: {Title} ({PackageName})", existingLifetime.StartTime.ToLocalTime(), title, packageName);
+        Log.Information("[{StartTime:hh:mm}] Focused: {Title} ({PackageName})", existingLifetime.StartTime.ToLocalTime(), title, packageName);
     }
 
     // The log format is "00:45:31.968" which is a timespan, not a timestamp
