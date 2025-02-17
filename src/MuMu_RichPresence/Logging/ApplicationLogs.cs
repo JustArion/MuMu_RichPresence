@@ -66,7 +66,7 @@ internal static class ApplicationLogs
             config.WriteTo.Seq(Arguments.HasCustomSeqUrl
                     ? Arguments.CustomSeqUrl
                     : DEFAULT_SEQ_URL,
-                restrictedToMinimumLevel: LogEventLevel.Warning);
+                restrictedToMinimumLevel: LogEventLevel.Information);
             #endif
 
             Log.Logger = config.CreateLogger();
