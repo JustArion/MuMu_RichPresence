@@ -27,9 +27,10 @@ internal static class AutoUpdate
                 Log.Information("The Velopack Update Manager is present");
             else
             {
-                Log.Information("The Velopack Update Manager is not present");
+                Log.Information("The Velopack Update Manager is not present. You will not receive auto-updates");
                 return false;
             }
+
             var response = await _retryPolicy.ExecuteAndCaptureAsync(async () => await manager.CheckForUpdatesAsync());
             if (response.Outcome == OutcomeType.Failure)
             {
