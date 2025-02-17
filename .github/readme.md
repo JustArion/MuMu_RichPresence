@@ -45,7 +45,7 @@ Enabling `Run on Startup` clones the current launch arguments and runs it as tha
 
 | Argument                 |     Default Value     | Description                                                                                |
 |:-------------------------|:---------------------:|:-------------------------------------------------------------------------------------------|
-| --custom-application-id= |  1204167311922167860  | [Discord Application Id](https://discord.com/developers/applications)                      |
+| --custom-application-id= |  1339586347576328293  | [Discord Application Id](https://discord.com/developers/applications)                      |
 | --seq-url=               | http://localhost:9999 | Seq Logging Platform                                                                       |
 | --bind-to=               |         `N/A`         | Binds this process to another process' ID. When the other process exits, this one does too |
 | --extended-logging       |         `N/A`         | File Log Level: Verbose (From Warning)                                                     |
