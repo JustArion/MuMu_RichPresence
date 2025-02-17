@@ -176,6 +176,7 @@ internal static class Program
                 };
         }
 
+        presence.Assets.LargeImageText = presence.Details;
         var retVal = _richPresenceHandler.SetPresence(presence);
 
         if (retVal)
