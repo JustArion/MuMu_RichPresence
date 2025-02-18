@@ -38,13 +38,14 @@ internal static class Program
 
         SingleInstanceApplication.Ensure();
 
+        _richPresenceHandler = new();
+        _trayIcon = new();
+        _trayIcon.RichPresenceEnabledChanged += OnRichPresenceEnabledChanged;
+
         _filePath = await GetOrWaitForFilePath();
 
-        _richPresenceHandler = new();
         _logReader = new MuMuPlayerLogReader(_filePath);
 
-        _trayIcon = new(_filePath);
-        _trayIcon.RichPresenceEnabledChanged += OnRichPresenceEnabledChanged;
 
         _logReader.Sessions.CollectionChanged += ReaderSessionsChanged;
 

@@ -10,10 +10,8 @@ public class RichPresence_Tray
 {
     internal NotifyIcon Tray { get; private set; }
     private readonly ILogger _logger = Log.ForContext<RichPresence_Tray>();
-    private readonly string _logPath;
-    public RichPresence_Tray(string logPath)
+    public RichPresence_Tray()
     {
-        _logPath = logPath;
         Tray = new();
 
         Tray.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
@@ -50,11 +48,6 @@ public class RichPresence_Tray
             {
                 _logger.Information("Adding extended logging items");
                 items.Add("Open App Directory", null, (_, _) => StartProcess(()=> Process.Start("explorer", $"/select,\"{Application.ExecutablePath}\"")));
-                items.Add("Open Log File", null, (_, _) =>
-                {
-                    if (File.Exists(_logPath))
-                        StartProcess(()=> Process.Start("explorer", _logPath));
-                });
             }
             items.Add(Enabled());
             items.Add(RunOnStartup());
