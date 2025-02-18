@@ -1,4 +1,4 @@
-﻿namespace Dawn.MuMu.RichPresence;
+﻿namespace Dawn.MuMu.RichPresence.Tools;
 
 using Microsoft.Win32;
 
