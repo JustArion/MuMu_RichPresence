@@ -1,0 +1,72 @@
+# What does this integration do?
+# When a new tag is created (v1.0.0) a release for that tag is created
+# If all tests pass
+# - JustArion 18/02/25
+
+name: CI Tag Releases
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+      if: ${{ github.event_name == 'push' }}
+      runs-on: windows-latest
+      steps:
+        - uses: actions/checkout@v4
+          with:
+            lfs: true
+
+        - name: Setup .NET SDK
+          uses: actions/setup-dotnet@v4
+          with:
+            dotnet-version: '8.0.X'
+            cache: true
+            cache-dependency-path: '**/packages.lock.json'
+        - run: dotnet restore ./src/
+
+        - name: Run Project Tests Before Release
+          run: dotnet test ./src/
+
+        - name: Setup .NET Velopack
+          run: make install_velopack
+
+        - name: Build and Package Release
+          run: make velopack VERSION="$($env:GITHUB_REF -replace '^refs/tags/v', '')"
+
+        - name: Create GitHub Release
+          id: create_release
+          uses: actions/create-release@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            tag_name: ${{ github.ref_name }}
+            release_name: ${{ github.ref_name }}
+            body: |
+              **Dependencies**
+              - [.NET 8.0 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-8.0.13-windows-x64-installer)
+
+        - name: Upload assets from bin folder
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            Write-Output "Uploading files from ./bin/..."
+            ls ./bin/ | ForEach-Object { 
+            $file = $_.FullName
+            
+            Write-Output "Uploading [ $file ]"
+            gh release upload ${{ github.ref_name }} "$file" --clobber
+            }
+        - name: Upload assets from velopack folder
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            Write-Output "Uploading files from ./velopack/..."
+            ls ./velopack/ | ForEach-Object { 
+            $file = $_.FullName
+            
+            Write-Output "Uploading [ $file ]"
+            gh release upload ${{ github.ref_name }} "$file" --clobber
+            }
