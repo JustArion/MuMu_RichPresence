@@ -48,6 +48,8 @@ jobs:
               **Dependencies**
               - [.NET 8.0 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-8.0.13-windows-x64-installer)
 
+              **Changelog**
+
         - name: Upload assets from bin folder
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
