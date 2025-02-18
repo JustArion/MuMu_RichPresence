@@ -30,10 +30,12 @@ internal static class Program
 
         ApplicationLogs.Initialize(false);
 
-        var supportsVelopack = await AutoUpdate.Velopack();
-
-        if (supportsVelopack)
-            ApplicationLogs.Initialize(true);
+        if (!Arguments.NoAutoUpdate)
+        {
+            var supportsVelopack = await AutoUpdate.Velopack();
+            if (supportsVelopack)
+                ApplicationLogs.Initialize(true);
+        }
         ApplicationLogs.ListenToEvents();
 
         SingleInstanceApplication.Ensure();
@@ -45,7 +47,6 @@ internal static class Program
         _filePath = await GetOrWaitForFilePath();
 
         _logReader = new MuMuPlayerLogReader(_filePath);
-
 
         _logReader.Sessions.CollectionChanged += ReaderSessionsChanged;
 

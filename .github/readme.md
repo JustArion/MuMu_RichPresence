@@ -54,6 +54,7 @@ Enabling `Run on Startup` clones the current launch arguments and runs it as tha
 | --extended-logging       |         `N/A`         | File Log Level: Verbose (From Warning)                                                     |
 | --rp-disabled-on-start   |         `N/A`         | Rich Presence is Disabled for *MuMu Emulator*                                              |
 | --no-file-logging        |         `N/A`         | Disables logging to the file (Located in the current directory)                            |
+| --no-auto-update         |         `N/A`         | Disables Auto-Updates & Checking for Updates (Only affects Velopack (Portable / Setup) versions) |
 
 **Launch Args Example**
 
