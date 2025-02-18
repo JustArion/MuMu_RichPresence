@@ -1,6 +1,7 @@
 # What does this integration do?
 # When a new tag is created (v1.0.0) a release for that tag is created
 # If all tests pass
+# Note the 'v'. It's a requirement
 # - JustArion 18/02/25
 
 name: CI Tag Releases
