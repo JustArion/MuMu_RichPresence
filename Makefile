@@ -1,12 +1,15 @@
-﻿install_velopack:
+﻿SHELL := pwsh.exe
+.SHELLFLAGS := -Command
+
+install_velopack:
 	dotnet tool update -g vpk
 
 velopack: clean build
-	vpk pack -u 'MuMu-RichPresence' -v '1.1.1' -e 'MuMu RichPresence Standalone.exe' -o 'velopack' --packTitle 'MuMu - Rich Presence' -p 'bin' --shortcuts 'StartMenuRoot'
+	vpk pack -u 'MuMu-RichPresence' -v '$(VERSION)' -e 'MuMu RichPresence Standalone.exe' -o 'velopack' --packTitle 'MuMu - Rich Presence' -p 'bin' --shortcuts 'StartMenuRoot'
 
 clean:
-	del /s /q bin
-	del /s /q velopack
+	-rm -Recurse -ErrorAction SilentlyContinue bin
+	-rm -Recurse -ErrorAction SilentlyContinue velopack
 
 build:
 	git submodule init
@@ -17,7 +20,7 @@ help:
 	@echo "Usage: make <target>"
 	@echo ""
 	@echo "Targets:"
-	@echo "  build           Build the application"
-	@echo "  installvpk      Installs the toolset for auto-updates"
-	@echo "  velopack        Build the application with auto-updates"
-	@echo "  help            Show this help message"
+	@echo "  build                 Build the application"
+	@echo "  install_velopack      Installs the toolset for auto-updates"
+	@echo "  velopack              Build the application with auto-updates"
+	@echo "  help                  Show this help message"
