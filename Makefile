@@ -1,6 +1,13 @@
 ﻿SHELL := pwsh.exe
 .SHELLFLAGS := -Command
 
+init:
+	git submodule init
+	git submodule update
+
+restore: init
+	dotnet restore ./src/
+
 install_velopack:
 	dotnet tool update -g vpk
 
@@ -11,9 +18,10 @@ clean:
 	-rm -Recurse -ErrorAction SilentlyContinue bin
 	-rm -Recurse -ErrorAction SilentlyContinue velopack
 
-build:
-	git submodule init
-	git submodule update
+test:
+	dotnet test ./src/
+
+build: init
 	dotnet publish ./src/MuMu_RichPresence/ --runtime win-x64 --output ./bin/
 	
 help:

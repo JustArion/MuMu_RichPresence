@@ -25,10 +25,10 @@ jobs:
             dotnet-version: '8.0.X'
             cache: true
             cache-dependency-path: '**/packages.lock.json'
-        - run: dotnet restore ./src/
+        - run: make restore
 
         - name: Run Project Tests Before Release
-          run: dotnet test ./src/
+          run: make test
 
         - name: Setup .NET Velopack
           run: make install_velopack

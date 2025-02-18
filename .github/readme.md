@@ -68,7 +68,7 @@ Enabling `Run on Startup` clones the current launch arguments and runs it as tha
 
 #### Pre-Build Requirements
 
-- [.NET SDK 8.0.X](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) (x64)<br>
+- [.NET SDK 8.0.X](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-8.0.13-windows-x64-installer) (x64)<br>
 - [Git](https://git-scm.com/downloads)
 
 ---
