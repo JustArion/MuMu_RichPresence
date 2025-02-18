@@ -20,7 +20,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="Versioning">
-    <Version>1.1.2</Version>
+    <Version>1.1.4</Version>
 
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <ProductVersion>$Version)</ProductVersion>
