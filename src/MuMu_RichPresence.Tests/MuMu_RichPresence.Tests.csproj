@@ -9,6 +9,8 @@
         <IsTestProject>true</IsTestProject>
         <AssemblyName>MuMu_RichPresence.Tests</AssemblyName>
         <RootNamespace>MuMu_RichPresence.Tests</RootNamespace>
+
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -25,13 +27,13 @@
     </ItemGroup>
 
     <ItemGroup>
-      <AdditionalFiles Include="Assets\*">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </AdditionalFiles>
+        <AdditionalFiles Include="Assets\**">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </AdditionalFiles>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\MuMu_RichPresence\MuMu_RichPresence.csproj" />
+        <ProjectReference Include="..\MuMu_RichPresence\MuMu_RichPresence.csproj" />
     </ItemGroup>
 
 </Project>
