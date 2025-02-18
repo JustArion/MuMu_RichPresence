@@ -170,15 +170,20 @@ internal static class Program
         if (!string.IsNullOrWhiteSpace(iconUrl))
         {
             if (presence.HasAssets())
-                presence.Assets!.LargeImageKey = iconUrl;
+            {
+                var assets = presence.Assets;
+                assets.LargeImageKey = iconUrl;
+                assets.LargeImageText = presence.Details;
+
+            }
             else
                 presence.Assets = new()
                 {
-                    LargeImageKey = iconUrl
+                    LargeImageKey = iconUrl,
+                    LargeImageText = presence.Details
                 };
         }
 
-        presence.Assets.LargeImageText = presence.Details;
         var retVal = _richPresenceHandler.SetPresence(presence);
 
         if (retVal)
