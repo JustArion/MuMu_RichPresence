@@ -1,3 +1,5 @@
+[![Test Runner](https://github.com/JustArion/MuMu_RichPresence/actions/workflows/tests.yml/badge.svg)](https://github.com/JustArion/MuMu_RichPresence/actions/workflows/tests.yml)
+
 > [!NOTE]
 > - The project has a [sister-repo](https://github.com/JustArion/PlayGames_RichPresence) for `Google Play Games`
 > - Additional options available in the Tray Icon
@@ -11,8 +13,6 @@
 - [Previews](#previews)
 - [Building from Source](#building-from-source)
 - [Permissions](#permissions)
-
-[![Test Runner](https://github.com/JustArion/MuMu_RichPresence/actions/workflows/tests.yml/badge.svg)](https://github.com/JustArion/MuMu_RichPresence/actions/workflows/tests.yml)
 
 ---
 ### Requirements
