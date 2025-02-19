@@ -11,21 +11,21 @@ public class VelopackUpdateLogger(ILogger logger) : Microsoft.Extensions.Logging
     {
         switch (logLevel)
         {
-            case LogLevel.Trace:
             case LogLevel.Debug:
                 logger.Debug(exception, formatter(state, exception));
-                break;
-            case LogLevel.Information:
-                logger.Information(exception, formatter(state, exception));
                 break;
             case LogLevel.Warning:
                 logger.Warning(exception, formatter(state, exception));
                 break;
             case LogLevel.Error:
-            case LogLevel.Critical:
                 logger.Error(exception, formatter(state, exception));
                 break;
+            case LogLevel.Critical:
+                logger.Fatal(exception, formatter(state, exception));
+                break;
             case LogLevel.None:
+            case LogLevel.Trace:
+            case LogLevel.Information:
             default:
                 logger.Verbose(exception, formatter(state, exception));
                 break;
