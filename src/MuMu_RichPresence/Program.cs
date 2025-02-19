@@ -1,15 +1,15 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
-using Dawn.MuMu.RichPresence.Logging;
-using Dawn.MuMu.RichPresence.Models;
-using Dawn.MuMu.RichPresence.Tools;
 using DynamicData.Binding;
 
 namespace Dawn.MuMu.RichPresence;
 
 using DiscordRichPresence;
 using DiscordRPC;
+using Logging;
+using Models;
+using Tools;
 using global::Serilog;
 using Tray;
 
@@ -47,9 +47,7 @@ internal static class Program
         _filePath = await GetOrWaitForFilePath();
 
         _logReader = new MuMuPlayerLogReader(_filePath);
-
         _logReader.Sessions.CollectionChanged += ReaderSessionsChanged;
-
         _logReader.StartAsync();
 
         if (Arguments.HasProcessBinding)
@@ -185,7 +183,6 @@ internal static class Program
         }
 
         var retVal = _richPresenceHandler.SetPresence(presence);
-
         if (retVal)
             _currentPresence = presence;
 
