@@ -1,4 +1,4 @@
-﻿namespace MuMu_RichPresence.Tests.Unit;
+﻿namespace MuMu_RichPresence.Tests.Integration;
 
 using System.Collections.ObjectModel;
 using Dawn.MuMu.RichPresence;

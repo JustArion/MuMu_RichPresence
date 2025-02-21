@@ -1,6 +1,5 @@
-﻿namespace MuMu_RichPresence.Tests.Unit;
+﻿namespace MuMu_RichPresence.Tests.Integration;
 
-using System.Web;
 using Dawn.MuMu.RichPresence;
 using FluentAssertions;
 
