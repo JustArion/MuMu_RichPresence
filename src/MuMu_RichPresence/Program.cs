@@ -161,23 +161,25 @@ internal static class Program
         if (Interlocked.Exchange(ref _focusedLifetime, sessionLifetime) == sessionLifetime)
             return false;
 
-        var iconUrl = await PlayStoreWebScraper.TryGetInfoAsync(sessionLifetime.PackageName);
+        var packageInfo = await PlayStoreWebScraper.TryGetPackageInfo(sessionLifetime.PackageName);
+
+        var iconLink = packageInfo?.IconLink;
 
         presence.Details ??= sessionLifetime.Title;
 
-        if (!string.IsNullOrWhiteSpace(iconUrl))
+        if (!string.IsNullOrWhiteSpace(iconLink))
         {
             if (presence.HasAssets())
             {
                 var assets = presence.Assets;
-                assets.LargeImageKey = iconUrl;
+                assets.LargeImageKey = iconLink;
                 assets.LargeImageText = presence.Details;
 
             }
             else
                 presence.Assets = new()
                 {
-                    LargeImageKey = iconUrl,
+                    LargeImageKey = iconLink,
                     LargeImageText = presence.Details
                 };
         }

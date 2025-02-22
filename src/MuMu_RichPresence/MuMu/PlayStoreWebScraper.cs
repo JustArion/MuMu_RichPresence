@@ -8,50 +8,57 @@ using System.Text.RegularExpressions;
 
 public static partial class PlayStoreWebScraper
 {
-    private static readonly AsyncRetryPolicy<string> _retryPolicy = Policy<string>
+    private static readonly HttpClient _client = new();
+    private static readonly ConcurrentDictionary<string, PlayStorePackageInfo> _webCache = new();
+
+    public record PlayStorePackageInfo(string IconLink, string Title);
+
+    private static readonly AsyncRetryPolicy<PlayStorePackageInfo?> _retryPolicy = Policy<PlayStorePackageInfo?>
         .Handle<Exception>()
         .WaitAndRetryAsync(MAX_RETRIES, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt) - 1));
-    private static readonly HttpClient _client = new();
 
     private const int MAX_RETRIES = 3;
-    private static readonly ConcurrentDictionary<string, string> _iconLinks = new();
-    public static async ValueTask<string> TryGetInfoAsync(string packageName)
+    public static async ValueTask<PlayStorePackageInfo?> TryGetPackageInfo(string packageName)
     {
-        if (_iconLinks.TryGetValue(packageName, out var link))
+        if (_webCache.TryGetValue(packageName, out var link))
             return link;
 
-        var i = 0;
-        var response = await _retryPolicy.ExecuteAndCaptureAsync(async () =>
+        try
         {
-            if (i++ == 0)
-                Log.Information("Getting icon for {PackageName}", packageName);
-            else
-                Log.Information("({RetryCount}/{Retries}) Getting icon for {PackageName}", i, MAX_RETRIES, packageName);
-
-            var storePageContent =
-                await _client.GetStringAsync($"https://play.google.com/store/apps/details?id={packageName}");
-
-            var match = GetImageRegex().Match(storePageContent);
-
-            if (!match.Success)
+            return await _retryPolicy.ExecuteAsync(async () =>
             {
-                Log.Warning("Failed to find icon link for {PackageName}", packageName);
-                return string.Empty;
-            }
+                using var client = new HttpClient();
 
-            var imageLink = match.Groups[1].Value;
-            _iconLinks.TryAdd(packageName, imageLink);
-            return imageLink;
-        });
+                var storePageContent = await client.GetStringAsync($"https://play.google.com/store/apps/details?id={packageName}");
 
-        if (response.Outcome == OutcomeType.Successful)
-            return response.Result;
+                var match = GetImageRegex().Match(storePageContent);
 
+                if (!match.Success)
+                {
+                    Log.Warning("Failed to find icon link for {PackageName}", packageName);
+                    return null;
+                }
 
-        Log.Error(response.FinalException, "Failed to get icon link for {PackageName}", packageName);
-        return string.Empty;
+                var imageLink = match.Groups[1].Value;
+                var titleMatch = GetTitleRegex().Match(storePageContent);
+                var title = titleMatch.Success ? titleMatch.Groups[1].Value : string.Empty;
+
+                var info = new PlayStorePackageInfo(imageLink, title);
+                _webCache.TryAdd(packageName, info);
+
+                return info;
+            });
+        }
+        catch (Exception e)
+        {
+            Log.Error(e, "Failed to get icon link for {PackageName}", packageName);
+            return null;
+        }
     }
 
     [GeneratedRegex("<meta property=\"og:image\" content=\"(.+?)\">")]
     private static partial Regex GetImageRegex();
+
+    [GeneratedRegex("<meta property=\"og:title\" content=\"(.+?) - Apps on Google Play\">")]
+    private static partial Regex GetTitleRegex();
 }
