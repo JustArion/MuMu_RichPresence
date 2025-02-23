@@ -45,11 +45,7 @@ public class RichPresence_Tray
         items.AddRange(Header());
         try
         {
-            if (Arguments.ExtendedLogging)
-            {
-                _logger.Information("Adding extended logging items");
-                items.Add("Open App Directory", null, (_, _) => StartProcess(()=> Process.Start("explorer", $"/select,\"{Application.ExecutablePath}\"")));
-            }
+            items.Add("Open App Directory", null, (_, _) => StartProcess(()=> Process.Start("explorer", $"/select,\"{Application.ExecutablePath}\"")));
             items.Add(Enabled());
             items.Add(RunOnStartup());
             items.Add(HideTray());
