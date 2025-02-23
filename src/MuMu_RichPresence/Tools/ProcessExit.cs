@@ -52,6 +52,7 @@ internal static class ProcessExit
         catch (ArgumentException)
         {
             // app is not running
+            onExit(0);
         }
     }
 
@@ -61,6 +62,7 @@ internal static class ProcessExit
         if (process is null)
         {
             Log.Warning("Process {ProcessName} not found", processName);
+            onExit(0);
             return;
         }
 

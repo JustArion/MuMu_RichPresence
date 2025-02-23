@@ -155,6 +155,7 @@ internal static class Program
 
     private static volatile RichPresence? _currentPresence;
     private static MuMuSessionLifetime? _focusedLifetime;
+    private static CancellationTokenSource? _processSubscriptionCts = new();
     private static async Task<bool> SetPresenceFor(MuMuSessionLifetime sessionLifetime, RichPresence presence)
     {
         // A race condition is possible here, so we use Interlocked.Exchange
@@ -185,9 +186,24 @@ internal static class Program
         }
 
         var retVal = _richPresenceHandler.SetPresence(presence);
-        if (retVal)
-            _currentPresence = presence;
+        if (!retVal)
+            return retVal;
+
+        _currentPresence = presence;
+        await RemovePresenceOnMuMuPlayerExit();
 
         return retVal;
+    }
+
+    private static async Task RemovePresenceOnMuMuPlayerExit()
+    {
+        if (_processSubscriptionCts != null)
+        {
+            await _processSubscriptionCts.CancelAsync();
+            _processSubscriptionCts.Dispose();
+        }
+        _processSubscriptionCts = new();
+
+        ProcessExit.Subscribe("MuMuPlayer", _ => RemovePresence(), _processSubscriptionCts.Token);
     }
 }
