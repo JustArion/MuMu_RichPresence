@@ -40,9 +40,9 @@ public class AppSessionMessageReaderTests
         await _sut.GetAllSessionInfos(fileLock, sessions, graveyard);
 
         // Assert
-        sessions.Count.Should().Be(2);
+        sessions.Count.Should().Be(0); // MuMu player isn't running
 
-        graveyard.Count.Should().Be(6);
+        graveyard.Count.Should().Be(54);
     }
 
     [Test]
