@@ -45,11 +45,12 @@ internal static class ApplicationLogs
                 .WriteTo.Console(outputTemplate: LOGGING_FORMAT, theme: BlizzardTheme.GetTheme,
                     applyThemeToRedirectedOutput: true, standardErrorFromLevel: LogEventLevel.Error);
 
+
+            var logPath = writeToParent
+                ? Path.Combine(AppContext.BaseDirectory, $"{Application.ProductName}.log")
+                : Path.Combine(Directory.GetParent(".")!.FullName, $"{Application.ProductName}.log");
             if (!Arguments.NoFileLogging)
-                config.WriteTo.File(
-                    writeToParent
-                        ? Path.Combine(AppContext.BaseDirectory, $"{Application.ProductName}.log")
-                        : Path.Combine(Directory.GetParent(".")!.FullName, $"{Application.ProductName}.log"),
+                config.WriteTo.File(logPath,
                     outputTemplate: LOGGING_FORMAT,
                     restrictedToMinimumLevel: Arguments.ExtendedLogging
                         ? LogEventLevel.Verbose
@@ -59,6 +60,7 @@ internal static class ApplicationLogs
                     rollOnFileSizeLimit: true,
                     fileSizeLimitBytes: (long)Math.Pow(1024, 2) * 20, flushToDiskInterval // 20mb
                     : TimeSpan.FromSeconds(1));
+
 
             #if RELEASE
             // This is personal preference, but you can set your Seq server to catch :9999 too.
@@ -70,6 +72,11 @@ internal static class ApplicationLogs
             #endif
 
             Log.Logger = config.CreateLogger();
+
+            #if DEBUG
+            if (!Arguments.NoFileLogging)
+                Log.Information("Logging to {LogPath} with current directory: {CurrentDirectory}", logPath, Environment.CurrentDirectory);
+            #endif
         }
         catch (Exception e)
         {

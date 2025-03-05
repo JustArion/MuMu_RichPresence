@@ -73,8 +73,8 @@ public class MuMuPlayerLogReader(string filePath) : IDisposable
                 await GetAllSessionInfos(fileLock, sessions, SessionGraveyard);
             _lastStreamPosition = reader.BaseStream.Position;
 
-            var processedEvents = Sessions.Select(x => x.PackageLifetimeEntries.Count).Sum() +
-                                  SessionGraveyard.Select(x => x.PackageLifetimeEntries.Count).Sum();
+            var processedEvents = sessions.Select(x => x?.PackageLifetimeEntries?.Count ?? 0).Sum() +
+                                  SessionGraveyard.Select(x => x?.PackageLifetimeEntries?.Count ?? 0).Sum();
 
             Sessions.Clear();
             foreach (var session in sessions)
