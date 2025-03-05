@@ -79,12 +79,14 @@ internal static partial class AppLifetimeParser
         }
         else
         {
-            existingLifetime.SessionSubscriptions?.Cancel();
+            lock (existingLifetime.SynchronizationRoot)
+            {
+                existingLifetime.SessionSubscriptions?.Cancel();
+                existingLifetime.SessionSubscriptions = cts;
+            }
 
             if (existingLifetime.AppState.Value != AppState.Focused)
                 existingLifetime.AppState.Value = AppState.Started;
-
-            existingLifetime.SessionSubscriptions = cts;
 
             if (existingLifetime.StartTime == default)
                existingLifetime.StartTime = approximateStartTime;
@@ -95,9 +97,8 @@ internal static partial class AppLifetimeParser
         {
             try
             {
-                lifetimes.Remove(existingLifetime);
+                ClearTabLifetime(existingLifetime, lifetimes, graveyard);
                 Log.Debug("The gravekeeper has come for {LifetimePackageName}, MuMu Player has exited", existingLifetime.PackageName);
-                graveyard.Add(existingLifetime);
             }
             catch { }
 
@@ -106,19 +107,27 @@ internal static partial class AppLifetimeParser
         // Log.Verbose("[{StartTime:hh:mm}] App Launched: {PackageName}", existingLifetime.StartTime.ToLocalTime(), packageName);
     }
 
+    private static void ClearTabLifetime(MuMuSessionLifetime lifetime, ObservableCollection<MuMuSessionLifetime> lifetimes, ObservableCollection<MuMuSessionLifetime> graveyard)
+    {
+        lock (lifetime.SynchronizationRoot)
+        {
+            lifetime.SessionSubscriptions?.Cancel();
+            lifetime.SessionSubscriptions?.Dispose();
+            lifetime.SessionSubscriptions = null;
+        }
+
+        lifetime.AppState.Value = AppState.Stopped;
+
+        lifetimes.Remove(lifetime);
+        graveyard.Add(lifetime);
+    }
     private static void CreateTabCloseEvent(string packageName, ObservableCollection<MuMuSessionLifetime> lifetimes, ObservableCollection<MuMuSessionLifetime> graveyard)
     {
         var existingLifetime = lifetimes.FirstOrDefault(x => x.PackageName == packageName);
         if (existingLifetime == null)
             return;
 
-        existingLifetime.SessionSubscriptions?.Cancel();
-        existingLifetime.SessionSubscriptions?.Dispose();
-        existingLifetime.SessionSubscriptions = null;
-        existingLifetime.AppState.Value = AppState.Stopped;
-
-        lifetimes.Remove(existingLifetime);
-        graveyard.Add(existingLifetime);
+        ClearTabLifetime(existingLifetime, lifetimes, graveyard);
 
         Log.Verbose("[{StartTime:hh:mm}] Tab Closed: {Title} ({PackageName})", existingLifetime.StartTime.ToLocalTime(), existingLifetime.Title, packageName);
     }
