@@ -33,7 +33,7 @@ internal static class ApplicationLogs
         if (AttachConsole(ATTACH_PARENT_PROCESS))
             Console.WriteLine("[*] Attached Console to Parent");
     }
-    public static void Initialize(bool writeToParent)
+    public static void Initialize(bool logToParentDirectory)
     {
         try
         {
@@ -46,7 +46,7 @@ internal static class ApplicationLogs
                     applyThemeToRedirectedOutput: true, standardErrorFromLevel: LogEventLevel.Error);
 
 
-            var logPath = writeToParent
+            var logPath = logToParentDirectory
                 ? Path.Combine(AppContext.BaseDirectory, $"{Application.ProductName}.log")
                 : Path.Combine(Directory.GetParent(".")!.FullName, $"{Application.ProductName}.log");
             if (!Arguments.NoFileLogging)

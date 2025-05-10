@@ -7,6 +7,8 @@ namespace Dawn.MuMu.RichPresence.Logging;
 [SuppressMessage("ReSharper", "TemplateIsNotCompileTimeConstantProblem")]
 public class VelopackUpdateLogger(ILogger logger) : Microsoft.Extensions.Logging.ILogger
 {
+    public static VelopackUpdateLogger Create() => new(global::Serilog.Log.Logger);
+
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
         switch (logLevel)

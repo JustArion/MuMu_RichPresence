@@ -32,7 +32,7 @@ internal static class Program
 
         if (!Arguments.NoAutoUpdate)
         {
-            var supportsVelopack = await AutoUpdate.Velopack();
+            var supportsVelopack = await AutoUpdate.Check_WithVelopack();
             if (supportsVelopack)
                 ApplicationLogs.Initialize(true);
         }
