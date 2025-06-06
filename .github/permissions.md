@@ -5,6 +5,7 @@
         - Writes a single Log File to the `MuMu RichPresence.exe` directory
             - `MuMu RichPresence.log`
         - _Can_ create a single registry key (`\HKCU\Software\Microsoft\Windows\CurrentVersion\Run\MuMu RichPresence`)
+            - For running on startup
             - Default is off, configurable by the user
     - `Read Access`
         - Reads Start Menu shortcuts for `MuMu Player*`
@@ -21,6 +22,8 @@
         - _Can_ download updates from `https://github.com/JustArion/MuMu_RichPresence`
             - Handled by Nuget package [Velopack](https://www.nuget.org/packages/Velopack)
         - Accesses the site `https://play.google.com/store/apps/details?id=`
+            - The id would be the package name of the app used
+            - This is used to get the icon for the game you're currently playing  on MuMu
     - `Upload Access`
         - Sends telemetry (`http://localhost:9999`)
             - Configurable by the user / command line, Handled by Nuget package [Serilog.Sinks.Seq](https://www.nuget.org/packages/Serilog.Sinks.Seq) & external application ([Seq](https://datalust.co/seq))
