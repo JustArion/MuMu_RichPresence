@@ -93,6 +93,7 @@ git clone https://github.com/JustArion/MuMu_RichPresence && cd "MuMu_RichPresenc
 git submodule init
 git submodule update
 dotnet publish .\src\MuMu_RichPresence\ --runtime win-x64 --output ./bin/
+dotnet tool update -g vpk
 vpk pack -packId 'MuMu-RichPresence' -v "$VERSION" --outputDir 'velopack' --mainExe 'MuMu RichPresence Standalone.exe' --packDir 'bin'
 echo "Successfully built to 'velopack'"
 ```

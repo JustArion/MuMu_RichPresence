@@ -11,7 +11,7 @@ restore: init
 install_velopack:
 	dotnet tool update -g vpk
 
-velopack: clean build
+velopack: install_velopack clean build
 	vpk pack -u 'MuMu-RichPresence' -v '$(VERSION)' -e 'MuMu RichPresence Standalone.exe' -o 'velopack' --packTitle 'MuMu - Rich Presence' -p 'bin' --shortcuts 'StartMenuRoot'
 
 clean:
