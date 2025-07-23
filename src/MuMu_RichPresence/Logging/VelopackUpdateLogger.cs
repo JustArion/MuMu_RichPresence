@@ -1,40 +1,37 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Microsoft.Extensions.Logging;
+using DiscordRPC.Logging;
+using Velopack.Logging;
 using ILogger = Serilog.ILogger;
+#pragma warning disable CA2254
 
 namespace Dawn.MuMu.RichPresence.Logging;
 
 [SuppressMessage("ReSharper", "TemplateIsNotCompileTimeConstantProblem")]
-public class VelopackUpdateLogger(ILogger logger) : Microsoft.Extensions.Logging.ILogger
+public class VelopackUpdateLogger(ILogger logger) : IVelopackLogger
 {
     public static VelopackUpdateLogger Create() => new(global::Serilog.Log.Logger);
 
-    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+    public void Log(VelopackLogLevel logLevel, string? message, Exception? exception)
     {
+        message ??= string.Empty;
         switch (logLevel)
         {
-            case LogLevel.Debug:
-                logger.Debug(exception, formatter(state, exception));
+            case VelopackLogLevel.Debug:
+                logger.Debug(exception, message);
                 break;
-            case LogLevel.Warning:
-                logger.Warning(exception, formatter(state, exception));
+            case VelopackLogLevel.Warning:
+                logger.Warning(exception, message);
                 break;
-            case LogLevel.Error:
-                logger.Error(exception, formatter(state, exception));
+            case VelopackLogLevel.Error:
+                logger.Error(exception, message);
                 break;
-            case LogLevel.Critical:
-                logger.Fatal(exception, formatter(state, exception));
+            case VelopackLogLevel.Critical:
+                logger.Fatal(exception, message);
                 break;
-            case LogLevel.None:
-            case LogLevel.Trace:
-            case LogLevel.Information:
+            case VelopackLogLevel.Trace:
+            case VelopackLogLevel.Information:
             default:
-                logger.Verbose(exception, formatter(state, exception));
-                break;
+                throw new ArgumentOutOfRangeException(nameof(logLevel), logLevel, null);
         }
     }
-
-    public bool IsEnabled(LogLevel logLevel) => true;
-
-    public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
 }

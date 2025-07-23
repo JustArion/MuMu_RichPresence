@@ -28,7 +28,10 @@ internal static class AutoUpdate
     {
         try
         {
-            VelopackApp.Build().Run(VelopackUpdateLogger.Create());
+            var app = VelopackApp.Build();
+            app.SetLogger(VelopackUpdateLogger.Create());
+
+            app.Run();
 
             var manager =
                 new UpdateManager(new GithubSource(REPO_LINK, null, false));
