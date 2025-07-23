@@ -108,7 +108,7 @@ echo "Successfully built to 'bin'"
 **Makefile with Auto-Update**
 ```ps1
 git clone https://github.com/JustArion/MuMu_RichPresence && cd "MuMu_RichPresence"
-make velopack
+make velopack VERSION="1.0.0"
 echo "Successfully built to 'velopack'"
 ```
 
