@@ -20,8 +20,7 @@ internal static class ApplicationLogs
         Console.SetOut(stdout);
     }
 
-    private const string LOGGING_FORMAT =
-        "{Level:u1} {Timestamp:yyyy-MM-dd HH:mm:ss.ffffff}   [{Source}] {Message:lj}{NewLine}{Exception}";
+    private const string LOGGING_FORMAT = "{Level:u1} {Timestamp:yyyy-MM-dd HH:mm:ss.ffffff}   [{Source}] {Message:lj}{NewLine}{Exception}";
 
     #if RELEASE
     private const string DEFAULT_SEQ_URL = "http://localhost:9999";

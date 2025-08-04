@@ -48,7 +48,7 @@ public struct LaunchArgs
     public int ProcessBinding { get; }
     // ---
 
-    private string ExtractArgumentValue(string argumentKey, string[] args)
+    private static string ExtractArgumentValue(string argumentKey, string[] args)
     {
         var rawrArgument = args.FirstOrDefault(x => x.StartsWith(argumentKey));
 
