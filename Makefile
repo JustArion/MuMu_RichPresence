@@ -12,7 +12,7 @@ install_velopack:
 	dotnet tool update -g vpk
 
 velopack: install_velopack clean build
-	vpk pack -u 'MuMu-RichPresence' -v '$(VERSION)' -e 'MuMu RichPresence Standalone.exe' -o 'velopack' --packTitle 'MuMu - Rich Presence' -p 'bin' --shortcuts 'StartMenuRoot'
+	vpk pack -u 'MuMu-RichPresence' -v '$(VERSION)' -e 'MuMu RichPresence Standalone.exe' -o 'velopack' --packTitle 'MuMu - Rich Presence' -p 'bin' --shortcuts 'StartMenuRoot' --framework net9-x64-desktop
 
 clean:
 	-rm -Recurse -ErrorAction SilentlyContinue bin
@@ -25,14 +25,14 @@ build: init
 	dotnet publish ./src/MuMu_RichPresence/ --runtime win-x64 --output ./bin/
 	
 help:
-	@echo "Usage: make <target>"
-	@echo ""
-	@echo "Targets:"
-	@echo "  build                 Build the application"
-	@echo "  test                  Run tests on the application"
-	@echo "  install_velopack      Installs the toolset for auto-updates"
-	@echo "  velopack              Build the application with auto-updates"
-	@echo "  init                  Initializes git submodules"
-	@echo "  restore               Restores dependencies"
-	@echo "  clean                 Cleans build artifact directories"
-	@echo "  help                  Show this help message"
+	$(info Usage: make <target>)
+	$(info )
+	$(info Targets: )
+	$(info   build                 Build the application )
+	$(info   test                  Run tests on the application )
+	$(info   install_velopack      Installs the toolset for auto-updates )
+	$(info   velopack              Build the application with auto-updates )
+	$(info   init                  Initializes git submodules )
+	$(info   restore               Restores dependencies )
+	$(info   clean                 Cleans build artifact directories )
+	$(info   help                  Show this help message )
