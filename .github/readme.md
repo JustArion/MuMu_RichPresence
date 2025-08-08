@@ -16,7 +16,7 @@
 
 ---
 ### Requirements
-[.NET 9.0.X Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) (x64)
+[.NET 9.0.X Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-9.0.8-windows-x64-installer) (x64)
 
 ---
 ### Installation
@@ -72,7 +72,7 @@ Enabling `Run on Startup` clones the current launch arguments and runs it as tha
 
 #### Pre-Build Requirements
 
-- [.NET SDK 8.0.X](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-8.0.13-windows-x64-installer) (x64)<br>
+- [.NET SDK 9.0.X](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/sdk-9.0.304-windows-x64-installer) (x64)<br>
 - [Git](https://git-scm.com/downloads)
 
 ---
