@@ -10,10 +10,8 @@ internal static class Pathfinder
     [SuppressMessage("ReSharper", "RemoveRedundantBraces")]
     public static async ValueTask<string> GetOrWaitForFilePath()
     {
-        if (TryGetFromProcess(out var logPath))
-            return logPath.FullName;
-
-        if (TryGetFromShortcut(out logPath))
+        if (TryGetFromProcess(out var logPath)
+            || TryGetFromShortcut(out logPath))
             return logPath.FullName;
 
         Log.Warning("Unable to find MuMu Player path, waiting for the player to start instead");
