@@ -1,8 +1,8 @@
-﻿namespace Dawn.Serilog.CustomEnrichers;
+﻿using System.Diagnostics;
+using Serilog.Core;
+using Serilog.Events;
 
-using System.Diagnostics;
-using global::Serilog.Core;
-using global::Serilog.Events;
+namespace Dawn.MuMu.RichPresence.Logging.Serilog.Enrichers;
 
 public class ClassNameEnricher : ILogEventEnricher
 {

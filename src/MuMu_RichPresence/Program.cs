@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using Dawn.MuMu.RichPresence.MuMu;
 using DynamicData.Binding;
 
 namespace Dawn.MuMu.RichPresence;
@@ -75,7 +76,7 @@ internal static class Program
 
                 foreach (var lifetime in e.NewItems.Cast<MuMuSessionLifetime>())
                 {
-                    if (AppLifetimeParser.IsSystemLevelPackage(lifetime.PackageName))
+                    if (MuMu.AppLifetimeParser.IsSystemLevelPackage(lifetime.PackageName))
                         continue;
 
                     lifetime.AppState.WhenPropertyChanged(entry => entry.Value).Subscribe(a =>
@@ -123,7 +124,7 @@ internal static class Program
     {
         foreach (var session in sessions)
         {
-            if (AppLifetimeParser.IsSystemLevelPackage(session.PackageName))
+            if (MuMu.AppLifetimeParser.IsSystemLevelPackage(session.PackageName))
                 continue;
 
             if (session.AppState.Value is AppState.Focused or AppState.Started)
@@ -162,7 +163,7 @@ internal static class Program
         if (Interlocked.Exchange(ref _focusedLifetime, sessionLifetime) == sessionLifetime)
             return false;
 
-        var packageInfo = await PlayStoreWebScraper.TryGetPackageInfo(sessionLifetime.PackageName);
+        var packageInfo = await MuMu.PlayStoreWebScraper.TryGetPackageInfo(sessionLifetime.PackageName);
 
         var iconLink = packageInfo?.IconLink;
 

@@ -1,11 +1,11 @@
 ﻿using System.Runtime.Versioning;
+using Dawn.MuMu.RichPresence.Logging.Serilog;
+using Dawn.MuMu.RichPresence.Logging.Serilog.Themes;
 
 namespace Dawn.MuMu.RichPresence.Logging;
 
 using global::Serilog;
 using global::Serilog.Events;
-using Serilog.CustomEnrichers;
-using Serilog.Themes;
 
 internal static class ApplicationLogs
 {

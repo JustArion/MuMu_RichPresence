@@ -2,7 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-namespace Dawn.Serilog.CustomEnrichers;
+namespace Dawn.MuMu.RichPresence.Logging.Serilog;
 
 public static class Warn
 {

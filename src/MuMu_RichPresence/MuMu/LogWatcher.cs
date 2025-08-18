@@ -1,12 +1,12 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace Dawn.MuMu.RichPresence;
+namespace Dawn.MuMu.RichPresence.MuMu;
 
 public class LogWatcher : IDisposable
 {
     private readonly string _filePath;
     private FileSystemWatcher? _logFileWatcher;
-    private CancellationTokenSource _pokeCTS = new();
+    private readonly CancellationTokenSource _pokeCTS = new();
 
     [SuppressMessage("ReSharper", "RemoveRedundantBraces")]
     public LogWatcher(string filePath)

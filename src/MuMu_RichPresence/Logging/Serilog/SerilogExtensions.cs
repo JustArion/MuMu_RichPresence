@@ -1,7 +1,7 @@
-﻿namespace Dawn.Serilog.CustomEnrichers;
+﻿using Dawn.MuMu.RichPresence.Logging.Serilog.Enrichers;
+using Serilog.Configuration;
 
-using global::Serilog;
-using global::Serilog.Configuration;
+namespace Dawn.MuMu.RichPresence.Logging.Serilog;
 
 public static class SerilogExtensions
 {

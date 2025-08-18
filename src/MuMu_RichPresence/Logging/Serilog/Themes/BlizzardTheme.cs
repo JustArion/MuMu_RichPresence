@@ -1,8 +1,8 @@
-﻿namespace Dawn.Serilog.Themes;
+﻿using System.Diagnostics.CodeAnalysis;
+using Serilog.Sinks.Console.LogThemes;
+using Serilog.Sinks.SystemConsole.Themes;
 
-using System.Diagnostics.CodeAnalysis;
-using global::Serilog.Sinks.Console.LogThemes;
-using global::Serilog.Sinks.SystemConsole.Themes;
+namespace Dawn.MuMu.RichPresence.Logging.Serilog.Themes;
 
 [SuppressMessage("ReSharper", "UnusedType.Global")]
 [SuppressMessage("ReSharper", "UnusedMember.Global")]

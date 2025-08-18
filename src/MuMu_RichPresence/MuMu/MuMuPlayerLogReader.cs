@@ -2,13 +2,11 @@
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using Dawn.MuMu.RichPresence.Logging.Serilog;
 using Dawn.MuMu.RichPresence.Models;
 using Dawn.MuMu.RichPresence.Tools;
-using Dawn.Serilog.CustomEnrichers;
 
-namespace Dawn.MuMu.RichPresence;
-
-using global::Serilog;
+namespace Dawn.MuMu.RichPresence.MuMu;
 
 public class MuMuPlayerLogReader(string filePath) : IDisposable
 {

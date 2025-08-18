@@ -1,10 +1,9 @@
 ﻿using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 using Polly;
 using Polly.Retry;
 
-namespace Dawn.MuMu.RichPresence;
-
-using System.Text.RegularExpressions;
+namespace Dawn.MuMu.RichPresence.MuMu;
 
 public static partial class PlayStoreWebScraper
 {

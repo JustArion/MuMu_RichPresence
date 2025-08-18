@@ -1,12 +1,10 @@
 ﻿using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Text.RegularExpressions;
 using Dawn.MuMu.RichPresence.Models;
 using Dawn.MuMu.RichPresence.Tools;
 
-namespace Dawn.MuMu.RichPresence;
-
-using System.Globalization;
-using System.Text.RegularExpressions;
-using global::Serilog;
+namespace Dawn.MuMu.RichPresence.MuMu;
 
 internal static partial class AppLifetimeParser
 {
