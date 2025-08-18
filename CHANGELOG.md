@@ -3,6 +3,7 @@
 ## v1.2.0
 
 - ⚡️ Updated .NET Runtime (.NET 8 -> .NET 9)
+- 🦺 Various minor optimizations and improvements
 
 ## v1.1.5
 
