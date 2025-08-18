@@ -2,6 +2,7 @@
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Dawn.MuMu.RichPresence.Logging.Serilog;
 using Dawn.MuMu.RichPresence.Models;
 using Dawn.MuMu.RichPresence.Tools;
@@ -26,6 +27,7 @@ public class MuMuPlayerLogReader(string filePath) : IDisposable
 
         Task.Factory.StartNew(InitiateWatchOperation, TaskCreationOptions.LongRunning);
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal FileLock AquireFileLock() => FileLock.Aquire(filePath);
 
     private async Task InitiateWatchOperation()
