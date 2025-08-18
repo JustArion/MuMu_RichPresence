@@ -2,8 +2,7 @@
 .SHELLFLAGS := -Command
 
 init:
-	git submodule init
-	git submodule update
+	git submodule update --init --remote --recursive
 
 restore: init
 	dotnet restore ./src/
