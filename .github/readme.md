@@ -28,7 +28,7 @@
     - Auto Update
     - Shortcut in Start Menu
     - Can be uninstalled by right clicking uninstall in Start Menu
-    - Installed in `%appdata%/Local`
+    - Installed in `%appdata%/Local/MuMu-RichPresence`
 
 ---
 ### Tray Options
