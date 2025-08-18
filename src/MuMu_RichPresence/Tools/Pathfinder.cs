@@ -41,12 +41,7 @@ internal static class Pathfinder
             if (mumuDirectory == null)
                 return false;
 
-            var vms = mumuDirectory.Parent!.GetDirectories("vms").First();
-
-            // The base-vm is 'MuMuPlayerGlobal-12.0-0-base' this probably contains system files, but we need the folder with the 'logs' folder in, so we skip this.
-            var vm = vms.EnumerateDirectories().First(x => !x.Name.Contains("base"));
-
-            logPath = vm.GetDirectories("logs").First().GetFiles("shell.log").First();
+            logPath = GetLogPathFromBaseDirectory(mumuDirectory);
             Log.Verbose("Found log path from process: {ProcessName}.exe ({ProcessId}) -> {MuMuPlayerPath} -> {Path}", proc.ProcessName, proc.Id, mumuPath.FullName, logPath.FullName);
             return true;
         }
@@ -83,12 +78,9 @@ internal static class Pathfinder
             if (!mumuPath.Exists)
                 return false;
 
-            var vms = mumuPath.Directory!.Parent!.GetDirectories("vms").First();
+            var mumuDirectory = mumuPath.Directory!;
 
-            // The base-vm is 'MuMuPlayerGlobal-12.0-0-base' this probably contains system files, but we need the folder with the 'logs' folder in, so we skip this.
-            var vm = vms.EnumerateDirectories().First(x => !x.Name.Contains("base"));
-
-            logPath = vm.GetDirectories("logs").First().GetFiles("shell.log").First();
+            logPath = GetLogPathFromBaseDirectory(mumuDirectory);
             Log.Verbose("Found log path from shortcut: {LinkPath} -> {MuMuPlayerPath} -> {Path}", playerLink.FullName, shortcutPath, logPath.FullName);
             return true;
 
@@ -100,4 +92,13 @@ internal static class Pathfinder
         }
     }
 
+    private static FileInfo GetLogPathFromBaseDirectory(DirectoryInfo mumuDirectory)
+    {
+        var vms = mumuDirectory.Parent!.GetDirectories("vms").First();
+
+        // The base-vm is 'MuMuPlayerGlobal-12.0-0-base' this probably contains system files, but we need the folder with the 'logs' folder in, so we skip this.
+        var vm = vms.EnumerateDirectories().First(x => !x.Name.Contains("base"));
+
+        return vm.GetDirectories("logs").First().GetFiles("shell.log").First();
+    }
 }
