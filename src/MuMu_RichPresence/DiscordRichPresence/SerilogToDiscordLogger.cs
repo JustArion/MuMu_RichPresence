@@ -2,7 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using DiscordRPC.Logging;
-using global::Serilog.Core;
+using Serilog.Core;
 using ILogger = ILogger;
 
 [SuppressMessage("ReSharper", "TemplateIsNotCompileTimeConstantProblem")]

@@ -4,8 +4,8 @@ using DiscordRPC.Message;
 namespace Dawn.MuMu.RichPresence.DiscordRichPresence;
 
 using DiscordRPC;
-using global::Serilog;
-using global::Serilog.Core;
+using Serilog;
+using Serilog.Core;
 
 public class RichPresenceHandler : IDisposable
 {

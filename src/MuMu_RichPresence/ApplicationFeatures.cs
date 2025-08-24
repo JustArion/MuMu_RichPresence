@@ -3,7 +3,7 @@
 using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
-using global::Serilog;
+using Serilog;
 
 /// <summary>
 /// Application features differs from LaunchArgs as LaunchArgs is immutable

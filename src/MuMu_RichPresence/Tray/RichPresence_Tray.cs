@@ -4,7 +4,7 @@ using Dawn.MuMu.RichPresence.Tools;
 
 namespace Dawn.MuMu.RichPresence.Tray;
 
-using global::Serilog;
+using Serilog;
 using WinForms.ContextMenu;
 
 public class RichPresence_Tray

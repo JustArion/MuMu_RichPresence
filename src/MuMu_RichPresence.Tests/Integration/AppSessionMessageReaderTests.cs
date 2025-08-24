@@ -59,7 +59,7 @@ public class AppSessionMessageReaderTests
         await _sut.GetAllSessionInfos(fileLock, sessions, graveyard);
 
         // Assert
-        var playedGames = graveyard.Where(x => !Dawn.MuMu.RichPresence.MuMu.AppLifetimeParser.IsSystemLevelPackage(x.PackageName)).ToArray();
+        var playedGames = graveyard.Where(x => !AppLifetimeParser.IsSystemLevelPackage(x.PackageName)).ToArray();
         playedGames.Should().HaveCountGreaterThanOrEqualTo(1);
 
         var first = playedGames.First();
@@ -81,7 +81,7 @@ public class AppSessionMessageReaderTests
         await _sut.GetAllSessionInfos(fileLock, sessions, graveyard);
 
         // Assert
-        var playedGames = graveyard.Where(x => !Dawn.MuMu.RichPresence.MuMu.AppLifetimeParser.IsSystemLevelPackage(x.PackageName)).ToArray();
+        var playedGames = graveyard.Where(x => !AppLifetimeParser.IsSystemLevelPackage(x.PackageName)).ToArray();
         playedGames.Should().HaveCountGreaterThanOrEqualTo(1);
 
         var last = playedGames.Last();

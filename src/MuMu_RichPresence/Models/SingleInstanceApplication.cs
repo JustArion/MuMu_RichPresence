@@ -41,7 +41,7 @@ public static class SingleInstanceApplication
         if (otherProcess == null)
             return;
 
-        if (otherProcess.Responding == false && otherProcess.StartTime < currentProcess.StartTime)
+        if (!otherProcess.Responding && otherProcess.StartTime < currentProcess.StartTime)
         {
             try
             {
