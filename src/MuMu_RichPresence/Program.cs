@@ -11,7 +11,7 @@ using DiscordRPC;
 using Logging;
 using Models;
 using Tools;
-using global::Serilog;
+using Serilog;
 using Tray;
 
 internal static class Program
@@ -21,8 +21,7 @@ internal static class Program
     private static RichPresence_Tray _trayIcon = null!;
     private static RichPresenceHandler _richPresenceHandler = null!;
     private static ProcessBinding? _processBinding;
-    private static MuMuPlayerLogReader _logReader = null!;
-    private static string _filePath = null!;
+    private static MuMuPlayerLogReader? _logReader;
 
     [STAThread]
     private static async Task Main(string[] args)
@@ -45,14 +44,17 @@ internal static class Program
         _trayIcon = new();
         _trayIcon.RichPresenceEnabledChanged += OnRichPresenceEnabledChanged;
 
-        _filePath = await GetOrWaitForFilePath();
+        _ = Task.Run(async () =>
+        {
+            var filePath = await GetOrWaitForFilePath();
 
-        _logReader = new MuMuPlayerLogReader(_filePath);
-        _logReader.Sessions.CollectionChanged += ReaderSessionsChanged;
-        _logReader.StartAsync();
+            _logReader = new MuMuPlayerLogReader(filePath);
+            _logReader.Sessions.CollectionChanged += ReaderSessionsChanged;
+            _logReader.StartAsync();
 
-        if (Arguments.HasProcessBinding)
-            _processBinding = new ProcessBinding(Arguments.ProcessBinding);
+            if (Arguments.HasProcessBinding)
+                _processBinding = new ProcessBinding(Arguments.ProcessBinding);
+        });
 
         Application.Run();
         _richPresenceHandler.Dispose();
@@ -67,8 +69,9 @@ internal static class Program
         {
             Log.Debug("[{ChangeType}] Session Updated", e.Action);
 
+            var logReader = _logReader!;
             if (e.Action != NotifyCollectionChangedAction.Add)
-                Task.Run(() => UpdatePresenceIfNecessary(_logReader));
+                Task.Run(() => UpdatePresenceIfNecessary(logReader));
             else
             {
                 if (e.NewItems == null)
@@ -76,16 +79,16 @@ internal static class Program
 
                 foreach (var lifetime in e.NewItems.Cast<MuMuSessionLifetime>())
                 {
-                    if (MuMu.AppLifetimeParser.IsSystemLevelPackage(lifetime.PackageName))
+                    if (AppLifetimeParser.IsSystemLevelPackage(lifetime.PackageName))
                         continue;
 
                     lifetime.AppState.WhenPropertyChanged(entry => entry.Value).Subscribe(a =>
                     {
 
                         if (a.Value == AppState.Focused)
-                            Task.Run(() => UpdatePresenceIfNecessary(_logReader, lifetime));
+                            Task.Run(() => UpdatePresenceIfNecessary(logReader, lifetime));
                         else
-                            Task.Run(() => UpdatePresenceIfNecessary(_logReader));
+                            Task.Run(() => UpdatePresenceIfNecessary(logReader));
 
                         Log.Debug("Updating from AppState Change {NewState}", a.Value);
                     });
@@ -124,7 +127,7 @@ internal static class Program
     {
         foreach (var session in sessions)
         {
-            if (MuMu.AppLifetimeParser.IsSystemLevelPackage(session.PackageName))
+            if (AppLifetimeParser.IsSystemLevelPackage(session.PackageName))
                 continue;
 
             if (session.AppState.Value is AppState.Focused or AppState.Started)
@@ -163,7 +166,7 @@ internal static class Program
         if (Interlocked.Exchange(ref _focusedLifetime, sessionLifetime) == sessionLifetime)
             return false;
 
-        var packageInfo = await MuMu.PlayStoreWebScraper.TryGetPackageInfo(sessionLifetime.PackageName);
+        var packageInfo = await PlayStoreWebScraper.TryGetPackageInfo(sessionLifetime.PackageName);
 
         var iconLink = packageInfo?.IconLink;
 
