@@ -7,10 +7,14 @@ internal sealed class FileLock : IAsyncDisposable
     private readonly FileStream _fileLock;
     public StreamReader Reader { get; }
 
+    public FileInfo LockFile { get; }
+
     private FileLock(string filePath)
     {
         if (!File.Exists(filePath))
             throw new FileNotFoundException(nameof(filePath));
+
+        LockFile = new (filePath);
 
         _fileLock = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         Reader = new StreamReader(_fileLock);
