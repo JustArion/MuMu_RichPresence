@@ -2,6 +2,8 @@
 
 ## v1.2.2
 
+- 🦺 Rich Presence would unintentionally be cleared after prolonged activity in MuMu Player
+    - This is partly a technical issue on MuMu's side but a workaround has been created.
 - 🦺 Added More MuMu specific apps to the Rich Presence blacklist (App Cloner, Home Screen)
 
 ## v1.2.1
