@@ -1,3 +1,4 @@
+// #define DEBUG
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
@@ -53,7 +54,7 @@ internal static class Program
         {
             var filePath = await GetOrWaitForFilePath();
 
-            _logReader = new MuMuPlayerLogReader(filePath);
+            _logReader = new MuMuPlayerLogReader(filePath, _currentProcessState);
             _logReader.Sessions.CollectionChanged += ReaderSessionsChanged;
             _logReader.StartAsync();
 
@@ -119,8 +120,11 @@ internal static class Program
 
         foreach (var emulatorProcessName in Pathfinder.EmulatorProcessNames)
         {
-            if (Process.GetProcessesByName(emulatorProcessName).Length == 0)
+            var currentMuMuProcess = Process.GetProcessesByName(emulatorProcessName);
+            if (currentMuMuProcess.Length == 0)
                 continue;
+
+            _currentProcessState.CurrentEmulatorProcess = currentMuMuProcess.First();
 
             if (await SetPresenceFor(focusedApp, new() { Timestamps = new Timestamps(focusedApp.StartTime.DateTime) }, emulatorProcessName))
                 Log.Debug("Presence updated for {SessionTitle}", focusedApp);
@@ -216,6 +220,12 @@ internal static class Program
         }
         _processSubscriptionCts = new();
 
-        ProcessExit.Subscribe(emulatorProcessName, _ => RemovePresence(), _processSubscriptionCts.Token);
+        ProcessExit.Subscribe(emulatorProcessName, _ =>
+        {
+            RemovePresence();
+            _currentProcessState.CurrentEmulatorProcess = null;
+        }, _processSubscriptionCts.Token);
     }
+
+    private static readonly MuMuProcessState _currentProcessState = new();
 }

@@ -9,7 +9,7 @@ using Dawn.MuMu.RichPresence.Tools;
 
 namespace Dawn.MuMu.RichPresence.MuMu;
 
-public class MuMuPlayerLogReader(string filePath) : IDisposable
+public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProcessState) : IDisposable
 {
     private readonly ILogger _logger = Log.ForContext<MuMuPlayerLogReader>();
 
@@ -68,9 +68,39 @@ public class MuMuPlayerLogReader(string filePath) : IDisposable
             var ts = Stopwatch.GetTimestamp();
             var reader = fileLock.Reader;
             var sessions = new ObservableCollection<MuMuSessionLifetime>();
+            var linesRead = 0L;
+            var fileSizeReadMB = 0D;
+
+
             // We read the old entries (To check if there's a game currently running)
             using (Warn.OnLongerThan(TimeSpan.FromSeconds(2), "Catch-Up took unusually long"))
+            {
+                var file = fileLock.LockFile;
+                var fileDirectory = file.Directory!;
+
+                var searchPattern = $"{file.Name.Replace(file.Extension, string.Empty)}*";
+
+                var oldLogFiles = fileDirectory.GetFiles(searchPattern)
+                    .Where(x => x.FullName !=
+                                file.FullName) // We already have a file lock on this, we need to process it last
+                    .OrderBy(x => x.LastWriteTimeUtc)
+                    .ToArray();
+
+                foreach (var oldLogFile in oldLogFiles)
+                {
+                    if (oldLogFile.FullName == file.FullName)
+                        continue;
+
+                    await using var oldFileLock = FileLock.Aquire(oldLogFile.FullName);
+                    await GetAllSessionInfos(oldFileLock, sessions, SessionGraveyard);
+                    linesRead += _initialLinesRead;
+                    fileSizeReadMB += oldFileLock.Reader.BaseStream.Length / Math.Pow(1024, 2);
+                }
+
                 await GetAllSessionInfos(fileLock, sessions, SessionGraveyard);
+                linesRead += _initialLinesRead;
+                fileSizeReadMB += reader.BaseStream.Length / Math.Pow(1024, 2);
+            }
             _lastStreamPosition = reader.BaseStream.Position;
 
             var processedEvents = sessions.Select(x => x?.PackageLifetimeEntries?.Count ?? 0).Sum() +
@@ -90,8 +120,8 @@ public class MuMuPlayerLogReader(string filePath) : IDisposable
                     "Caught up in {ExecutionDuration:F}ms, no games are currently running (Processed {EventsProcessed} events)",
                     Stopwatch.GetElapsedTime(ts).TotalMilliseconds, sessions.Count);
 
-            Log.Debug("CatchUp: Read {Lines} lines ({FileSize} mb)[{Position}]", _initialLinesRead,
-                Math.Round(reader.BaseStream.Length / Math.Pow(1024, 2), 0), reader.BaseStream.Position);
+            Log.Debug("CatchUp: Read {Lines} lines ({FileSize:F2} mb)[{Position}]", linesRead,
+                Math.Round(fileSizeReadMB, 2), reader.BaseStream.Position);
         }
         catch (Exception e)
         {
@@ -120,11 +150,19 @@ public class MuMuPlayerLogReader(string filePath) : IDisposable
             var reader = fileLock.Reader;
             if (_lastStreamPosition > reader.BaseStream.Length)
             {
-                Log.Verbose("{Path} file was truncated, resetting stream position", filePath);
-                await CatchUpAsync(fileLock);
-                Log.Debug("The log file has been reset, likely indicates MuMu is starting up");
-                Log.Information("MuMu Player is starting up");
-                return;
+                var prevSize = Math.Round(_lastStreamPosition / Math.Pow(1024, 1), 2);
+
+                if (currentProcessState.CurrentEmulatorProcess == null)
+                {
+                    Log.Verbose("{Path} file was truncated, resetting stream position", filePath);
+                    await CatchUpAsync(fileLock);
+                    Log.Debug("The log file has been reset, likely indicates MuMu is starting up, previous size: {PreviousSize:F2} kb", prevSize);
+                    Log.Information("MuMu Player is starting up");
+                    return;
+                }
+
+                Log.Debug("Prevented a ghost truncation event. (MuMu wipes the log file while the app is currently running), previous size: {PreviousSize:F2} kb", prevSize);
+                _lastStreamPosition = reader.BaseStream.Position;
             }
 
             // We read new things being added from here onwards
