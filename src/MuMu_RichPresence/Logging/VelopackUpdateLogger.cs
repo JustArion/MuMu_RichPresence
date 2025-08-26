@@ -28,10 +28,6 @@ public class VelopackUpdateLogger(ILogger logger) : IVelopackLogger
             case VelopackLogLevel.Critical:
                 logger.Fatal(exception, message);
                 break;
-            case VelopackLogLevel.Trace:
-            case VelopackLogLevel.Information:
-            default:
-                throw new ArgumentOutOfRangeException(nameof(logLevel), logLevel, null);
         }
     }
 }
