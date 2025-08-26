@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.2
+
+- 🦺 Added More MuMu specific apps to the Rich Presence blacklist (App Cloner, Home Screen)
+
 ## v1.2.1
 
 - ⚡️ Updated .NET Runtime (.NET 8 -> .NET 9)

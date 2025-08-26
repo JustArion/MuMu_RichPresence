@@ -13,7 +13,9 @@ internal static partial class AppLifetimeParser
             "com.android",
             "com.google",
             "com.mumu",
-            "app.lawnchair" // Added in MuMu 5 (Default home screen?)
+            // Added in MuMu Player 5
+            "com.netease.mumu",
+            "app.lawnchair" // (Default home screen?)
         ];
 
     private static partial class ShellRegexes
