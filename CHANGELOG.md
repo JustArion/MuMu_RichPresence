@@ -4,6 +4,7 @@
 
 - ⚡️ Updated .NET Runtime (.NET 8 -> .NET 9)
 - 🦺 Various minor optimizations and improvements
+- 🦺 Added support for MuMu Player 5 (Up from MuMu Player 4)
 
 ## v1.1.5
 
