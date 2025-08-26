@@ -117,15 +117,18 @@ internal static class Program
             return;
         }
 
-        if (Process.GetProcessesByName("MuMuPlayer").Length == 0)
+        foreach (var emulatorProcessName in Pathfinder.EmulatorProcessNames)
         {
-            Log.Debug("Emulator is not running, likely an old entry ({SessionTitle})", focusedApp.Title);
-            RemovePresence();
+            if (Process.GetProcessesByName(emulatorProcessName).Length == 0)
+                continue;
+
+            if (await SetPresenceFor(focusedApp, new() { Timestamps = new Timestamps(focusedApp.StartTime.DateTime) }, emulatorProcessName))
+                Log.Debug("Presence updated for {SessionTitle}", focusedApp);
             return;
         }
 
-        if (await SetPresenceFor(focusedApp, new() { Timestamps = new Timestamps(focusedApp.StartTime.DateTime) }))
-            Log.Debug("Presence updated for {SessionTitle}", focusedApp);
+        Log.Debug("Emulator is not running, likely an old entry ({SessionTitle})", focusedApp.Title);
+        RemovePresence();
     }
 
     private static MuMuSessionLifetime? GetFocusedApp(ObservableCollection<MuMuSessionLifetime> sessions)
@@ -165,7 +168,7 @@ internal static class Program
     private static volatile RichPresence? _currentPresence;
     private static MuMuSessionLifetime? _focusedLifetime;
     private static CancellationTokenSource? _processSubscriptionCts = new();
-    private static async Task<bool> SetPresenceFor(MuMuSessionLifetime sessionLifetime, RichPresence presence)
+    private static async Task<bool> SetPresenceFor(MuMuSessionLifetime sessionLifetime, RichPresence presence, string emulatorProcessName)
     {
         // A race condition is possible here, so we use Interlocked.Exchange
         if (Interlocked.Exchange(ref _focusedLifetime, sessionLifetime) == sessionLifetime)
@@ -199,12 +202,12 @@ internal static class Program
             return retVal;
 
         _currentPresence = presence;
-        await RemovePresenceOnMuMuPlayerExit();
+        await RemovePresenceOnMuMuPlayerExit(emulatorProcessName);
 
         return retVal;
     }
 
-    private static async Task RemovePresenceOnMuMuPlayerExit()
+    private static async Task RemovePresenceOnMuMuPlayerExit(string emulatorProcessName)
     {
         if (_processSubscriptionCts != null)
         {
@@ -213,6 +216,6 @@ internal static class Program
         }
         _processSubscriptionCts = new();
 
-        ProcessExit.Subscribe("MuMuPlayer", _ => RemovePresence(), _processSubscriptionCts.Token);
+        ProcessExit.Subscribe(emulatorProcessName, _ => RemovePresence(), _processSubscriptionCts.Token);
     }
 }

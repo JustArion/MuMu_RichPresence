@@ -27,23 +27,19 @@ internal static class Pathfinder
 
     internal static bool TryGetFromProcess([NotNullWhen(true)] out FileInfo? logPath)
     {
-        Log.Verbose("Trying to get path from process");
         logPath = null;
         try
         {
-            var proc = Process.GetProcessesByName("MuMuPlayer").FirstOrDefault();
-            if (proc == null)
-                return false;
+            foreach (var emulatorName in EmulatorProcessNames)
+            {
+                if (PathFromPlayer(emulatorName) is { } validPath)
+                {
+                    logPath = validPath;
+                    return true;
+                }
+            }
 
-            var mumuPath = new FileInfo(proc.MainModule!.FileName);
-
-            var mumuDirectory = mumuPath.Directory;
-            if (mumuDirectory == null)
-                return false;
-
-            logPath = GetLogPathFromBaseDirectory(mumuDirectory);
-            Log.Verbose("Found log path from process: {ProcessName}.exe ({ProcessId}) -> {MuMuPlayerPath} -> {Path}", proc.ProcessName, proc.Id, mumuPath.FullName, logPath.FullName);
-            return true;
+            return false;
         }
         catch (Exception e)
         {
@@ -51,6 +47,32 @@ internal static class Pathfinder
             return false;
         }
     }
+
+    private static FileInfo? PathFromPlayer(string playerProcessName)
+    {
+        var proc = Process.GetProcessesByName(playerProcessName).FirstOrDefault();
+        if (proc == null)
+            return null;
+
+        var mumuPath = new FileInfo(proc.MainModule!.FileName);
+
+        var mumuDirectory = mumuPath.Directory;
+        if (mumuDirectory == null)
+            return null;
+
+        var retVal = GetLogPathFromBaseDirectory(mumuDirectory);
+        Log.Verbose("Found log path from process: {ProcessName}.exe ({ProcessId}) -> {MuMuPlayerPath} -> {Path}", proc.ProcessName, proc.Id, mumuPath.FullName, retVal.FullName);
+
+        return retVal;
+    }
+
+
+    internal static readonly string[] EmulatorProcessNames =
+        [
+            "MuMuPlayer",
+            "MuMuNxMain", // \MuMuPlayerGlobal-12.0\nx_main\MuMuNxMain.exe
+        ];
+
 
     [SupportedOSPlatform("windows")]
     internal static bool TryGetFromShortcut(out FileInfo logPath)
