@@ -35,7 +35,7 @@ public struct LaunchArgs
     // Args
     public bool RichPresenceDisabledOnStart { get; }
     public bool NoFileLogging { get; }
-    public bool ExtendedLogging { get; }
+    public bool ExtendedLogging { get; set; }
     public bool NoAutoUpdate { get; set; }
 
     public bool HasCustomApplicationId { get; }

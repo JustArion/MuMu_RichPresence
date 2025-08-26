@@ -26,7 +26,12 @@ internal static class Program
     [STAThread]
     private static async Task Main(string[] args)
     {
-        Arguments = new(args);
+        Arguments = new(args)
+        {
+            #if DEBUG
+            ExtendedLogging = true
+            #endif
+        };
         Environment.CurrentDirectory = AppContext.BaseDirectory; // Startup sets it to %windir%
         ApplicationLogs.Initialize(false);
 
