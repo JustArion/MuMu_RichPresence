@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.2.0
+## v1.2.1
 
 - ⚡️ Updated .NET Runtime (.NET 8 -> .NET 9)
 - 🦺 Various minor optimizations and improvements
