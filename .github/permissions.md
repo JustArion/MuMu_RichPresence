@@ -8,8 +8,8 @@
             - For running on startup
             - Default is off, configurable by the user
     - `Read Access`
-        - Reads Start Menu shortcuts for `MuMu Player*`
-        - Walks the directory of the file found previously (`MuMu Player*`)
+        - Reads Start Menu shortcuts for `MuMu Player*` / `MuMuPlayer*`
+        - Walks the directory of the file found previously (`MuMu Player*` / `MuMuPlayer*`)
             - `../vms/???/logs/shell.log`
         - Reads the file (`Logs/shell.log`) if it exists
             - See [Technical-Document](technical-1.md)
@@ -29,6 +29,6 @@
             - Configurable by the user / command line, Handled by Nuget package [Serilog.Sinks.Seq](https://www.nuget.org/packages/Serilog.Sinks.Seq) & external application ([Seq](https://datalust.co/seq))
 - `Process`
     - `Read Access`
-        - Looks for the file path of process `MuMuPlayer.exe`
-        - Checks how many processes of`MuMuPlayer.exe` are running
+        - Looks for the file path of processes [`MuMuPlayer.exe`, `MuMuNxMain.exe`]
+        - Checks how many processes of [`MuMuPlayer.exe`, `MuMuNxMain.exe`] are running
             - Clears Rich Presence when process ends
