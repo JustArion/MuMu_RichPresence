@@ -84,8 +84,12 @@ internal static class Pathfinder
         {
             var dir = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Programs));
 
-            var playerLink = dir.GetDirectories("MuMu*").FirstOrDefault()
-                ?.GetFiles("MuMu Player*").FirstOrDefault();
+            var mumuShortcutDirectory = dir.GetDirectories("MuMu*").FirstOrDefault();
+            if (mumuShortcutDirectory == null)
+                return false;
+
+            var playerLink = mumuShortcutDirectory.GetFiles("MuMu Player*").FirstOrDefault()
+                             ?? mumuShortcutDirectory.GetFiles("MuMuPlayer*").FirstOrDefault();
 
             if (playerLink == null)
                 return false;
