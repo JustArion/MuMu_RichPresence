@@ -80,6 +80,7 @@ public class MuMuPlayerLogReader(string filePath) : IDisposable
             foreach (var session in sessions)
                 Sessions.Add(session);
 
+            // Emitting means that there's a game currently running AFTER we started, meaning we flag it for the Rich Presence to trigger
             if (sessions.FirstOrDefault(x => x.AppState.Value is AppState.Focused or AppState.Started) is { } lifetime)
                 Log.Verbose(
                     "Caught up in {ExecutionDuration:F}ms (Processed {EventsProcessed} events), emitting {SessionInfo}",
@@ -121,7 +122,8 @@ public class MuMuPlayerLogReader(string filePath) : IDisposable
             {
                 Log.Verbose("{Path} file was truncated, resetting stream position", filePath);
                 await CatchUpAsync(fileLock);
-                Log.Information("Log file reset, Looks like MuMu Player is starting up");
+                Log.Debug("The log file has been reset, likely indicates MuMu is starting up");
+                Log.Information("MuMu Player is starting up");
                 return;
             }
 
