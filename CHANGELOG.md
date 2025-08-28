@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.3
+
+- 🦺 Enabling Rich Presence on Discord after a game has already started would not show the game as being played. It now correctly updates within 5 seconds.
+- 🦺 Reduced log level of App Focus events from Info -> Verbose
+    - This is partly due to the recent patch adding further MuMu log file histories for more accurate presences
+
 ## v1.2.2
 
 - 🦺 Rich Presence would unintentionally be cleared after prolonged activity in MuMu Player
