@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using DiscordRPC.Logging;
 using Velopack.Logging;
 using ILogger = Serilog.ILogger;
 #pragma warning disable CA2254

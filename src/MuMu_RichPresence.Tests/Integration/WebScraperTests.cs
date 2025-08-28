@@ -1,10 +1,11 @@
-﻿namespace MuMu_RichPresence.Tests.Integration;
+﻿using Dawn.MuMu.RichPresence.MuMu;
+
+namespace MuMu_RichPresence.Tests.Integration;
 
 using System.Collections.Frozen;
-using Dawn.MuMu.RichPresence;
 using FluentAssertions;
 
-[TestFixture(TestOf = typeof(Dawn.MuMu.RichPresence.MuMu.PlayStoreWebScraper))]
+[TestFixture(TestOf = typeof(PlayStoreWebScraper))]
 public class WebScraperTests
 {
     private static readonly FrozenDictionary<string, string> _appPackagesToTitles = new Dictionary<string, string>
@@ -17,7 +18,7 @@ public class WebScraperTests
     public async Task ShouldScrape_Titles(KeyValuePair<string, string> package)
     {
         // Act
-        var packageInfo = await Dawn.MuMu.RichPresence.MuMu.PlayStoreWebScraper.TryGetPackageInfo(package.Key);
+        var packageInfo = await PlayStoreWebScraper.TryGetPackageInfo(package.Key);
 
         // Assert
         packageInfo.Should().NotBeNull();
