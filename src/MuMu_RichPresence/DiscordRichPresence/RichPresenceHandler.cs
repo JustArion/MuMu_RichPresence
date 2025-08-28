@@ -14,6 +14,7 @@ public class RichPresenceHandler : IDisposable
     private readonly Logger _logger = (Logger)Log.ForContext<RichPresenceHandler>();
     private DiscordRpcClient _client;
     private RichPresence? _currentPresence;
+    private readonly CancellationTokenSource _disposingSource = new();
 
     public RichPresenceHandler()
     {
@@ -25,13 +26,22 @@ public class RichPresenceHandler : IDisposable
 
         _client = new DiscordRpcClient(applicationId, logger: (SerilogToDiscordLogger)_logger);
 
-        _client.SkipIdenticalPresence = true;
+        _client.SkipIdenticalPresence = false;
         _client.Initialize();
         #if LISTEN_TO_RPCS
         _client.OnRpcMessage += (_, msg) => Log.Debug("Received RPC Message: {@Message}", msg);
         #endif
 
         _client.OnPresenceUpdate += OnPresenceUpdate;
+
+        Task.Factory.StartNew(async _ =>
+        {
+            var token = _disposingSource.Token;
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
+
+            while (await timer.WaitForNextTickAsync(token) && ApplicationFeatures.GetFeature(x => x.RichPresenceEnabled))
+                _client.SetPresence(_currentPresence);
+        }, TaskCreationOptions.LongRunning);
     }
 
     public bool SetPresence(RichPresence? presence)
@@ -76,6 +86,7 @@ public class RichPresenceHandler : IDisposable
     public void Dispose()
     {
         Log.Debug("Disposing IPC Client");
+        _disposingSource.Cancel();
         _client.ClearPresence();
         _client.Dispose();
         _client = null!;
