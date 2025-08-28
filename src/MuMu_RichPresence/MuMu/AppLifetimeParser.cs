@@ -152,7 +152,7 @@ internal static partial class AppLifetimeParser
         foreach (var lifetime in lifetimes.Where(x => x != existingLifetime))
             lifetime.AppState.Value = AppState.Unfocused;
 
-        Log.Information("[{StartTime:hh:mm}] Focused: {Title} ({PackageName})", existingLifetime.StartTime.ToLocalTime(), title, packageName);
+        Log.Verbose("[{StartTime:hh:mm}] Focused: {Title} ({PackageName})", existingLifetime.StartTime.ToLocalTime(), title, packageName);
     }
 
     // The log format is "00:45:31.968" which is a timespan, not a timestamp
