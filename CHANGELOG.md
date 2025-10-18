@@ -5,6 +5,7 @@
 - 🦺 Enabling Rich Presence on Discord after a game has already started would not show the game as being played. It now correctly updates within 5 seconds.
 - 🦺 Reduced log level of App Focus events from Info -> Verbose
     - This is partly due to the recent patch adding further MuMu log file histories for more accurate presences
+- 🦺 Fixed a rare case where "Run on Startup" would be checked but would not actually start. This was due to the .exe being moved after "Run on Startup" was checked.
 
 ## v1.2.2
 

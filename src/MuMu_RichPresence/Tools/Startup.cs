@@ -30,12 +30,14 @@ public static class Startup
 
         return regVal?.ToString()?.Contains(value) ?? false;
     }
-    public static bool StartsWithWindows(string key)
+    public static bool StartsWithWindows(string key, string path)
     {
         using var startupKey = Registry.CurrentUser.OpenSubKey(STARTUP_SUBKEY, false)!;
         var regVal = startupKey.GetValue(key);
 
-        return regVal != null;
+        var str = regVal?.ToString();
+
+        return str != null && str.Contains(path);
     }
     public static bool ValidateStartsWithWindows(string key, string pathAndArgs)
     {
