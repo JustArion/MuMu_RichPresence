@@ -8,9 +8,9 @@ namespace Dawn.MuMu.RichPresence.Tools;
 
 internal static class AutoUpdate
 {
-    private const string REPO_LINK = "https://github.com/JustArion/MuMu_RichPresence";
+    private const string REPO_NAME = "MuMu_RichPresence";
+    
     private const int MAX_RETRIES = 3;
-
     private static readonly AsyncRetryPolicy<UpdateInfo?> _retryPolicy = Policy<UpdateInfo?>
         .Handle<Exception>()
         .WaitAndRetryAsync(MAX_RETRIES,
@@ -24,44 +24,40 @@ internal static class AutoUpdate
     /// If checking for updates fails, returns false<br/>
     /// If there's no update, returns false
     /// </returns>
-    internal static async Task<bool> Check_WithVelopack()
+    internal static async Task CheckForUpdates()
     {
         try
         {
-            var manager =
-                new UpdateManager(new GithubSource(REPO_LINK, null, false));
+            var manager = new UpdateManager(new GithubSource($"https://github.com/JustArion/{REPO_NAME}", null, false));
 
             if (manager.IsInstalled)
                 Log.Information("The Velopack Update Manager is present");
             else
             {
                 Log.Information("The Velopack Update Manager is not present. You will not receive auto-updates");
-                return false;
+                return;
             }
 
             var response = await _retryPolicy.ExecuteAndCaptureAsync(manager.CheckForUpdatesAsync);
             if (response.Outcome == OutcomeType.Failure)
             {
                 Log.Error(response.FinalException, "Failed to check for updates");
-                return false;
+                return;
             }
 
             var update = response.Result;
             if (update == null)
-                return false;
+                return;
 
             await manager.DownloadUpdatesAsync(update);
 
             Log.Information("Updates are ready to be installed and will be applied on next restart ({Version})",
                 update.TargetFullRelease.Version);
             // manager.ApplyUpdatesAndRestart(update);
-
-            return true;
         }
         catch (Exception e)
         {
             Log.Error(e, "Failed to update using Velopack");
-            return false;
         }
     }
 }
