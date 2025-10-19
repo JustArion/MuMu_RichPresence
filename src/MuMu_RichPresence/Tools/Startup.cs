@@ -15,10 +15,17 @@ public static class Startup
     }
     public static void RemoveStartup(string key)
     {
-        using var startupKey = Registry.CurrentUser.OpenSubKey(STARTUP_SUBKEY, true)!;
-        startupKey.DeleteValue(key, false);
+        try
+        {
+            using var startupKey = Registry.CurrentUser.OpenSubKey(STARTUP_SUBKEY, true)!;
+            startupKey.DeleteValue(key, false);
 
-        Log.Verbose("Removed {Key} from startup registry", key);
+            Log.Verbose("Removed {Key} from startup registry", key);
+        }
+        catch (Exception e)
+        {
+            Log.Error(e, "Exception occurred when attempting to remove the startup key '{Key}'", key);
+        }
     }
     // ---
 

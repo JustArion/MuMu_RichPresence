@@ -4,6 +4,8 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using Dawn.MuMu.RichPresence.MuMu;
 using DynamicData.Binding;
+using NuGet.Versioning;
+using Velopack;
 
 namespace Dawn.MuMu.RichPresence;
 
@@ -36,6 +38,8 @@ internal static class Program
         Environment.CurrentDirectory = AppContext.BaseDirectory; // Startup sets it to %windir%
         ApplicationLogs.Initialize(false);
 
+        InitializeVelopack();
+
         if (!Arguments.NoAutoUpdate)
         {
             var supportsVelopack = await AutoUpdate.Check_WithVelopack();
@@ -66,6 +70,16 @@ internal static class Program
         _richPresenceHandler.Dispose();
         _processBinding?.Dispose();
     }
+
+    private static void InitializeVelopack()
+    {
+        var app = VelopackApp.Build();
+        app.OnBeforeUninstallFastCallback(OnUninstall);
+        app.SetLogger(VelopackUpdateLogger.Create());
+        app.Run();
+    }
+
+    private static void OnUninstall(SemanticVersion version) => Startup.RemoveStartup(Application.ProductName!);
 
     private static async Task<string> GetOrWaitForFilePath() => await Pathfinder.GetOrWaitForFilePath();
 
