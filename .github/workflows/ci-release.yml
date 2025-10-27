@@ -47,7 +47,7 @@ jobs:
             release_name: ${{ github.ref_name }}
             body: |
               **Dependencies**
-              - [.NET 9.0 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-9.0.8-windows-x64-installer)
+              - [.NET 9.0 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-9.0.10-windows-x64-installer)
 
               **Changelog**
               - Coming soon
