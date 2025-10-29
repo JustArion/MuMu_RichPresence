@@ -70,6 +70,11 @@ jobs:
             Write-Output "Uploading files from ./velopack/..."
             ls ./velopack/ | ForEach-Object { 
             $file = $_.FullName
+
+            if ($file.Contains("assets") -or $file -eq "RELEASES")
+            {
+              return
+            }
             
             Write-Output "Uploading [ $file ]"
             gh release upload ${{ github.ref_name }} "$file" --clobber
