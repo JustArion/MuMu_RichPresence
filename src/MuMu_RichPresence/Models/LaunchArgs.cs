@@ -6,6 +6,7 @@ namespace Dawn.MuMu.RichPresence.Models;
 public struct LaunchArgs
 {
     internal const string RP_DISABLED_ON_START = "--rp-disabled-on-start";
+    internal const string HIDE_TRAY_ICON_ON_START = "--hide-tray-icon-on-start";
     public LaunchArgs(string[] args)
     {
         RawArgs = args;
@@ -14,6 +15,7 @@ public struct LaunchArgs
         ExtendedLogging  = args.Contains("--extended-logging");
         NoFileLogging = args.Contains("--no-file-logging");
         NoAutoUpdate = args.Contains("--no-auto-update");
+        HideTrayIconOnStart = args.Contains(HIDE_TRAY_ICON_ON_START);
 
         CustomApplicationId = ExtractArgumentValue("--custom-application-id=", args);
         HasCustomApplicationId = !string.IsNullOrWhiteSpace(CustomApplicationId);
@@ -34,6 +36,7 @@ public struct LaunchArgs
 
     // Args
     public bool RichPresenceDisabledOnStart { get; }
+    public bool HideTrayIconOnStart { get; }
     public bool NoFileLogging { get; }
     public bool ExtendedLogging { get; set; }
     public bool NoAutoUpdate { get; set; }

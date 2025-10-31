@@ -17,7 +17,7 @@ public class RichPresence_Tray
 
         Tray.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         Tray.Text = Application.ProductName;
-        Tray.Visible = true;
+        Tray.Visible = Arguments.HideTrayIconOnStart;
 
         AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
         Tray.Disposed += OnTrayDisposed;

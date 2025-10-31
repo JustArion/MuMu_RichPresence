@@ -7,6 +7,7 @@
     - This is partly due to the recent patch adding further MuMu log file histories for more accurate presences
 - 🦺 Bugfix: Fixed a rare case where "Run on Startup" would be checked but would not actually start. This was due to the .exe being moved after "Run on Startup" was checked.
 - 🦺 MuMu Rich Presence will now only keep the current version's logs
+- ⚡️Added launch arg for hiding the tray icon on start
 
 ## v1.2.2
 
