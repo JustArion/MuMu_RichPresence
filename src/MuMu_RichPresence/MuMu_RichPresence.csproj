@@ -12,7 +12,7 @@
     <AssemblyName>MuMu RichPresence Standalone</AssemblyName>
     <RootNamespace>Dawn.MuMu.RichPresence</RootNamespace>
     <ApplicationIcon>Assets\AppIcon_Blue.ico</ApplicationIcon>
-    <Company>https://github.com/JustArion</Company>
+    <Copyright>https://github.com/JustArion/MuMu_RichPresence/#GPL-2.0-1-ov-file</Copyright>
 
     <!-- This is so that CI can cache nuget dependencies -->
     <DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
