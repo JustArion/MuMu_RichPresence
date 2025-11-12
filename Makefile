@@ -1,5 +1,9 @@
 ﻿SHELL := pwsh.exe
 .SHELLFLAGS := -Command
+VERSION ?= 1.0.0
+
+velopack: install_velopack clean build
+	vpk pack -u 'MuMu-RichPresence' -v '$(VERSION)' -e 'MuMu RichPresence Standalone.exe' -o 'velopack' --packTitle 'MuMu - Rich Presence' -p 'bin' --shortcuts 'StartMenuRoot' --framework net9-x64-desktop
 
 init:
 	git submodule update --init --remote --recursive
@@ -9,9 +13,6 @@ restore: init
 
 install_velopack:
 	dotnet tool update -g vpk
-
-velopack: install_velopack clean build
-	vpk pack -u 'MuMu-RichPresence' -v '$(VERSION)' -e 'MuMu RichPresence Standalone.exe' -o 'velopack' --packTitle 'MuMu - Rich Presence' -p 'bin' --shortcuts 'StartMenuRoot' --framework net9-x64-desktop
 
 clean:
 	-rm -Recurse -ErrorAction SilentlyContinue bin
@@ -35,3 +36,5 @@ help:
 	$(info   restore               Restores dependencies )
 	$(info   clean                 Cleans build artifact directories )
 	$(info   help                  Show this help message )
+
+.PHONY: velopack
