@@ -59,8 +59,9 @@ jobs:
             Write-Output "Uploading files from ./bin/..."
             ls ./bin/ | ForEach-Object { 
             $file = $_.FullName
+            $fileName = $_.Name
             
-            Write-Output "Uploading [ $file ]"
+            Write-Output "Uploading [ $fileName ]"
             gh release upload ${{ github.ref_name }} "$file" --clobber
             }
         - name: Upload assets from velopack folder
