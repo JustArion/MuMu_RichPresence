@@ -68,14 +68,16 @@ jobs:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
             Write-Output "Uploading files from ./velopack/..."
-            ls ./velopack/ | ForEach-Object { 
-            $file = $_.FullName
+            $dontUpload = $("assets.win.json", "RELEASES")
+            ls ./velopack/ | ForEach-Object {
+              $file = $_.FullName
+              $fileName = $_.Name
 
-            if ($file.Contains("assets") -or $file -eq "RELEASES")
-            {
-              return
-            }
-            
-            Write-Output "Uploading [ $file ]"
-            gh release upload ${{ github.ref_name }} "$file" --clobber
+              if ($dontUpload.Contains($fileName))
+              {
+                return
+              }
+              
+              Write-Output "Uploading [ $fileName ]"
+              gh release upload ${{ github.ref_name }} "$file" --clobber
             }
