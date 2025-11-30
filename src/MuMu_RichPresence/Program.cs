@@ -28,7 +28,7 @@ internal static class Program
     private static MuMuPlayerLogReader? _logReader;
 
     [STAThread]
-    private static async Task Main(string[] args)
+    private static void Main(string[] args)
     {
         Environment.CurrentDirectory = AppContext.BaseDirectory; // Startup sets it to %windir%
         Arguments = new(args)
@@ -42,18 +42,19 @@ internal static class Program
 
         ApplicationLogs.Initialize();
 
-        if (!Arguments.NoAutoUpdate)
-            await AutoUpdate.CheckForUpdates();
+        SingleInstanceApplication.Ensure();
 
         ApplicationLogs.ListenToEvents();
 
-        SingleInstanceApplication.Ensure();
+        if (!Arguments.NoAutoUpdate)
+            Task.Run(AutoUpdate.CheckForUpdates);
+
 
         _richPresenceHandler = new();
         _trayIcon = new();
         _trayIcon.RichPresenceEnabledChanged += OnRichPresenceEnabledChanged;
 
-        _ = Task.Run(async () =>
+        Task.Run(async () =>
         {
             var filePath = await GetOrWaitForFilePath();
 
