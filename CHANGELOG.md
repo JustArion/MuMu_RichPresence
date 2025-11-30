@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.2.4
+- 🦺 Improved startup times for `Auto Update` users. Checking for updates caused the app to wait until checking was done..
+- 🦺 Bugfix: In some cases Rich Presence wasn't removed after MuMu Player closes.
+    - This occurs when MuMu Player is ran as admin while this program was not admin.
+
 ## v1.2.3
 
 - 🦺 Bugfix: Enabling Rich Presence on Discord after a game has already started would not show the game as being played. It now correctly updates within 5 seconds.
