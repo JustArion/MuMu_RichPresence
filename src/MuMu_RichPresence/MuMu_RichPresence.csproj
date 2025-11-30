@@ -10,6 +10,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- Don't change this without changing the same in the Makefile and readme.md -->
     <AssemblyName>MuMu RichPresence Standalone</AssemblyName>
+    <!--                                                                           -->
+
     <RootNamespace>Dawn.MuMu.RichPresence</RootNamespace>
     <ApplicationIcon>Assets\AppIcon_Blue.ico</ApplicationIcon>
     <Copyright>https://github.com/JustArion/MuMu_RichPresence/#GPL-2.0-1-ov-file</Copyright>
@@ -20,7 +22,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="Versioning">
-    <Version>1.2.3</Version>
+    <Version>1.2.4</Version>
 
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <ProductVersion>$Version)</ProductVersion>
