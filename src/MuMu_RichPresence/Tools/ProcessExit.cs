@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel;
+using System.Diagnostics;
 
 namespace Dawn.MuMu.RichPresence.Tools;
 
@@ -29,8 +30,10 @@ internal static class ProcessExit
 
                 // Log.Verbose("Subscribed to app exit for {ProcessName}", $"{process.ProcessName}.exe");
             }
-            catch (AccessViolationException e)
+            catch (Win32Exception e)
             {
+                if (e.NativeErrorCode != ACCESS_DENIED)
+                    throw;
                 Log.Warning(e, "Failed to subscribe to app exit, using fallback");
                 Task.Run(async () =>
                 {
@@ -55,6 +58,8 @@ internal static class ProcessExit
             onExit(0);
         }
     }
+
+    private const int ACCESS_DENIED = 5;
 
     internal static void Subscribe(string processName, AppExit onExit, CancellationToken cts)
     {
