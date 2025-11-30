@@ -2,11 +2,9 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
-using Dawn.MuMu.RichPresence.MuMu;
 using DynamicData.Binding;
 using NuGet.Versioning;
 using Velopack;
-using Velopack.Sources;
 
 namespace Dawn.MuMu.RichPresence;
 
@@ -17,6 +15,7 @@ using Models;
 using Tools;
 using Serilog;
 using Tray;
+using MuMu;
 
 internal static class Program
 {
@@ -54,13 +53,14 @@ internal static class Program
         _trayIcon = new();
         _trayIcon.RichPresenceEnabledChanged += OnRichPresenceEnabledChanged;
 
+        // The below code is within a Task block since 'GetOrWaitForFilePath' can take an unknown amount of time to complete
         Task.Run(async () =>
         {
-            var filePath = await GetOrWaitForFilePath();
+            var filePath = await Pathfinder.GetOrWaitForFilePath();
 
             _logReader = new MuMuPlayerLogReader(filePath, _currentProcessState);
             _logReader.Sessions.CollectionChanged += ReaderSessionsChanged;
-            _logReader.StartAsync();
+            _logReader.StartAsync(); // This starts a long running operation, the method doesn't need to be awaited
 
             if (Arguments.HasProcessBinding)
                 _processBinding = new ProcessBinding(Arguments.ProcessBinding);
@@ -79,8 +79,6 @@ internal static class Program
     }
 
     private static void OnUninstall(SemanticVersion version) => Startup.RemoveStartup(Application.ProductName!);
-
-    private static async Task<string> GetOrWaitForFilePath() => await Pathfinder.GetOrWaitForFilePath();
 
     private static void ReaderSessionsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
