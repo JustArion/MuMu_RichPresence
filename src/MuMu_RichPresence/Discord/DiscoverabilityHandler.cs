@@ -3,7 +3,6 @@ using System.Text.Json;
 using Dawn.MuMu.RichPresence.Models;
 using Polly;
 using Polly.Retry;
-using Velopack;
 
 namespace Dawn.MuMu.RichPresence.Discord;
 
@@ -27,8 +26,7 @@ internal class DiscoverabilityHandler
                 using var client = new HttpClient();
 
                 _discoverablePresences = await _retryPolicy.ExecuteAsync(async ()
-                    => await client.GetFromJsonAsync<DiscoverableRichPresence[]?>(
-                        "https://discord.com/api/v9/games/detectable", _options));
+                    => await client.GetFromJsonAsync<DiscoverableRichPresence[]?>("https://discord.com/api/v9/games/detectable", _options));
 
                 var count = _discoverablePresences?.Length ?? 0;
 
