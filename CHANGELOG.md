@@ -1,6 +1,13 @@
 # Changelog
 
-## v1.2.4
+## v2.0.0
+- ⚡️Most games will now show "Playing \<game name>" instead of normally "Playing MuMu Player"
+    - Discord has added a ton of mobile games to their "Official Presences" list, which we now also use if we detect any of them!
+    - What this does **not** do is show the game in your "Recently Played" list. As this to my knowledge requires each game to have a specific path / process name which can *somewhat* be set by the user but not programatically
+- ⚡️ Updated .NET Runtime (.NET 9 -> .NET 10)
+    - **Huge apologies for updating the runtime again!**
+    - Won't change the runtime version for a really long time now
+    - A missing dependencies popup will appear with an option to install the update. Pressing "Install Update" will update the app
 - 🦺 Improved startup times for `Auto Update` users. Checking for updates caused the app to wait until checking was done..
 - 🦺 Bugfix: In some cases Rich Presence wasn't removed after MuMu Player closes.
     - This occurs when MuMu Player is ran as admin while this program was not admin.
