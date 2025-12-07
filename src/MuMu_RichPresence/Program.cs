@@ -2,13 +2,13 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using Dawn.MuMu.RichPresence.Discord;
 using DynamicData.Binding;
 using NuGet.Versioning;
 using Velopack;
 
 namespace Dawn.MuMu.RichPresence;
 
-using DiscordRichPresence;
 using DiscordRPC;
 using Logging;
 using Models;
@@ -23,6 +23,7 @@ internal static class Program
 
     private static RichPresence_Tray _trayIcon = null!;
     private static RichPresenceHandler _richPresenceHandler = null!;
+    private static DiscoverabilityHandler _discoverabilityHandler = null!;
     private static ProcessBinding? _processBinding;
     private static MuMuPlayerLogReader? _logReader;
 
@@ -52,6 +53,7 @@ internal static class Program
         _richPresenceHandler = new();
         _trayIcon = new();
         _trayIcon.RichPresenceEnabledChanged += OnRichPresenceEnabledChanged;
+        _discoverabilityHandler = new();
 
         // The below code is within a Task block since 'GetOrWaitForFilePath' can take an unknown amount of time to complete
         Task.Run(async () =>
@@ -164,23 +166,33 @@ internal static class Program
     {
         if (active)
         {
-            if (_currentPresence != null)
-                _richPresenceHandler.SetPresence(_currentPresence);
+            if (_currentPresence is not { } presence)
+                return;
+
+            if (_focusedLifetime == null)
+            {
+                Log.Error("Trying to set a rich presence without an associated lifetime! Known details are: AppId: {AppId}, Details: {Details}", _currentApplicationId, presence.Details);
+                return;
+            }
+
+            _richPresenceHandler.TrySetPresence(_focusedLifetime.Title, presence, _currentApplicationId);
             return;
         }
 
-        _richPresenceHandler.RemovePresence();
+        _richPresenceHandler.ClearPresence(_focusedLifetime?.Title);
     }
 
     private static void RemovePresence()
     {
+        var title = _focusedLifetime?.Title;
         if (Interlocked.Exchange(ref _focusedLifetime, null) == null)
             return;
 
-        _richPresenceHandler.RemovePresence();
+        _richPresenceHandler.ClearPresence(title);
     }
 
     private static volatile RichPresence? _currentPresence;
+    private static string? _currentApplicationId;
     private static MuMuSessionLifetime? _focusedLifetime;
     private static CancellationTokenSource? _processSubscriptionCts = new();
     private static async Task<bool> SetPresenceFor(MuMuSessionLifetime sessionLifetime, RichPresence presence, string emulatorProcessName)
@@ -189,11 +201,21 @@ internal static class Program
         if (Interlocked.Exchange(ref _focusedLifetime, sessionLifetime) == sessionLifetime)
             return false;
 
-        var packageInfo = await PlayStoreWebScraper.TryGetPackageInfo(sessionLifetime.PackageName);
+        var discoverabilityTask = _discoverabilityHandler.TryGetOfficialApplicationId(sessionLifetime.Title);
+        var packageInfoTask = PlayStoreWebScraper.TryGetPackageInfo(sessionLifetime.PackageName);
 
+        if (await discoverabilityTask is not { } officialApplicationId)
+        {
+            // There's no official application id associated with this presence (or the discoverability handler isn't initialized yet
+            // This can be due to multiple reasons
+            // - https://discord.com/api/v9/games/detectable is down / blocks your traffic
+            // - Our program started recently while the user is playing a game and the api hit hasn't completed yet
+            officialApplicationId = null;
+            presence.Details ??= sessionLifetime.Title;
+        }
+
+        var packageInfo = await packageInfoTask;
         var iconLink = packageInfo?.IconLink;
-
-        presence.Details ??= sessionLifetime.Title;
 
         if (!string.IsNullOrWhiteSpace(iconLink))
         {
@@ -202,20 +224,16 @@ internal static class Program
                 var assets = presence.Assets;
                 assets.LargeImageKey = iconLink;
                 assets.LargeImageText = presence.Details;
-
             }
             else
-                presence.Assets = new()
-                {
-                    LargeImageKey = iconLink,
-                    LargeImageText = presence.Details
-                };
+                presence.Assets = new() { LargeImageKey = iconLink, LargeImageText = presence.Details };
         }
 
-        var retVal = _richPresenceHandler.SetPresence(presence);
+        var retVal = _richPresenceHandler.TrySetPresence(sessionLifetime.Title, presence, officialApplicationId);
         if (!retVal)
             return retVal;
 
+        _currentApplicationId = officialApplicationId;
         _currentPresence = presence;
         await RemovePresenceOnMuMuPlayerExit(emulatorProcessName);
 

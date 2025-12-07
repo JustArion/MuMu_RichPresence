@@ -1,9 +1,10 @@
-﻿namespace Dawn.MuMu.RichPresence.DiscordRichPresence;
-
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using DiscordRPC.Logging;
 using Serilog.Core;
-using ILogger = ILogger;
+
+namespace Dawn.MuMu.RichPresence.Discord;
+
+using ILogger = Serilog.ILogger;
 
 [SuppressMessage("ReSharper", "TemplateIsNotCompileTimeConstantProblem")]
 public class SerilogToDiscordLogger(ILogger logger) : DiscordRPC.Logging.ILogger
