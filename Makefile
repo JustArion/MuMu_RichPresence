@@ -1,9 +1,9 @@
 ﻿SHELL := pwsh.exe
 .SHELLFLAGS := -Command
-VERSION ?= 1.0.0
+VERSION ?= 2.0.0
 
 velopack: install_velopack clean build
-	vpk pack -u 'MuMu-RichPresence' -v '$(VERSION)' -e 'MuMu RichPresence Standalone.exe' -o 'velopack' --packTitle 'MuMu - Rich Presence' -p 'bin' --shortcuts 'StartMenuRoot' --framework net9-x64-desktop
+	vpk pack -u 'MuMu-RichPresence' -v '$(VERSION)' -e 'MuMu RichPresence Standalone.exe' -o 'velopack' --packTitle 'MuMu - Rich Presence' -p 'bin' --shortcuts 'StartMenuRoot' --framework net10-x64-desktop
 
 init:
 	git submodule update --init --remote --recursive

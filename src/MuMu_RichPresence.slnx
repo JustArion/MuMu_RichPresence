@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="MuMu_RichPresence.Tests/MuMu_RichPresence.Tests.csproj" />
+  <Project Path="MuMu_RichPresence/MuMu_RichPresence.csproj" />
+  <Project Path="RiotTrayContextTheme/RiotTrayContextTheme.csproj" />
+</Solution>

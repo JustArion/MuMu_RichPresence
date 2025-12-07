@@ -23,7 +23,7 @@ jobs:
         - name: Setup .NET SDK
           uses: actions/setup-dotnet@v4
           with:
-            dotnet-version: '9.0.X'
+            dotnet-version: '10.0.X'
             cache: true
             cache-dependency-path: '**/packages.lock.json'
         - run: make restore
@@ -47,7 +47,7 @@ jobs:
             release_name: ${{ github.ref_name }}
             body: |
               **Dependencies**
-              - [.NET 9.0 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-9.0.10-windows-x64-installer)
+              - [.NET 10.0 Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-10.0.0-windows-x64-installer)
 
               **Changelog**
               - Coming soon
