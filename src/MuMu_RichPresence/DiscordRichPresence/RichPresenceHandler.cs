@@ -14,7 +14,7 @@ public class RichPresenceHandler : IDisposable
     private readonly Logger _logger = (Logger)Log.ForContext<RichPresenceHandler>();
     private DiscordRpcClient _client;
     private RichPresence? _currentPresence;
-    private readonly CancellationTokenSource _disposingSource = new();
+    private CancellationTokenSource? _disposingSource;
 
     public RichPresenceHandler()
     {
@@ -33,20 +33,11 @@ public class RichPresenceHandler : IDisposable
         #endif
 
         _client.OnPresenceUpdate += OnPresenceUpdate;
-
-        Task.Factory.StartNew(async _ =>
-        {
-            var token = _disposingSource.Token;
-            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
-
-            while (await timer.WaitForNextTickAsync(token) && ApplicationFeatures.GetFeature(x => x.RichPresenceEnabled))
-                _client.SetPresence(_currentPresence);
-        }, TaskCreationOptions.LongRunning);
     }
 
     public bool SetPresence(RichPresence? presence)
     {
-        if (!ApplicationFeatures.GetFeature(x => x.RichPresenceEnabled))
+        if (!ApplicationFeatures.GetFeature(x => x.RichPresenceEnabled) || Interlocked.Exchange(ref _currentPresence, presence) == presence)
         {
             _logger.Verbose("Rich Presence is disabled");
             return false;
@@ -55,8 +46,19 @@ public class RichPresenceHandler : IDisposable
         if (presence != null)
             Log.Information("Setting Rich Presence for {GameTitle}", presence.Details);
 
-        _currentPresence = presence;
         _client.SetPresence(presence);
+
+        _disposingSource = new();
+        var token = _disposingSource.Token;
+        // This continiously sets the presence to the current one.
+        // It's relevant since the user can toggle showing rich presence and then it would just be gone until our app restarts or changes game.
+        Task.Factory.StartNew(async _ =>
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
+
+            while (await timer.WaitForNextTickAsync(token) && ApplicationFeatures.GetFeature(x => x.RichPresenceEnabled))
+                _client.SetPresence(_currentPresence);
+        }, TaskCreationOptions.LongRunning, token);
         return true;
     }
 
@@ -67,6 +69,8 @@ public class RichPresenceHandler : IDisposable
             Log.Information("Clearing Rich Presence for {PresenceTitle}", presence.Details);
 
         _client.ClearPresence();
+        _disposingSource?.Dispose();
+        _disposingSource = null;
     }
 
     private void OnPresenceUpdate(object _, PresenceMessage args)
@@ -86,7 +90,8 @@ public class RichPresenceHandler : IDisposable
     public void Dispose()
     {
         Log.Debug("Disposing IPC Client");
-        _disposingSource.Cancel();
+        _disposingSource?.Cancel();
+        _disposingSource = null;
         _client.ClearPresence();
         _client.Dispose();
         _client = null!;
