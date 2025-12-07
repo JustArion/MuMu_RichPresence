@@ -10,7 +10,6 @@ using WinForms.ContextMenu;
 public class RichPresence_Tray
 {
     internal NotifyIcon Tray { get; }
-    private readonly ILogger _logger = Log.ForContext<RichPresence_Tray>();
     public RichPresence_Tray()
     {
         Tray = new();
@@ -52,7 +51,7 @@ public class RichPresence_Tray
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to add tray items");
+            Log.Error(ex, "Failed to add tray items");
         }
         finally
         {

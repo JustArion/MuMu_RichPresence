@@ -11,8 +11,6 @@ namespace Dawn.MuMu.RichPresence.MuMu;
 
 public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProcessState) : IDisposable
 {
-    private readonly ILogger _logger = Log.ForContext<MuMuPlayerLogReader>();
-
     private bool _started;
     private long _lastStreamPosition;
     private readonly LogWatcher _logWatcher = new(filePath);
@@ -37,7 +35,7 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
         // Wait till the file exists
         if (!File.Exists(filePath))
         {
-            _logger.Debug("File not found: Service.log");
+            Log.Debug("File not found: Service.log");
             await Task.Delay(TimeSpan.FromSeconds(5));
         }
 
@@ -125,11 +123,11 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
         }
         catch (Exception e)
         {
-            _logger.Error(e, "Failed to read the file {FilePath}", filePath);
+            Log.Error(e, "Failed to read the file {FilePath}", filePath);
         }
     }
 
-    private void LogFileWatcherOnError(object? _, ErrorEventArgs e) => _logger.Error(e.GetException(), "File watcher error");
+    private void LogFileWatcherOnError(object? _, ErrorEventArgs e) => Log.Error(e.GetException(), "File watcher error");
 
     private bool _reading;
     private void LogFileWatcherOnFileChanged(object? _, FileSystemEventArgs args)
@@ -183,20 +181,20 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
         }
         catch (Exception e)
         {
-            _logger.Error(e, "Failed to read the change in file {FilePath}", filePath);
+            Log.Error(e, "Failed to read the change in file {FilePath}", filePath);
         }
     }
 
     private uint _initialLinesRead;
 
-    private async Task<string> ReadLineAsync(StreamReader reader, bool increment = true)
+    private async Task<string?> ReadLineAsync(StreamReader reader, bool increment = true)
     {
         var retVal = await reader.ReadLineAsync();
 
         if (increment && retVal != null)
             Interlocked.Increment(ref _initialLinesRead);
 
-        return retVal ?? string.Empty;
+        return retVal;
     }
     /// <summary>
     /// The method ensures that a Rich Presence will be enabled if a game is running before this program started.
@@ -207,9 +205,8 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
         reader.BaseStream.Seek(0, SeekOrigin.Begin);
         _initialLinesRead = 0;
 
-        while (!reader.EndOfStream)
+        while (await ReadLineAsync(reader) is { } line)
         {
-            var line = await ReadLineAsync(reader);
             if (string.IsNullOrWhiteSpace(line))
                 continue;
 
