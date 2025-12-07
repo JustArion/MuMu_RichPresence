@@ -21,9 +21,13 @@
     - `Download Access`
         - _Can_ download updates from `https://github.com/JustArion/MuMu_RichPresence`
             - Handled by Nuget package [Velopack](https://www.nuget.org/packages/Velopack)
+        - Downloads info from `https://discord.com/api/v9/games/detectable`
+            - This is used to get the application ids of registered games on Discord
+            - JSON data
         - Accesses the site `https://play.google.com/store/apps/details?id=`
             - The id would be the package name of the app used
             - This is used to get the icon for the game you're currently playing  on MuMu
+            - HTML data
     - `Upload Access`
         - Sends telemetry (`http://localhost:9999`)
             - Configurable by the user / command line, Handled by Nuget package [Serilog.Sinks.Seq](https://www.nuget.org/packages/Serilog.Sinks.Seq) & external application ([Seq](https://datalust.co/seq))
