@@ -44,6 +44,10 @@
     <PathMap>$(MSBuildProjectDirectory)=/</PathMap>
   </PropertyGroup>
 
+  <ItemGroup Label="Remove lock file in SLN view">
+    <None Remove="packages.lock.json"/>
+  </ItemGroup>
+
   <ItemGroup Label="Winforms Theme">
     <ProjectReference Include="..\RiotTrayContextTheme\RiotTrayContextTheme.csproj" />
   </ItemGroup>
