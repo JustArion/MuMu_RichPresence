@@ -57,7 +57,7 @@
     <PackageReference Include="Polly" Version="8.6.5" />
     <PackageReference Include="securifybv.ShellLink" Version="0.1.0" />
     <PackageReference Include="Vanara.PInvoke.Kernel32" Version="4.2.1" />
-    <PackageReference Include="DiscordRichPresence" Version="1.6.1.70" />
+    <PackageReference Include="DiscordRichPresence" Version="1.5.0.51" />
     <PackageReference Include="Velopack" Version="0.0.1298" />
   </ItemGroup>
 

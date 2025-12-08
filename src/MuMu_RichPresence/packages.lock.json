@@ -4,9 +4,9 @@
     "net10.0-windows7.0": {
       "DiscordRichPresence": {
         "type": "Direct",
-        "requested": "[1.6.1.70, )",
-        "resolved": "1.6.1.70",
-        "contentHash": "yho1fdhbsedICHdfHe/Tu3IX6a5oj4fiPFL0keZStlsh7T/FrdjcwZZ7C1uC2HUvcXbFh+VEJvcbo1W66QtkUg==",
+        "requested": "[1.5.0.51, )",
+        "resolved": "1.5.0.51",
+        "contentHash": "Io6z30fJSUU5XJeEtgZkHbW2IxGojM0svJf4C2JZlVJwiMkmukr7S9O/KjnLxGPmSu2rPc/VfR6D1yzjTl3KrQ==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.1"
         }

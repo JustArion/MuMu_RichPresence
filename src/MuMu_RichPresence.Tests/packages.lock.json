@@ -52,8 +52,8 @@
       },
       "DiscordRichPresence": {
         "type": "Transitive",
-        "resolved": "1.6.1.70",
-        "contentHash": "yho1fdhbsedICHdfHe/Tu3IX6a5oj4fiPFL0keZStlsh7T/FrdjcwZZ7C1uC2HUvcXbFh+VEJvcbo1W66QtkUg==",
+        "resolved": "1.5.0.51",
+        "contentHash": "Io6z30fJSUU5XJeEtgZkHbW2IxGojM0svJf4C2JZlVJwiMkmukr7S9O/KjnLxGPmSu2rPc/VfR6D1yzjTl3KrQ==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.1"
         }
@@ -350,7 +350,7 @@
         "type": "Project",
         "dependencies": {
           "Dawn.WinForms.ContextMenu": "[1.0.0, )",
-          "DiscordRichPresence": "[1.6.1.70, )",
+          "DiscordRichPresence": "[1.5.0.51, )",
           "DynamicData": "[9.4.1, )",
           "Polly": "[8.6.5, )",
           "Serilog": "[4.3.0, )",
