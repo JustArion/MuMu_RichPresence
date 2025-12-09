@@ -212,6 +212,7 @@ internal static class Program
             // - Our program started recently while the user is playing a game and the api hit hasn't completed yet
             officialApplicationId = null;
             presence.Details ??= sessionLifetime.Title;
+            presence.WithStatusDisplay(StatusDisplayType.Details);
         }
 
         var packageInfo = await packageInfoTask;
