@@ -8,6 +8,7 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Don't change this without changing the same in the Makefile and readme.md -->
     <AssemblyName>MuMu RichPresence Standalone</AssemblyName>
     <!--                                                                           -->
