@@ -167,10 +167,8 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
             reader.BaseStream.Seek(_lastStreamPosition, SeekOrigin.Begin);
             reader.DiscardBufferedData();
 
-            while (!reader.EndOfStream)
+            while (await reader.ReadLineAsync() is { } line)
             {
-                var line = await reader.ReadLineAsync();
-
                 _lastStreamPosition = reader.BaseStream.Position;
 
                 if (string.IsNullOrWhiteSpace(line))
