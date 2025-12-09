@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using DiscordRPC.Logging;
 using Serilog.Core;
+#pragma warning disable CA2254
 
 namespace Dawn.MuMu.RichPresence.Discord;
 
