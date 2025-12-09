@@ -213,22 +213,14 @@ internal static class Program
             officialApplicationId = null;
             presence.Details ??= sessionLifetime.Title;
             presence.WithStatusDisplay(StatusDisplayType.Details);
+            presence.WithDetailsUrl(PlayStoreWebScraper.GetPlayStoreLinkForPackage(sessionLifetime.PackageName));
         }
 
         var packageInfo = await packageInfoTask;
         var iconLink = packageInfo?.IconLink;
 
         if (!string.IsNullOrWhiteSpace(iconLink))
-        {
-            if (presence.HasAssets())
-            {
-                var assets = presence.Assets;
-                assets.LargeImageKey = iconLink;
-                assets.LargeImageText = presence.Details;
-            }
-            else
-                presence.Assets = new() { LargeImageKey = iconLink, LargeImageText = presence.Details };
-        }
+            PopulatePresenceAssets(sessionLifetime, presence, iconLink);
 
         var retVal = _richPresenceHandler.TrySetPresence(sessionLifetime.Title, presence, officialApplicationId);
         if (!retVal)
@@ -239,6 +231,25 @@ internal static class Program
         await RemovePresenceOnMuMuPlayerExit(emulatorProcessName);
 
         return retVal;
+    }
+
+    private static void PopulatePresenceAssets(MuMuSessionLifetime sessionLifetime, RichPresence presence, string iconLink)
+    {
+        var imageUrl = PlayStoreWebScraper.GetPlayStoreLinkForPackage(sessionLifetime.PackageName);
+        if (presence.HasAssets())
+        {
+            var assets = presence.Assets;
+            assets.LargeImageKey = iconLink;
+            assets.LargeImageText = presence.Details;
+            assets.LargeImageUrl = imageUrl;
+        }
+        else
+            presence.Assets = new()
+            {
+                LargeImageKey = iconLink,
+                LargeImageText = presence.Details,
+                LargeImageUrl = imageUrl
+            };
     }
 
     private static async Task RemovePresenceOnMuMuPlayerExit(string emulatorProcessName)
