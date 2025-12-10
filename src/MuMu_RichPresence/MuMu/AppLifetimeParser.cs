@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Dawn.MuMu.RichPresence.Models;
@@ -94,16 +95,31 @@ internal static partial class AppLifetimeParser
         }
         existingLifetime.PackageLifetimeEntries.Add(info);
 
-        ProcessExit.Subscribe(pid, _ =>
+        try
         {
-            try
-            {
-                ClearTabLifetime(existingLifetime, lifetimes, graveyard);
-                Log.Debug("The gravekeeper has come for {LifetimePackageName}, MuMu Player has exited", existingLifetime.PackageName);
-            }
-            catch { }
+            var proc = Process.GetProcessById(pid);
+            // Reading old lifetimes can cause subscriptions to pids that are no longer associated with the emulator
+            if (!Pathfinder.EmulatorProcessNames.Contains(proc.ProcessName))
+                return;
 
-        }, cts.Token);
+            ProcessExit.Subscribe(pid, _ =>
+            {
+                try
+                {
+                    ClearTabLifetime(existingLifetime, lifetimes, graveyard);
+                    Log.Debug("The gravekeeper has come for {LifetimePackageName}, MuMu Player has exited", existingLifetime.PackageName);
+                }
+                catch
+                {
+                    // ignored
+                }
+            }, cts.Token);
+        }
+        catch
+        {
+            // ignored
+        }
+
 
         // Log.Verbose("[{StartTime:hh:mm}] App Launched: {PackageName}", existingLifetime.StartTime.ToLocalTime(), packageName);
     }
