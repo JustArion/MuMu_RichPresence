@@ -30,14 +30,12 @@ internal static class Pathfinder
         logPath = null;
         try
         {
-            foreach (var emulatorName in EmulatorProcessNames)
-            {
+            foreach (var emulatorName in MuMuProcessNames)
                 if (PathFromPlayer(emulatorName) is { } validPath)
                 {
                     logPath = validPath;
                     return true;
                 }
-            }
 
             return false;
         }
@@ -70,8 +68,14 @@ internal static class Pathfinder
     internal static readonly string[] EmulatorProcessNames =
         [
             "MuMuPlayer",
-            "MuMuNxMain", // \MuMuPlayerGlobal-12.0\nx_main\MuMuNxMain.exe
+            "MuMuNxDevice" // \MuMuPlayerGlobal-12.0\nx_device\12.0\shell\MuMuNxDevice.exe
         ];
+
+    private static readonly string[] MuMuProcessNames =
+    [
+        "MuMuPlayer",
+        "MuMuNxMain", // \MuMuPlayerGlobal-12.0\nx_main\MuMuNxMain.exe
+    ];
 
 
     [SupportedOSPlatform("windows")]
