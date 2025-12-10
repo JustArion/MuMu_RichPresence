@@ -4,6 +4,9 @@
     - `Write Access`
         - Writes a single Log File to the `MuMu RichPresence.exe` directory
             - `MuMu RichPresence.log`
+        - Writes a single JSON File to the `MuMu_RichPresence.exe` directory
+            - `detectable.json`
+            - This is a reduced cached collection of `https://discord.com/api/v9/games/detectable`
         - _Can_ create a single registry key (`\HKCU\Software\Microsoft\Windows\CurrentVersion\Run\MuMu RichPresence`)
             - For running on startup
             - Default is off, configurable by the user
