@@ -220,7 +220,7 @@ internal static class Program
         var iconLink = packageInfo?.IconLink;
 
         if (!string.IsNullOrWhiteSpace(iconLink))
-            PopulatePresenceAssets(sessionLifetime, presence, iconLink);
+            PopulatePresenceAssets(sessionLifetime, presence, iconLink, officialApplicationId == null);
 
         var retVal = _richPresenceHandler.TrySetPresence(sessionLifetime.Title, presence, officialApplicationId);
         if (!retVal)
@@ -233,23 +233,17 @@ internal static class Program
         return retVal;
     }
 
-    private static void PopulatePresenceAssets(MuMuSessionLifetime sessionLifetime, RichPresence presence, string iconLink)
+    private static void PopulatePresenceAssets(MuMuSessionLifetime sessionLifetime, RichPresence presence, string iconLink, bool linkToStorePage)
     {
-        var imageUrl = PlayStoreWebScraper.GetPlayStoreLinkForPackage(sessionLifetime.PackageName);
-        if (presence.HasAssets())
-        {
-            var assets = presence.Assets;
-            assets.LargeImageKey = iconLink;
-            assets.LargeImageText = presence.Details;
-            // assets.LargeImageUrl = imageUrl;
-        }
-        else
-            presence.Assets = new()
-            {
-                LargeImageKey = iconLink,
-                LargeImageText = presence.Details,
-                // LargeImageUrl = imageUrl
-            };
+        if (!presence.HasAssets())
+            presence.Assets = new();
+
+        var assets = presence.Assets;
+        assets.LargeImageKey = iconLink;
+        assets.LargeImageText = presence.Details;
+
+        if (linkToStorePage)
+            assets.LargeImageUrl = PlayStoreWebScraper.GetPlayStoreLinkForPackage(sessionLifetime.PackageName);
     }
 
     private static async Task RemovePresenceOnMuMuPlayerExit(string emulatorProcessName)
