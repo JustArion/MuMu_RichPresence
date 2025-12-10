@@ -241,14 +241,14 @@ internal static class Program
             var assets = presence.Assets;
             assets.LargeImageKey = iconLink;
             assets.LargeImageText = presence.Details;
-            assets.LargeImageUrl = imageUrl;
+            // assets.LargeImageUrl = imageUrl;
         }
         else
             presence.Assets = new()
             {
                 LargeImageKey = iconLink,
                 LargeImageText = presence.Details,
-                LargeImageUrl = imageUrl
+                // LargeImageUrl = imageUrl
             };
     }
 
