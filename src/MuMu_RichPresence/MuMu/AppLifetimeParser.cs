@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Dawn.MuMu.RichPresence.Models;
@@ -32,15 +33,30 @@ internal static partial class AppLifetimeParser
         // [00:52:32.304 13508/11972][info][:] [ShellWindow::onTabClose]: index: 1, app info: [id:task:22, packageName:com.SmokymonkeyS.Triglav, appName:Triglav, originName:Triglav, displayId:7]
         [GeneratedRegex(@"\[ShellWindow::onTabClose]:.+?packageName:(?'PackageName'.+?),", RegexOptions.Multiline)]
         internal static partial Regex TabCloseRegex();
+
+        // [20:00:06.264 18088/26636][info]  AppInfo {id:task:287, name:Arknights, originName:Arknights, packageName:com.YoStarEN.Arknights, tag:, icon_size:2548, isLauncher0, displayId:0, rotation:90, pid:5020, uid:10046, isNewTask:1, canChangeAppOrient:0}
+        [GeneratedRegex(@"\[(?'StartTime'.+?) (?'ProcessId'\d+?)/.+?AppInfo.+?{.+?packageName:(?'PackageName'.+?),.+?isNewTask:(?'IsNewTask'.+?),")]
+        internal static partial Regex AppInfoChangeRegex();
     }
 
+    [SuppressMessage("ReSharper", "InlineOutVariableDeclaration")]
     public static void MutateLifetime(string info, ObservableCollection<MuMuSessionLifetime> lifetimes, ObservableCollection<MuMuSessionLifetime> graveyard)
     {
         try
         {
-            if (IsAppLaunchEvent(info, out var packageName, out var startTime, out var pid))
+            string? packageName;
+            TimeSpan startTime;
+
+            // if (IsAppLaunchEvent(info, out packageName, out startTime, out var pid))
+            // {
+            //     CreateAppLaunchEvent(info, packageName, startTime, pid, lifetimes, graveyard);
+            //     return;
+            // }
+
+            if (IsAppInfoEvent(info, out packageName, out startTime, out var pid, out var isNewTask))
             {
-                CreateAppLaunchEvent(info, packageName, startTime, pid, lifetimes, graveyard);
+                if (isNewTask)
+                    CreateAppLaunchEvent(info, packageName, startTime, pid, lifetimes, graveyard);
                 return;
             }
 
@@ -75,7 +91,7 @@ internal static partial class AppLifetimeParser
                 PackageName = packageName,
                 AppState = AppState.Started,
                 SessionSubscriptions = cts,
-                StartTime = approximateStartTime
+                StartTime = approximateStartTime,
             };
             lifetimes.Add(existingLifetime);
         }
@@ -90,6 +106,7 @@ internal static partial class AppLifetimeParser
             if (existingLifetime.AppState.Value != AppState.Focused)
                 existingLifetime.AppState.Value = AppState.Started;
 
+            // TODO
             if (existingLifetime.StartTime == default)
                existingLifetime.StartTime = approximateStartTime;
         }
@@ -198,6 +215,31 @@ internal static partial class AppLifetimeParser
         packageName = match.Groups["PackageName"].Value;
 
         processId = int.Parse(match.Groups["ProcessId"].Value, CultureInfo.InvariantCulture);
+
+        var startTimeString = match.Groups["StartTime"].Value;
+        if (TimeSpan.TryParse(startTimeString, out startTime))
+            return true;
+
+        Log.Warning("Failed to parse start time: {StartTime}", startTimeString);
+        return false;
+    }
+
+    private static bool IsAppInfoEvent(string info, out string packageName, out TimeSpan startTime, out int processId, out bool isNewTask)
+    {
+        packageName = string.Empty;
+        startTime = TimeSpan.Zero;
+        processId = 0;
+        isNewTask = false;
+
+        var match = ShellRegexes.AppInfoChangeRegex().Match(info);
+        if (!match.Success)
+            return false;
+
+        packageName = match.Groups["PackageName"].Value;
+
+        processId = int.Parse(match.Groups["ProcessId"].Value, CultureInfo.InvariantCulture);
+
+        isNewTask = int.Parse(match.Groups["IsNewTask"].Value, CultureInfo.InvariantCulture) == 1;
 
         var startTimeString = match.Groups["StartTime"].Value;
         if (TimeSpan.TryParse(startTimeString, out startTime))

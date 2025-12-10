@@ -1,6 +1,7 @@
 # Changelog
 
 ## v2.0.0
+- 🦺 Bugfix: Fixed Rich Presences displaying old game durations in some cases
 - ⚡️Rich Presences now have clickable links directing them to the respective game's listing on the Play Store
 - ⚡️Now shows the game you're playing in the members / direct message list instead of "MuMu Player"
     - This is different than the change below. The one below uses Rich Presences made by Discord, this change uses Rich Presences made by MuMu Rich Presence (If no official rich presence is detected)
