@@ -7,7 +7,7 @@ namespace Dawn.MuMu.RichPresence.Models;
 
 public sealed record MuMuSessionLifetime : INotifyPropertyChanged
 {
-    public readonly object SynchronizationRoot = new();
+    public readonly Lock SynchronizationRoot = new();
     public required string PackageName { get; init => SetField(ref field, value); }
 
     public required HistoricalEntry<AppState> AppState { get; init => SetField(ref field, value); }
