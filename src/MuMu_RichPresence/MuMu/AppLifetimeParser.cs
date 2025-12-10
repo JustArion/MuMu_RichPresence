@@ -99,7 +99,7 @@ internal static partial class AppLifetimeParser
         {
             var proc = Process.GetProcessById(pid);
             // Reading old lifetimes can cause subscriptions to pids that are no longer associated with the emulator
-            if (!Pathfinder.EmulatorProcessNames.Contains(proc.ProcessName))
+            if (!Pathfinder.EmulatorProcessNames.Contains(proc.ProcessName) && proc.ProcessName != "MuMuNxDevice")
                 return;
 
             ProcessExit.Subscribe(pid, _ =>
