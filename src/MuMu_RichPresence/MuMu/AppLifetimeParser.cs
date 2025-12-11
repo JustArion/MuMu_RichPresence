@@ -23,7 +23,7 @@ internal static partial class AppLifetimeParser
     private static partial class ShellRegexes
     {
         // [00:45:31.968 13508/13680][info][:] OnFocusOnApp Called: id=task:22, packageName=com.SmokymonkeyS.Triglav, appName=Triglav
-        [GeneratedRegex("\\[(?'StartTime'.+?) .+?OnFocusOnApp Called:.+?packageName=(?'PackageName'.+?), appName=(?'Title'.+?)$", RegexOptions.Multiline)]
+        [GeneratedRegex(@"\[(?'StartTime'.+?) (?'ProcessId'\d+?)/.+?OnFocusOnApp Called:.+?packageName=(?'PackageName'.+?), appName=(?'Title'.+?)$", RegexOptions.Multiline)]
         internal static partial Regex FocusedAppRegex();
 
         // [00:45:31.970 13508/11972][info][:] [Gateway] onAppLaunch: package=com.SmokymonkeyS.Triglav code= msg=
@@ -46,28 +46,37 @@ internal static partial class AppLifetimeParser
         {
             string? packageName;
             TimeSpan startTime;
+            int pid;
 
+            // Removed due to newer versions including "AppLaunch" whenever you focus a tab (Like ??? who thinks that's a good idea)
             // if (IsAppLaunchEvent(info, out packageName, out startTime, out var pid))
             // {
             //     CreateAppLaunchEvent(info, packageName, startTime, pid, lifetimes, graveyard);
             //     return;
             // }
 
-            if (IsAppInfoEvent(info, out packageName, out startTime, out var pid, out var isNewTask))
+            if (IsAppInfoEvent(info, out packageName, out startTime, out pid, out var isNewTask))
             {
-                if (isNewTask)
-                    CreateAppLaunchEvent(info, packageName, startTime, pid, lifetimes, graveyard);
+                if (!isNewTask)
+                    return;
+
+                Log.Verbose("Creating AppInfo Event: {AppInfo}", new { packageName, startTime, pid, isNewTask });
+                CreateAppLaunchEvent(info, packageName, startTime, pid, lifetimes, graveyard);
                 return;
             }
 
             if (IsTabCloseEvent(info, out packageName))
             {
+                Log.Verbose("Creating TabClose Event: {AppCloseEvent}", packageName);
                 CreateTabCloseEvent(packageName, lifetimes, graveyard);
                 return;
             }
 
-            if (IsFocusEvent(info, out packageName, out var title, out startTime))
-                CreateFocusEvent(info, packageName, title, startTime, lifetimes);
+            if (IsFocusEvent(info, out packageName, out var title, out startTime, out pid))
+            {
+                Log.Verbose("Creating FocusEvent: {AppFocusEvent}", new { packageName, title, startTime, pid });
+                CreateFocusEvent(info, packageName, title, startTime, pid, lifetimes, graveyard);
+            }
 
         }
         catch (Exception e)
@@ -107,7 +116,7 @@ internal static partial class AppLifetimeParser
                 existingLifetime.AppState.Value = AppState.Started;
 
             // TODO
-            if (existingLifetime.StartTime == default)
+            // if (existingLifetime.StartTime == default)
                existingLifetime.StartTime = approximateStartTime;
         }
         existingLifetime.PackageLifetimeEntries.Add(info);
@@ -115,30 +124,37 @@ internal static partial class AppLifetimeParser
         try
         {
             var proc = Process.GetProcessById(pid);
+
             // Reading old lifetimes can cause subscriptions to pids that are no longer associated with the emulator
             if (!Pathfinder.EmulatorProcessNames.Contains(proc.ProcessName))
-                return;
-
-            ProcessExit.Subscribe(pid, _ =>
             {
-                try
-                {
-                    ClearTabLifetime(existingLifetime, lifetimes, graveyard);
-                    Log.Debug("The gravekeeper has come for {LifetimePackageName}, MuMu Player has exited", existingLifetime.PackageName);
-                }
-                catch
-                {
-                    // ignored
-                }
-            }, cts.Token);
+                OnExit(0);
+                return;
+            }
+
+            ProcessExit.Subscribe(pid, OnExit, cts.Token);
         }
         catch
         {
-            // ignored
+            OnExit(0);
         }
 
 
-        // Log.Verbose("[{StartTime:hh:mm}] App Launched: {PackageName}", existingLifetime.StartTime.ToLocalTime(), packageName);
+        Log.Verbose("[{StartTime:hh:mm}] App Launched: {PackageName}", existingLifetime.StartTime.ToLocalTime(), packageName);
+        return;
+
+        void OnExit(int _)
+        {
+            try
+            {
+                ClearTabLifetime(existingLifetime, lifetimes, graveyard);
+                Log.Debug("The gravekeeper has come for {LifetimePackageName}, MuMu Player has exited", existingLifetime.PackageName);
+            }
+            catch
+            {
+                // ignored
+            }
+        }
     }
 
     private static void ClearTabLifetime(MuMuSessionLifetime lifetime, ObservableCollection<MuMuSessionLifetime> lifetimes, ObservableCollection<MuMuSessionLifetime> graveyard)
@@ -166,7 +182,7 @@ internal static partial class AppLifetimeParser
         Log.Verbose("[{StartTime:hh:mm}] Tab Closed: {Title} ({PackageName})", existingLifetime.StartTime.ToLocalTime(), existingLifetime.Title, packageName);
     }
 
-    private static void CreateFocusEvent(string info, string packageName, string title, TimeSpan time, ObservableCollection<MuMuSessionLifetime> lifetimes)
+    private static void CreateFocusEvent(string info, string packageName, string title, TimeSpan time, int pid, ObservableCollection<MuMuSessionLifetime> lifetimes, ObservableCollection<MuMuSessionLifetime> graveyard)
     {
         var existingLifetime = lifetimes.FirstOrDefault(x => x.PackageName == packageName);
         if (existingLifetime == null)
@@ -186,6 +202,19 @@ internal static partial class AppLifetimeParser
             lifetime.AppState.Value = AppState.Unfocused;
 
         Log.Verbose("[{StartTime:hh:mm}] Focused: {Title} ({PackageName})", existingLifetime.StartTime.ToLocalTime(), title, packageName);
+
+        try
+        {
+            var proc = Process.GetProcessById(pid);
+
+            if (!Pathfinder.EmulatorProcessNames.Contains(proc.ProcessName))
+                ClearTabLifetime(existingLifetime, lifetimes, graveyard);
+        }
+        catch
+        {
+            // There's no Process associated with the PID
+            ClearTabLifetime(existingLifetime, lifetimes, graveyard);
+        }
     }
 
     // The log format is "00:45:31.968" which is a timespan, not a timestamp
@@ -262,11 +291,12 @@ internal static partial class AppLifetimeParser
         return true;
     }
 
-    private static bool IsFocusEvent(string info, out string packageName, out string title, out TimeSpan timeSpan)
+    private static bool IsFocusEvent(string info, out string packageName, out string title, out TimeSpan timeSpan, out int pid)
     {
         packageName = string.Empty;
         title = string.Empty;
         timeSpan = TimeSpan.Zero;
+        pid = 0;
 
         var match = ShellRegexes.FocusedAppRegex().Match(info);
         if (!match.Success)
@@ -276,7 +306,8 @@ internal static partial class AppLifetimeParser
         title = match.Groups["Title"].Value;
         var startTimeString = match.Groups["StartTime"].Value;
 
-        return TimeSpan.TryParse(startTimeString, out timeSpan);
+        return int.TryParse(match.Groups["ProcessId"].Value, out pid)
+               && TimeSpan.TryParse(startTimeString, out timeSpan);
     }
 
     public static bool IsSystemLevelPackage(string packageName) => SystemLevelPackageHints.Any(packageName.StartsWith);
