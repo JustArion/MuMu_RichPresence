@@ -17,7 +17,7 @@ internal static partial class AppLifetimeParser
             "com.mumu",
             // Added in MuMu Player 5
             "com.netease.mumu",
-            "app.lawnchair" // (Default home screen?)
+            "app.lawnchair" // (Default home screen)
         ];
 
     private static partial class ShellRegexes
@@ -115,7 +115,6 @@ internal static partial class AppLifetimeParser
             if (existingLifetime.AppState.Value != AppState.Focused)
                 existingLifetime.AppState.Value = AppState.Started;
 
-            // TODO
             // if (existingLifetime.StartTime == default)
                existingLifetime.StartTime = approximateStartTime;
         }
