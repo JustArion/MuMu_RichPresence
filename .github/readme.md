@@ -16,7 +16,7 @@
 
 ---
 ### Requirements
-[.NET 10.0.X Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-10.0.0-windows-x64-installer) (x64)
+[.NET 10 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-10.0.0-windows-x64-installer) (x64)
 
 ---
 ### Installation
