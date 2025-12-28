@@ -89,7 +89,7 @@ public class LogWatcher : IDisposable
         Task.Run(onInitialize).ContinueWith(_ =>
         {
             _logFileWatcher.EnableRaisingEvents = true;
-            Log.Information("Watching for changes on file {FilePath}", _filePath);
+            Log.Verbose("Watching for changes on file {FilePath}", _filePath);
         });
     }
 
