@@ -139,7 +139,10 @@ internal static class Program
 
             _currentProcessState.CurrentEmulatorProcess = currentMuMuProcess.First();
 
-            if (await SetPresenceFor(focusedApp, new() { Timestamps = new Timestamps(focusedApp.StartTime.DateTime) }, emulatorProcessName))
+            if (await SetPresenceFor(focusedApp, new()
+                {
+                    Timestamps = new(focusedApp.StartTime.DateTime),
+                }, emulatorProcessName))
                 Log.Debug("Presence updated for {SessionTitle}", focusedApp);
             return;
         }
