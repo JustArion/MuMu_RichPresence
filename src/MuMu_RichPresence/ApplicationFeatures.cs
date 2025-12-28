@@ -57,7 +57,9 @@ internal class ApplicationFeatures
         Log.Verbose("FeatureChange: [{CallerName}] {Previous} -> {Current}", callerName, featureBackingField, newValue);
         featureBackingField = newValue;
     }
-
+    
+    // ReSharper disable once ReplaceWithFieldKeyword
+    // This is implicitly used using reflection
     private bool _richPresenceEnabled;
 
     public bool RichPresenceEnabled
