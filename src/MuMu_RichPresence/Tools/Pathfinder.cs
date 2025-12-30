@@ -124,6 +124,8 @@ internal static class Pathfinder
 
     private static FileInfo GetLogPathFromBaseDirectory(DirectoryInfo mumuDirectory)
     {
+        Log.Verbose("Trying to get from {Directory}", mumuDirectory.FullName);
+        // MuMuPlayerGlobal-12.0\vms
         var vms = mumuDirectory.Parent!.GetDirectories("vms").First();
 
         // The base-vm is 'MuMuPlayerGlobal-12.0-0-base' this probably contains system files, but we need the folder with the 'logs' folder in, so we skip this.
