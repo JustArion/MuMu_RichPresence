@@ -142,12 +142,12 @@ internal static partial class AppLifetimeParser
         Log.Verbose("[{StartTime:hh:mm}] App Launched: {PackageName}", existingLifetime.StartTime.ToLocalTime(), packageName);
         return;
 
-        void OnExit(int _)
+        void OnExit(int exitCode)
         {
             try
             {
                 ClearTabLifetime(existingLifetime, lifetimes, graveyard);
-                Log.Debug("The gravekeeper has come for {LifetimePackageName}, MuMu Player has exited", existingLifetime.PackageName);
+                Log.Debug("The gravekeeper has come for {LifetimePackageName}, MuMu Player has exited ({ExitCode})", existingLifetime.PackageName, exitCode);
             }
             catch
             {
