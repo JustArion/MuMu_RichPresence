@@ -76,13 +76,13 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
                 var file = fileLock.LockFile;
                 var fileDirectory = file.Directory!;
 
-                var searchPattern = $"{file.Name.Replace(file.Extension, string.Empty)}*";
-
-                var oldLogFiles = fileDirectory.GetFiles(searchPattern)
+                var oldLogFiles = fileDirectory.GetFiles("shell*")
                     .Where(x => x.FullName !=
                                 file.FullName) // We already have a file lock on this, we need to process it last
                     .OrderBy(x => x.LastWriteTimeUtc)
                     .ToArray();
+
+                Log.Verbose("Checking through {LogFileCount} shell.log files", oldLogFiles.Length);
 
                 foreach (var oldLogFile in oldLogFiles)
                 {
@@ -132,7 +132,8 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
     private bool _reading;
     private void LogFileWatcherOnFileChanged(object? _, FileSystemEventArgs args)
     {
-        if (_reading)
+        //              The file might not exist yet, this happens when MuMu clears the file and makes a new one
+        if (_reading || !File.Exists(filePath))
             return;
         _reading = true;
 
@@ -210,6 +211,20 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
 
             AppLifetimeParser.MutateLifetime(line, activeLifetimes, graveyard);
         }
+    }
+
+    public MuMuSessionLifetime? GetFocusedApp()
+    {
+        foreach (var session in Sessions)
+        {
+            if (AppLifetimeParser.IsSystemLevelPackage(session.PackageName))
+                continue;
+
+            if (session.AppState.Value is AppState.Focused or AppState.Started)
+                return session;
+        }
+
+        return null;
     }
 
     public void Stop()

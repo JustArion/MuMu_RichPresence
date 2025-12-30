@@ -122,7 +122,7 @@ internal static class Program
 
     private static async Task UpdatePresenceIfNecessary(MuMuPlayerLogReader reader, MuMuSessionLifetime? focusedApp = null)
     {
-        focusedApp ??= GetFocusedApp(reader.Sessions);
+        focusedApp ??= reader.GetFocusedApp();
 
         if (focusedApp == null)
         {
