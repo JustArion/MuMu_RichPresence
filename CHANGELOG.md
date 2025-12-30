@@ -7,7 +7,7 @@
 - 🦺 Bugfix: Fixed Rich Presences displaying old game durations in some cases
 - ⚡️Rich Presences now have clickable links directing them to the respective game's listing on the Play Store
 - ⚡️Now shows the game you're playing in the members / direct message list instead of "MuMu Player"
-    - This is different than the change below. The one below uses Rich Presences made by Discord, this change uses Rich Presences made by MuMu Rich Presence (If no official rich presence is detected)
+    - This is different from the change below. The one below uses Rich Presences made by Discord, this change uses Rich Presences made by MuMu Rich Presence (If no official rich presence is detected)
 - ⚡️Most games will now show "Playing \<game name>" instead of normally "Playing MuMu Player"
     - Discord has added a ton of mobile games to their "Official Presences" list, which we now also use if we detect any of them!
     - We save a list of these "Official Presences" instead of asking Discord for them every time (`detectable.json`)
@@ -18,7 +18,7 @@
     - A missing dependencies popup will appear with an option to install the update. Pressing "Install Update" will update the app
 - 🦺 Improved startup times for `Auto Update` users. Checking for updates caused the app to wait until checking was done..
 - 🦺 Bugfix: In some cases Rich Presence wasn't removed after MuMu Player closes.
-    - This occurs when MuMu Player is ran as admin while this program was not admin.
+    - This occurs when MuMu Player is run as admin while this program was not admin.
 
 ## v1.2.3
 
