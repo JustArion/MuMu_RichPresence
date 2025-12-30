@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.0.1
+- 🦺 Bugfix: In rare cases on v`5.14`, couldn't detect rich presences from MuMu Player
+
 ## v2.0.0
 - 🦺 Bugfix: Fixed Rich Presences displaying old game durations in some cases
 - ⚡️Rich Presences now have clickable links directing them to the respective game's listing on the Play Store
