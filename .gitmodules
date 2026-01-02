@@ -1,3 +1,3 @@
-[submodule "src/RiotTrayContextTheme"]
-	path = src/RiotTrayContextTheme
-	url = https://github.com/JustArion/RiotTrayContextTheme
+[submodule "Riot Tray Theme"]
+	path = src/Themes/RiotTrayContextTheme
+	url = https://github.com/JustArion/RiotTrayContextTheme/
