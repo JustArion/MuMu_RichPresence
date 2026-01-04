@@ -9,7 +9,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <!-- Don't change this without changing the same in the readme.md and Nuke -->
+    <!-- Don't change this without changing the same in the building.md and Nuke -->
     <AssemblyName>MuMu RichPresence Standalone</AssemblyName>
     <!--                                                                           -->
 
