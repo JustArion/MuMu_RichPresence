@@ -4,6 +4,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Development]
 - 🦺 Bugfix: In rare cases on v`5.14`, couldn't detect rich presences from MuMu Player
+- 🦺 Our build pipeline is now run through [NUKE](https://nuke.build)!
+    - This allows me to focus less on the administrative side of releases and more on actually writing code
+    - From a user perspective, nothing changes
 
 ## [2.0.0] / 2025-12-23
 - 🦺 Bugfix: Fixed Rich Presences displaying old game durations in some cases
