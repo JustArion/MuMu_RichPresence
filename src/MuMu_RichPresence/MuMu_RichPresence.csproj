@@ -9,13 +9,13 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <!-- Don't change this without changing the same in the Makefile and readme.md -->
+    <!-- Don't change this without changing the same in the readme.md and Nuke -->
     <AssemblyName>MuMu RichPresence Standalone</AssemblyName>
     <!--                                                                           -->
 
     <RootNamespace>Dawn.MuMu.RichPresence</RootNamespace>
     <ApplicationIcon>Assets\AppIcon_Blue.ico</ApplicationIcon>
-    <Copyright>https://github.com/JustArion/MuMu_RichPresence/#GPL-2.0-1-ov-file</Copyright>
+    <Copyright>GPL-2.0 license</Copyright>
 
     <!-- This is so that CI can cache nuget dependencies -->
     <DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
@@ -23,10 +23,10 @@
   </PropertyGroup>
 
   <PropertyGroup Label="Versioning">
-    <Version>2.0.0</Version>
+    <!-- The version will be specified via a property flag in CI or in nuke to the latest tag -->
+    <!-- <Version>2.0.0</Version>-->
 
     <AssemblyVersion>$(Version)</AssemblyVersion>
-    <ProductVersion>$Version)</ProductVersion>
   </PropertyGroup>
 
   <PropertyGroup Label="Dotnet Publish Properties">
@@ -50,7 +50,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Winforms Theme">
-    <ProjectReference Include="..\RiotTrayContextTheme\RiotTrayContextTheme.csproj" />
+    <ProjectReference Include="..\Themes\RiotTrayContextTheme\RiotTrayContextTheme.csproj" />
   </ItemGroup>
 
   <ItemGroup Label="Other Packages">
