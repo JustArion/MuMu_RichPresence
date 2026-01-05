@@ -11,7 +11,7 @@
 - [Tray Options](#tray-options)
 - [Custom Launch Args](#custom-launch-args)
 - [Advanced Users](#for-advanced-users)
-- [Building from Source](#building-from-source)
+- [Building from Source](./building.md)
 - [Permissions](#permissions)
 
 ---
@@ -62,7 +62,6 @@
 `& '.\MuMu RichPresence.exe' --extended-logging --seq-url=http://localhost:9999`
 
 ---
-
 ## For advanced users
 
 ### Auto-Startup
