@@ -2,6 +2,7 @@
   <Folder Name="/repo/">
     <Project Path="build/build.csproj" />
   </Folder>
+  
   <Folder Name="/repo/documents/">
     <File Path=".github/permissions.md" />
     <File Path=".github/readme.md" />
@@ -10,6 +11,7 @@
     <File Path=".github/technical-2.md" />
     <File Path="CHANGELOG.md" />
   </Folder>
+  
   <Folder Name="/src/">
     <Project Path="src/MuMu_RichPresence.Tests/MuMu_RichPresence.Tests.csproj" />
     <Project Path="src/MuMu_RichPresence/MuMu_RichPresence.csproj" />
