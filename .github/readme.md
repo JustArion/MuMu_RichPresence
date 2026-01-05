@@ -32,8 +32,9 @@
 
 ---
 ### Previews
-![context-menu-preview](images/TrayContextMenuPreview.png)
 ![rich-presence-preview](images/RichPresencePreview.png)
+![context-menu-preview](images/TrayContextMenuPreview.png)
+
 ---
 
 ### Tray Options
