@@ -43,7 +43,7 @@ $VERSION = '2.0.0'
 git submodule update --init --remote --recursive
 dotnet publish .\src\MuMu_RichPresence\ --runtime win-x64 --output ./bin/
 dotnet tool update -g vpk
-vpk pack --packId 'MuMu-RichPresence' -v "$VERSION" --outputDir 'velopack' --mainExe 'MuMu RichPresence Standalone.exe' --packDir 'bin' --framework net10-x64-desktop
+vpk pack --packId 'MuMu-RichPresence' -v "$VERSION" -e 'MuMu RichPresence Standalone.exe' -o 'velopack' --packTitle 'MuMu - Rich Presence' -p 'bin' --shortcuts 'StartMenuRoot' --framework net10-x64-desktop
 
 "Successfully built to 'velopack'"
 ```
