@@ -11,7 +11,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Don't change this without changing the same in the building.md and Nuke -->
     <AssemblyName>MuMu RichPresence Standalone</AssemblyName>
-    <!--                                                                           -->
+    <!--                                                                         -->
 
     <RootNamespace>Dawn.MuMu.RichPresence</RootNamespace>
     <ApplicationIcon>Assets\AppIcon_Blue.ico</ApplicationIcon>
