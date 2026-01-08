@@ -56,9 +56,13 @@
   <ItemGroup Label="Other Packages">
     <PackageReference Include="DynamicData" Version="9.4.1" />
     <PackageReference Include="Polly" Version="8.6.5" />
-    <PackageReference Include="securifybv.ShellLink" Version="0.1.0" />
+    <!--  Shortcut (.lnk) File parsing  -->
+    <PackageReference Include="securifybv.ShellLink" Version="[0.1.0]" />
     <PackageReference Include="Vanara.PInvoke.Kernel32" Version="4.2.1" />
-    <PackageReference Include="DiscordRichPresence" Version="1.5.0.51" />
+
+    <!-- 1.6.1 is a bad release, https://github.com/Lachee/discord-rpc-csharp/pull/282 is already fixed, but not released yet -->
+    <!-- Only update when there's a higher version than 1.6.1 -->
+    <PackageReference Include="DiscordRichPresence" Version="[1.5.0.51]" />
     <PackageReference Include="Velopack" Version="0.0.1298" />
   </ItemGroup>
 

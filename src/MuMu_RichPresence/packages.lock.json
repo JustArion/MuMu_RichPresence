@@ -4,7 +4,7 @@
     "net10.0-windows7.0": {
       "DiscordRichPresence": {
         "type": "Direct",
-        "requested": "[1.5.0.51, )",
+        "requested": "[1.5.0.51, 1.5.0.51]",
         "resolved": "1.5.0.51",
         "contentHash": "Io6z30fJSUU5XJeEtgZkHbW2IxGojM0svJf4C2JZlVJwiMkmukr7S9O/KjnLxGPmSu2rPc/VfR6D1yzjTl3KrQ==",
         "dependencies": {
@@ -37,7 +37,7 @@
       },
       "securifybv.ShellLink": {
         "type": "Direct",
-        "requested": "[0.1.0, )",
+        "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
         "contentHash": "VjJ8rJi6+yVla8DG1XRthwVneZq2Iojhf0KXwEKqJ+bIgbFTCIMpq33i0/HvPJSS1TdmaoGEnPHmjwP2ibenaA==",
         "dependencies": {
