@@ -2,11 +2,16 @@ using Extensions;
 using JetBrains.Annotations;
 
 [
+    GitHubActions("Run Tests", GitHubActionsImage.WindowsLatest, InvokedTargets = [nameof(Test)],        
+        On = [GitHubActionsTrigger.WorkflowDispatch],
+        CacheIncludePatterns = ["~/.nuget/packages"],
+        CacheKeyFiles = ["**/global.json", "**/*.csproj", "**/Directory.Packages.props", "**/packages.lock.json"],
+        Lfs = true),
     GitHubActions("CI Build", GitHubActionsImage.WindowsLatest, InvokedTargets = [nameof(Velopack)], PublishArtifacts = true,
         Submodules = GitHubActionsSubmodules.Recursive,
         CacheIncludePatterns = ["~/.nuget/packages"],
-        CacheKeyFiles = ["**/global.json", "**/*.csproj", "**/Directory.Packages.props", "**/packages.lock.json"],
-        Lfs = true, OnWorkflowDispatchOptionalInputs = ["Version"]),
+        CacheKeyFiles = ["**/global.json", "**/*.csproj", "**/Directory.Packages.props", "**/packages.lock.json"], 
+        OnWorkflowDispatchOptionalInputs = ["Version"]),
     GitHubActions("Release on Tag", 
         GitHubActionsImage.WindowsLatest,
         InvokedTargets = [nameof(TaggedRelease)],
