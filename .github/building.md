@@ -5,7 +5,7 @@
 
 - [.NET SDK 10.0.X](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/sdk-10.0.100-windows-x64-installer) (x64)
 - [Git](https://git-scm.com/downloads)
-  - Alternatively, [download](https://github.com/JustArion/MuMu_RichPresence/archive/refs/heads/master.zip) the source files yourself
+  - Alternatively, [download](https://github.com/JustArion/MuMu_RichPresence/archive/refs/heads/main.zip) the source files yourself
 
 ```ps1
 git clone https://github.com/JustArion/MuMu_RichPresence && cd "MuMu_RichPresence"
