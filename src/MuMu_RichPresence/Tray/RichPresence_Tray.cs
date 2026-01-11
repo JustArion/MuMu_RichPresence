@@ -102,11 +102,13 @@ public class RichPresence_Tray
         if (!Startup.StartsWithWindows(Application.ProductName!, Application.ExecutablePath))
             return;
 
+        var arg = $"--{LaunchArgs.ToKebabCase(LaunchArgs.RP_DISABLED_ON_START)}";
+
         Startup.StartWithWindows(Application.ProductName!,
             $"\"{Application.ExecutablePath}\" {(
                 enabled
-                    ? Arguments.CommandLine.Replace(LaunchArgs.RP_DISABLED_ON_START, string.Empty)
-                    : $"{Arguments.CommandLine} {LaunchArgs.RP_DISABLED_ON_START}")}");
+                    ? Arguments.CommandLine.Replace(arg, string.Empty)
+                    : $"{Arguments.CommandLine} {arg}")}");
     }
 
     private ToolStripMenuItem HideTray() => new("Hide Tray", null, (_, _) => Tray.Visible = false);

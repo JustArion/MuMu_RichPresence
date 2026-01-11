@@ -54,6 +54,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Other Packages">
+    <PackageReference Include="DotNetEnv" Version="3.1.1" />
     <PackageReference Include="DynamicData" Version="9.4.1" />
     <PackageReference Include="Polly" Version="8.6.5" />
     <!--  Shortcut (.lnk) File parsing  -->

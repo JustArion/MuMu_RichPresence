@@ -62,6 +62,20 @@
 
 `& '.\MuMu RichPresence.exe' --extended-logging --seq-url=http://localhost:9999`
 
+You can also provide a `.env` file in the MuMu_RichPresence's directory or it's parent folders.<br/>
+For the Setup version of Velopack, it's recommended to place the `.env` file in the parent directory (`%AppData%\Local\MuMu-RichPresence\`) since every update wipes everything in the `%AppData%\Local\MuMu-RichPresence\current` folder
+
+`.env` file example:
+```env
+# My Important Settings
+no-file-logging=true
+no-auto-update=true
+
+# Note setting 
+rp-disabled-on-start=false # has no impact and will still be treated as rp-disabled-on-start=true 
+custom-application-id=1339586347576328293
+```
+
 ---
 ## For advanced users
 

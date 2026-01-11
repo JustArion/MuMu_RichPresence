@@ -31,6 +31,12 @@ internal static class Program
     private static void Main(string[] args)
     {
         Environment.CurrentDirectory = AppContext.BaseDirectory; // Startup sets it to %windir%
+
+        // This might throw an access violation if we don't have permissions to read it, we just don't read further when that happens
+        SuppressExceptions(()=> DotNetEnv.Env
+            .TraversePath()
+            .Load());
+
         Arguments = new(args)
         {
             #if DEBUG
@@ -81,6 +87,18 @@ internal static class Program
     }
 
     private static void OnUninstall(SemanticVersion version) => Startup.RemoveStartup(Application.ProductName!);
+
+    private static void SuppressExceptions(Action act)
+    {
+        try
+        {
+            act();
+        }
+        catch
+        {
+            // ignored
+        }
+    }
 
     private static void ReaderSessionsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
