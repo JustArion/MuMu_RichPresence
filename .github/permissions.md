@@ -14,7 +14,7 @@
         - Reads Start Menu shortcuts for `MuMu Player*` / `MuMuPlayer*`
         - Walks the directory of the file found previously (`MuMu Player*` / `MuMuPlayer*`)
             - `../vms/???/logs/shell.log`
-        - Reads the file (`Logs/shell.log`) if it exists
+        - Reads the file (`logs/shell.log`) if it exists
             - See [Technical-Document](technical-1.md)
         - Reads directory changes for a single directory (`Logs/`)
             - The "File System Watcher" watches for changes on `shell.log` only
@@ -40,3 +40,7 @@
         - Looks for the file path of processes [`MuMuPlayer.exe`, `MuMuNxMain.exe`]
         - Checks how many processes of [`MuMuPlayer.exe`, `MuMuNxMain.exe`] are running
             - Clears Rich Presence when process ends
+    - `Inter-Process Communication`
+      - _Can_ connect to Android Debug Bridge (`adb.exe`)
+        - Used to query running apps and activity info from MuMu Emulator
+        - The Local IP is found in `../MuMuPlayerGlobal-12.0/configs/vm_config.json`

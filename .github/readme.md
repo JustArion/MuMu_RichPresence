@@ -47,16 +47,17 @@
 ---
 ### Custom Launch Args
 
-| Argument                  |     Default Value     | Description                                                                                      |
-|:--------------------------|:---------------------:|:-------------------------------------------------------------------------------------------------|
-| --custom-application-id=  |  1339586347576328293  | [Discord Application Id](https://discord.com/developers/applications)                            |
-| --seq-url=                | http://localhost:9999 | Seq Logging Platform                                                                             |
-| --bind-to=                |         `N/A`         | Binds this process to another process' ID. When the other process exits, this one does too       |
-| --extended-logging        |         `N/A`         | File Log Level: Verbose (From Warning)                                                           |
-| --rp-disabled-on-start    |         `N/A`         | Rich Presence is Disabled for *MuMu Emulator*                                                    |
-| --no-file-logging         |         `N/A`         | Disables logging to the file (Located in the current directory)                                  |
-| --no-auto-update          |         `N/A`         | Disables Auto-Updates & Checking for Updates (Only affects Velopack (Portable / Setup) versions) |
-| --hide-tray-icon-on-start |         `N/A`         | Hides the Tray Icon when running `MuMu Rich Presence`                                            |
+| Argument                  |     Default Value     | Description                                                                                       |
+|:--------------------------|:---------------------:|:--------------------------------------------------------------------------------------------------|
+| --custom-application-id=  |  1339586347576328293  | [Discord Application Id](https://discord.com/developers/applications)                             |
+| --seq-url=                | http://localhost:9999 | Seq Logging Platform                                                                              |
+| --bind-to=                |         `N/A`         | Binds this process to another process' ID. When the other process exits, this one does too        |
+| --extended-logging        |         `N/A`         | File Log Level: Verbose (From Warning)                                                            |
+| --rp-disabled-on-start    |         `N/A`         | Rich Presence is Disabled for *MuMu Emulator*                                                     |
+| --no-file-logging         |         `N/A`         | Disables logging to the file (Located in the current directory)                                   |
+| --no-auto-update          |         `N/A`         | Disables Auto-Updates & Checking for Updates (Only affects Velopack (Portable / Setup) versions)  |
+| --hide-tray-icon-on-start |         `N/A`         | Hides the Tray Icon when running `MuMu Rich Presence`                                             |
+| --adb-experimental        |         `N/A`         | Enables an experimental mode where we don't look for presences in a log file but instead ask MuMu |
 
 **Launch Args Example**
 

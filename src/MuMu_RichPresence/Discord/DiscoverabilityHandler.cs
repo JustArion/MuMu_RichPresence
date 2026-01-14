@@ -7,7 +7,7 @@ using Polly.Retry;
 
 namespace Dawn.MuMu.RichPresence.Discord;
 
-internal class DiscoverabilityHandler
+public class DiscoverabilityHandler
 {
     private static readonly JsonSerializerOptions _options = new() { PropertyNamingPolicy =  JsonNamingPolicy.CamelCase };
 
@@ -134,7 +134,9 @@ internal class DiscoverabilityHandler
         return null;
     }
 
-    public async Task<string?> TryGetOfficialApplicationId(string appName)
+    public async ValueTask<bool> IsOfficialGame(string appName) => !string.IsNullOrWhiteSpace(await TryGetOfficialApplicationId(appName));
+
+    public async ValueTask<string?> TryGetOfficialApplicationId(string appName)
     {
         // There's a possibility that within the time it takes to create a task this method (TryGetOfficialApplicationId) can get called
         // Resulting in the semaphore getting passed to this method first, instead of PopulateDiscoverablePresences.

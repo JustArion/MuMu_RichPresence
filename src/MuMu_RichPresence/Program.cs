@@ -2,7 +2,10 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Dawn.MuMu.RichPresence.Discord;
+using Dawn.MuMu.RichPresence.MuMu.Interop;
 using DynamicData.Binding;
 using NuGet.Versioning;
 using Velopack;
@@ -104,7 +107,7 @@ internal static class Program
     {
         try
         {
-            Log.Debug("[{ChangeType}] Session Updated", e.Action);
+            Log.Debug("[{ChangeType}] Session Updated {PossibleNewItems}", e.Action, e.NewItems);
 
             var logReader = _logReader!;
             if (e.Action != NotifyCollectionChangedAction.Add)
@@ -169,25 +172,11 @@ internal static class Program
         RemovePresence();
     }
 
-    private static MuMuSessionLifetime? GetFocusedApp(ObservableCollection<MuMuSessionLifetime> sessions)
-    {
-        foreach (var session in sessions)
-        {
-            if (AppLifetimeParser.IsSystemLevelPackage(session.PackageName))
-                continue;
-
-            if (session.AppState.Value is AppState.Focused or AppState.Started)
-                return session;
-        }
-
-        return null;
-    }
-
     private static void OnRichPresenceEnabledChanged(object? sender, bool active)
     {
         if (active)
         {
-            if (_currentPresence is not { } presence)
+            if (_richPresenceHandler.CurrentPresence is not { } presence)
                 return;
 
             if (_focusedLifetime == null)
@@ -200,19 +189,43 @@ internal static class Program
             return;
         }
 
-        _richPresenceHandler.ClearPresence(_focusedLifetime?.Title);
+        ClearPresence(_focusedLifetime);
     }
 
     private static void RemovePresence()
     {
-        var title = _focusedLifetime?.Title;
-        if (Interlocked.Exchange(ref _focusedLifetime, null) == null)
+        // Basically an atomic version of
+        // var lifetime = _focusedLifetime;
+        // if (_focusedLifetime == null) return;
+        // _focusedLifetime = null;
+        if (Interlocked.Exchange(ref _focusedLifetime, null) is not { } lifetime)
             return;
 
-        _richPresenceHandler.ClearPresence(title);
+        ClearPresence(lifetime);
     }
 
-    private static volatile RichPresence? _currentPresence;
+    private static void ClearPresence(MuMuSessionLifetime? lifetime)
+    {
+        var appName = _richPresenceHandler.CurrentPresence?.Details ?? lifetime?.Title;
+        if (string.IsNullOrWhiteSpace(appName))
+        {
+            Log.Warning("Unable to find a name associated with the current presence! {LifetimeInfo}", lifetime);
+            return;
+        }
+
+        var vt = _discoverabilityHandler.IsOfficialGame(appName);
+
+        var isOfficialGame = vt.IsCompletedSuccessfully
+            ? vt.Result
+            : vt.AsTask().GetAwaiter().GetResult();
+
+        if (isOfficialGame)
+            RichPresenceHandler.PrependOfficialGameTag(ref appName);
+
+        Log.Debug("Clearing Rich Presence for {AppName}", appName);
+        _richPresenceHandler.ClearPresence();
+    }
+
     private static string? _currentApplicationId;
     private static MuMuSessionLifetime? _focusedLifetime;
     private static CancellationTokenSource? _processSubscriptionCts = new();
@@ -248,7 +261,6 @@ internal static class Program
             return retVal;
 
         _currentApplicationId = officialApplicationId;
-        _currentPresence = presence;
         await RemovePresenceOnMuMuPlayerExit(emulatorProcessName);
 
         return retVal;

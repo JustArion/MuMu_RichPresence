@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Dawn.MuMu.RichPresence.Logging.Serilog;
 using Dawn.MuMu.RichPresence.Models;
+using Dawn.MuMu.RichPresence.MuMu.Interop;
 using Dawn.MuMu.RichPresence.Tools;
 
 namespace Dawn.MuMu.RichPresence.MuMu;
@@ -35,7 +36,7 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
         // Wait till the file exists
         if (!File.Exists(filePath))
         {
-            Log.Debug("File not found: Service.log");
+            Log.Debug("File not found: Shell.log");
             await Task.Delay(TimeSpan.FromSeconds(5));
         }
 
@@ -114,9 +115,24 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
                     "Caught up in {ExecutionDuration:F}ms (Processed {EventsProcessed} events), emitting {SessionInfo}",
                     Stopwatch.GetElapsedTime(ts).TotalMilliseconds, processedEvents, lifetime);
             else
-                Log.Verbose(
-                    "Caught up in {ExecutionDuration:F}ms, no games are currently running (Processed {EventsProcessed} events)",
-                    Stopwatch.GetElapsedTime(ts).TotalMilliseconds, sessions.Count);
+            {
+                var game = await MuMuADB.TryFindGame();
+                if (!game.HasValue)
+                    Log.Verbose("Caught up in {ExecutionDuration:F}ms, no games are currently running (Processed {EventsProcessed} events)", Stopwatch.GetElapsedTime(ts).TotalMilliseconds, sessions.Count);
+                else
+                {
+                    var info = game.Value;
+                    Sessions.Add(new MuMuSessionLifetime {
+                        AppState = new() { Value = AppState.Focused },
+                        Title = info.Title,
+                        PackageName = info.AppInfo.PackageName,
+                        StartTime = info.AppInfo.StartTime
+                    });
+
+                    Log.Debug("Set app session via ADB");
+                }
+            }
+
 
             Log.Debug("CatchUp: Read {Lines} lines ({FileSize:F2} mb)[{Position}]", linesRead,
                 Math.Round(fileSizeReadMB, 2), reader.BaseStream.Position);

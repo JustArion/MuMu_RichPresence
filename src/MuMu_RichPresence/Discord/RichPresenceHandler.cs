@@ -13,7 +13,7 @@ public class RichPresenceHandler
     private string _currentApplicationId;
 
     private DiscordRpcClient? _client;
-    private DiscordRPC.RichPresence? _currentPresence;
+    public DiscordRPC.RichPresence? CurrentPresence { get; private set; }
     private CancellationTokenSource? _presenceLifetimePollSource;
     private readonly Lock _sync = new();
 
@@ -61,7 +61,7 @@ public class RichPresenceHandler
             using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
 
             while (await timer.WaitForNextTickAsync(token) && ApplicationFeatures.GetFeature(x => x.RichPresenceEnabled))
-                _client?.SetPresence(_currentPresence);
+                _client?.SetPresence(CurrentPresence);
         }, TaskCreationOptions.LongRunning, token);
     }
 
@@ -71,7 +71,7 @@ public class RichPresenceHandler
             return;
 
         // We clear up some ghosting
-        if (_currentPresence != null)
+        if (CurrentPresence != null)
             return;
 
         Log.Verbose("Attempting to correct some rich presence ghosting");
@@ -99,7 +99,7 @@ public class RichPresenceHandler
     {
         lock (_sync)
         {
-            if (!ApplicationFeatures.GetFeature(x => x.RichPresenceEnabled) || _currentPresence == presence)
+            if (!ApplicationFeatures.GetFeature(x => x.RichPresenceEnabled) || CurrentPresence == presence)
             {
                 Log.Verbose("Rich Presence is disabled");
                 return false;
@@ -113,13 +113,14 @@ public class RichPresenceHandler
             if (presence != null)
             {
                 // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                if (applicationId == _sessionApplicationId)
-                    Log.Information("Setting Rich Presence for {GameTitle}", presenceName);
-                else // We indicate with • that it's an official rich presence
-                    Log.Information("Setting Rich Presence for • {GameTitle}", presenceName);
+                // We indicate with • that it's an official rich presence
+                if (applicationId != _sessionApplicationId)
+                    PrependOfficialGameTag(ref presenceName);
+
+                Log.Information("Setting Rich Presence for {GameTitle}", presenceName);
             }
 
-            _currentPresence = presence;
+            CurrentPresence = presence;
             _client?.SetPresence(presence);
 
             EnsurePresenceLifetime();
@@ -127,15 +128,13 @@ public class RichPresenceHandler
         }
     }
 
-    public void ClearPresence(string? presenceName = null)
+    public static void PrependOfficialGameTag(ref string str) => str = $"• {str}";
+
+    public void ClearPresence()
     {
         lock (_sync)
         {
-            if (_currentPresence != null)
-            {
-                Log.Debug("Clearing Rich Presence for {AppName}", _currentPresence.Details ?? presenceName);
-                _currentPresence = null;
-            }
+            CurrentPresence = null;
 
             _client?.ClearPresence();
             // We don't need to reset the application id since we're not disposing the client, we're just clearing the presence

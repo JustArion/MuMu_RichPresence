@@ -60,21 +60,21 @@ internal static partial class AppLifetimeParser
                 if (!isNewTask)
                     return;
 
-                Log.Verbose("Creating AppInfo Event: {AppInfo}", new { packageName, startTime, pid, isNewTask });
+                // Log.Debug("Creating AppInfo Event: {AppInfo}", new { packageName, startTime, pid, isNewTask });
                 CreateAppLaunchEvent(info, packageName, startTime, pid, lifetimes, graveyard);
                 return;
             }
 
             if (IsTabCloseEvent(info, out packageName))
             {
-                Log.Verbose("Creating TabClose Event: {AppCloseEvent}", packageName);
+                // Log.Debug("Creating TabClose Event: {AppCloseEvent}", packageName);
                 CreateTabCloseEvent(packageName, lifetimes, graveyard);
                 return;
             }
 
             if (IsFocusEvent(info, out packageName, out var title, out startTime, out pid))
             {
-                Log.Verbose("Creating FocusEvent: {AppFocusEvent}", new { packageName, title, startTime, pid });
+                // Log.Debug("Creating FocusEvent: {AppFocusEvent}", new { packageName, title, startTime, pid });
                 CreateFocusEvent(info, packageName, title, startTime, pid, lifetimes, graveyard);
             }
 
@@ -139,7 +139,7 @@ internal static partial class AppLifetimeParser
         }
 
 
-        Log.Verbose("[{StartTime:hh:mm}] App Launched: {PackageName}", existingLifetime.StartTime.ToLocalTime(), packageName);
+        // Log.Debug("[{StartTime:hh:mm}] App Launched: {PackageName}", existingLifetime.StartTime.ToLocalTime(), packageName);
         return;
 
         void OnExit(int exitCode)
@@ -147,7 +147,7 @@ internal static partial class AppLifetimeParser
             try
             {
                 ClearTabLifetime(existingLifetime, lifetimes, graveyard);
-                Log.Debug("The gravekeeper has come for {LifetimePackageName}, MuMu Player has exited ({ExitCode})", existingLifetime.PackageName, exitCode);
+                // Log.Debug("The gravekeeper has come for {LifetimePackageName}, MuMu Player has exited ({ExitCode})", existingLifetime.PackageName, exitCode);
             }
             catch
             {
@@ -200,7 +200,7 @@ internal static partial class AppLifetimeParser
         foreach (var lifetime in lifetimes.Where(x => x != existingLifetime))
             lifetime.AppState.Value = AppState.Unfocused;
 
-        Log.Verbose("[{StartTime:hh:mm}] Focused: {Title} ({PackageName})", existingLifetime.StartTime.ToLocalTime(), title, packageName);
+        // Log.Debug("[{StartTime:hh:mm}] Focused: {Title} ({PackageName})", existingLifetime.StartTime.ToLocalTime(), title, packageName);
 
         try
         {

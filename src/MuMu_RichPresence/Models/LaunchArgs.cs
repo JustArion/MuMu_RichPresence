@@ -33,6 +33,8 @@ public struct LaunchArgs
             ProcessBinding = pid;
             HasProcessBinding = true;
         }
+
+        ExperimentalADB = Contains("ADB Experimental", args);
     }
 
     public IReadOnlyList<string> RawArgs { get; }
@@ -44,6 +46,7 @@ public struct LaunchArgs
     public bool NoFileLogging { get; }
     public bool ExtendedLogging { get; init; }
     public bool NoAutoUpdate { get; }
+    public bool ExperimentalADB { get; }
 
     public bool HasCustomApplicationId { get; }
     public string CustomApplicationId { get; }

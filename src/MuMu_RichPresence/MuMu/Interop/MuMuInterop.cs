@@ -1,0 +1,82 @@
+﻿using System.Text;
+using System.Text.RegularExpressions;
+
+namespace Dawn.MuMu.RichPresence.MuMu.Interop;
+
+public partial class MuMuInterop(ConnectionInfo info) : IMuMuInterop
+{
+    [GeneratedRegex(@"^\W+?ResumedActivity: ActivityRecord{.+?\b(?'PackageName'[a-zA-Z0-9._]+(?:\.[a-zA-Z0-9_]+)*)\/.+?}", RegexOptions.Multiline)]
+    private partial Regex GetForegroundApp();
+
+    /*  We're executing this:
+
+        clk=$(getconf CLK_TCK)
+        boot=$(awk '{print int($1)}' /proc/uptime)
+        start_ticks=$(awk '{print $22}' /proc/<our_pid>/stat)
+        start=$((start_ticks / clk))
+        now=$(date +%s)
+        echo $((now - boot + start))
+     */
+    private async Task<int> GetStartTime(int pid)
+    {
+        var sb = new StringBuilder();
+        // Gets the amount of ticks per second (Usually 100)
+        sb.AppendLine("clk=$(getconf CLK_TCK)");
+
+        // Gets the amount of ticks elapsed since system start
+        sb.AppendLine("boot=$(awk '{print int($1)}' /proc/uptime)");
+
+        // https://man7.org/linux/man-pages/man5/proc_pid_stat.5.html
+        // We get the 22nd field in stat, which according to the man pages is the `starttime`
+        sb.AppendLine($"start_ticks=$(awk '{{print $22}}' /proc/{pid}/stat)");
+
+        // Gets the start time
+        sb.AppendLine("start=$((start_ticks / clk))");
+
+        // Gets the current time
+        sb.AppendLine("now=$(date +%s)");
+
+        // Prints the process's start time as a unix timestamp
+        sb.AppendLine("echo $((now - boot + start))");
+
+        var command = string.Join(" && ", sb.ToString()
+            .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries));
+
+        return await info.Execute<int>(command);
+    }
+
+    /*  We're executing this:
+
+        dumpsys activity activities | grep ResumedActivity
+        pidof <package_name>
+        -> GetStartTime
+    */
+    public async Task<AppInfo> GetForegroundAppInfo()
+    {
+        await using (await info.Connect())
+        {
+            // topResumedActivity=ActivityRecord{9846be1 u0 com.YoStarEN.Arknights/com.u8.sdk.U8UnityContext t365}
+            // topResumedActivity=ActivityRecord{321bd4c u0 app.lawnchair/.LawnchairLauncher t2}
+            // ResumedActivity: ActivityRecord{9846be1 u0 com.YoStarEN.Arknights/com.u8.sdk.U8UnityContext t365}
+            var result = await info.Execute("dumpsys activity activities | grep ResumedActivity");
+            var match = GetForegroundApp().Match(result);
+
+            if (!match.Success)
+                throw new Exception($"Could not find AppInfo, can't match {GetForegroundApp()} to {result}");
+
+            var packageName = match.Groups["PackageName"].Value;
+
+            var pid = await info.Execute<int>($"pidof {packageName}");
+
+            var startTime = await GetStartTime(pid);
+
+            return new AppInfo(packageName, pid, DateTimeOffset.FromUnixTimeSeconds(startTime));
+        }
+    }
+
+    /*  We're executing this:
+
+        cat /proc/<pid>/<path>
+     */
+    public async Task<string> GetInfo(AppInfo info1, string path) => await info.Execute($"cat /proc/{info1.Pid}/{path}");
+}
