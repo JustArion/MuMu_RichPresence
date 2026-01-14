@@ -160,8 +160,12 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
                     return;
                 }
 
-                Log.Debug("Prevented a ghost truncation event. (MuMu wipes the log file while the app is currently running), previous size: {PreviousSize:F2} kb", prevSize);
-                _lastStreamPosition = reader.BaseStream.Position;
+                var newPosition = reader.BaseStream.Position;
+                // What is a running truncation event?
+                // It's when the file gets cleaned out (there's nothing in it anymore) while the emulator is running (opposed to starting up)
+                // - We read from the new position of the stream (probably 0)
+                Log.Debug("Observed a running truncation event. (MuMu wipes the log file while the app is currently running), previous size: {PreviousSize:F2} kb, new position: {Position}", prevSize, newPosition);
+                _lastStreamPosition = newPosition;
             }
 
             // We read new things being added from here onwards
