@@ -1,9 +1,16 @@
-﻿using FileAccess = System.IO.FileAccess;
+﻿using Polly;
+using Polly.Retry;
+using FileAccess = System.IO.FileAccess;
 
 namespace Dawn.MuMu.RichPresence.Tools;
 
 internal sealed class FileLock : IAsyncDisposable
 {
+    private const int MAX_RETRIES = 3;
+    private static readonly RetryPolicy<FileStream> _retryPolicy = Policy<FileStream>
+        .Handle<IOException>()
+        .WaitAndRetry(MAX_RETRIES, _ => TimeSpan.FromMilliseconds(50));
+
     private readonly FileStream _fileLock;
     public StreamReader Reader { get; }
 
@@ -16,7 +23,8 @@ internal sealed class FileLock : IAsyncDisposable
 
         LockFile = new (filePath);
 
-        _fileLock = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        _fileLock = _retryPolicy.Execute(() => File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete));
+        // _fileLock = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         Reader = new StreamReader(_fileLock);
     }
 
