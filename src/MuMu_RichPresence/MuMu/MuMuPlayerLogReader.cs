@@ -67,7 +67,6 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
             var ts = Stopwatch.GetTimestamp();
             var reader = fileLock.Reader;
             var sessions = new ObservableCollection<MuMuSessionLifetime>();
-            var linesRead = 0L;
             var fileSizeReadMB = 0D;
 
 
@@ -92,12 +91,10 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
 
                     await using var oldFileLock = FileLock.Aquire(oldLogFile.FullName);
                     await GetAllSessionInfos(oldFileLock, sessions, SessionGraveyard);
-                    linesRead += _initialLinesRead;
                     fileSizeReadMB += oldFileLock.Reader.BaseStream.Length / Math.Pow(1024, 2);
                 }
 
                 await GetAllSessionInfos(fileLock, sessions, SessionGraveyard);
-                linesRead += _initialLinesRead;
                 fileSizeReadMB += reader.BaseStream.Length / Math.Pow(1024, 2);
             }
             _lastStreamPosition = reader.BaseStream.Position;
@@ -138,8 +135,7 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
             }
 
 
-            Log.Debug("CatchUp: Read {Lines} lines ({FileSize:F2} mb)[{Position}]", linesRead,
-                Math.Round(fileSizeReadMB, 2), reader.BaseStream.Position);
+            Log.Debug("CatchUp: Read {FileSize:F2}mb", Math.Round(fileSizeReadMB, 2));
         }
         catch (Exception e)
         {
