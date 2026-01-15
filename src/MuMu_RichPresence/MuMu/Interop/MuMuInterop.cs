@@ -115,4 +115,42 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
         return null;
     }
 
+    // --
+    public static async Task<IMuMuInterop?> TryCreate()
+    {
+        var config = await GetVMConfig();
+        if (config is null)
+            return null;
+
+        var adb = Pathfinder.GetADBFileInfo();
+        if (adb is null)
+            return null;
+
+        var port = config.VM.NAT.PortForward.ADB;
+        if (!int.TryParse(port.HostPort, out var portNumber) || string.IsNullOrWhiteSpace(port.GuestIP))
+            return null;
+
+        var connectionInfo = new ConnectionInfo(port.GuestIP, portNumber, adb.FullName);
+        return new MuMuInterop(connectionInfo);
+    }
+
+    // The VM Config contains the local IP of the emulator, which we can use to connect to via ADB,
+    // MuMu also has 2 identical versions of ADB, we can use them
+    private static async Task<VMConfig?> GetVMConfig()
+    {
+        var rootPath = Pathfinder.TryGetRootDirectoryFromProcess();
+
+        var vms = rootPath?.GetDirectories("vms").FirstOrDefault();
+
+        var configFile = vms?.GetFiles("vm_config.json", SearchOption.AllDirectories).FirstOrDefault();
+
+        if (configFile is not { Exists: true})
+            return null;
+
+        await using var file = configFile.OpenRead();
+
+        var config = await JsonSerializer.DeserializeAsync<VMConfig>(file);
+
+        return config;
+    }
 }
