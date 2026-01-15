@@ -58,12 +58,10 @@ public class LogWatcher : IDisposable
 
         _logFileWatcher.EnableRaisingEvents = _shouldRaiseEvents;
 
-        Log.Verbose("Log Watcher created!");
-
-        Log.Verbose("MuMu logs are fully buffered. We need to poke the logs for the watcher to register an update, poking every 100ms");
+        Log.Verbose("MuMu logs are fully buffered. We need to poke the logs for the watcher to register an update, poking every second");
         Task.Run(async () =>
         {
-            var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(100));
+            var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
 
             while (await timer.WaitForNextTickAsync(_pokeCTS.Token))
                 file.LastAccessTime = DateTime.Now;

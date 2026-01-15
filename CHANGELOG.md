@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ⚡️Added an experimental launch argument `--adb-experimental` that uses `ADB` instead of watching log files, to show Rich Presences
 - ⚡️If no Rich Presence is detected when the app starts, will try to ask `ADB` if there's a running app
   - This is a fallback measure for installing MuMu_RichPresence while MuMu is running for a while
+- 🦺 Changed checking the log file for updates from every `100ms` to every `1 second`
 
 ## [2.0.0] / 2025-12-23
 - 🦺 Bugfix: Fixed Rich Presences displaying old game durations in some cases
