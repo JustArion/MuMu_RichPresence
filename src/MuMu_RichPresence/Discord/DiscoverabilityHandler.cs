@@ -119,10 +119,6 @@ public class DiscoverabilityHandler
                 => await client.GetFromJsonAsync<DiscoverableRichPresence[]?>(
                     "https://discord.com/api/v9/games/detectable", _options));
 
-            var count = retVal?.Length ?? 0;
-
-            Log.Verbose("Got {DiscoverableRichPresenceCount} Official Rich Presence Ids", count);
-
             return retVal;
         }
         catch (HttpRequestException) { }
