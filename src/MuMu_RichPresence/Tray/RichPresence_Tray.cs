@@ -65,7 +65,7 @@ public class RichPresence_Tray
     {
         foreach (ToolStripItem item in items)
         {
-            item.Click += (_, _) => Log.Verbose("OnMenuItemClick: {MenuItemText}", item.Text);
+            item.Click += (_, _) => Log.Verbose("OnMenuItemClick: {MenuItemText}", item.Text?.Trim());
 
             if (item is ToolStripMenuItem menuItem)
                 LogInteractionsRecursively(menuItem.DropDownItems);
