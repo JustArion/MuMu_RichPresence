@@ -105,6 +105,8 @@ internal static class Program
 
     private static void ReaderSessionsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        if (e.Action == NotifyCollectionChangedAction.Reset)
+            return; // We don't care about reset events
         try
         {
             Log.Debug("[{ChangeType}] Session Updated {PossibleNewItems}", e.Action, e.NewItems);
