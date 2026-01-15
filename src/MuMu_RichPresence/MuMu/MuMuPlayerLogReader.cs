@@ -151,7 +151,7 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
         }
     }
 
-    private void LogFileWatcherOnError(object? _, ErrorEventArgs e) => Log.Error(e.GetException(), "File watcher error");
+    private static void LogFileWatcherOnError(object? _, ErrorEventArgs e) => Log.Error(e.GetException(), "File watcher error");
 
     private bool _reading;
     private void LogFileWatcherOnFileChanged(object? _, FileSystemEventArgs args)
