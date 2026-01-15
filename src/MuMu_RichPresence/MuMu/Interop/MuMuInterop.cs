@@ -1,9 +1,12 @@
 ﻿using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
+using Dawn.MuMu.RichPresence.Models;
+using Dawn.MuMu.RichPresence.Tools;
 
 namespace Dawn.MuMu.RichPresence.MuMu.Interop;
 
-public partial class MuMuInterop(ConnectionInfo info) : IMuMuInterop
+public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
 {
     [GeneratedRegex(@"^\W+?ResumedActivity: ActivityRecord{.+?\b(?'PackageName'[a-zA-Z0-9._]+(?:\.[a-zA-Z0-9_]+)*)\/.+?}", RegexOptions.Multiline)]
     private partial Regex GetForegroundApp();
@@ -79,4 +82,37 @@ public partial class MuMuInterop(ConnectionInfo info) : IMuMuInterop
         cat /proc/<pid>/<path>
      */
     public async Task<string> GetInfo(AppInfo info, string path, CancellationToken token = default) => await adb.Execute($"cat /proc/{info.Pid}/{path}", token: token);
+
+    // Gets the focused non-system app
+    public async Task<AndroidProcess?> GetFocusedApp(CancellationToken token = default)
+    {
+        // This times out if the emulator is starting up, since ADB waits for the emulator to fully start up
+        // We can reasonably say that there's no focused app at that point
+        if (token == CancellationToken.None)
+            token = new CancellationTokenSource(TimeSpan.FromSeconds(5)).Token;
+        AppInfo app;
+        try
+        {
+            app = await GetForegroundAppInfo(token);
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+
+        if (app == default)
+            return null;
+
+        if (AppLifetimeParser.IsSystemLevelPackage(app.PackageName))
+            return null;
+
+        var info = await PlayStoreWebScraper.TryGetPackageInfo(app.PackageName);
+
+        if (info != null)
+            return new(info.Title, app);
+
+        Log.Debug("Could not find a title for Package '{PackageName}'",  app.PackageName);
+        return null;
+    }
+
 }
