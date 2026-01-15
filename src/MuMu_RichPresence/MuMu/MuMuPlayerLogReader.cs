@@ -31,7 +31,7 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
 
     private async Task InitiateWatchOperation()
     {
-        Log.Verbose("Doing fresh read-operation pass on file {Path}", filePath);
+        Log.Verbose("Doing fresh read-operation pass on file {Path}", Path.GetFileName(filePath));
 
         // Wait till the file exists
         if (!File.Exists(filePath))
