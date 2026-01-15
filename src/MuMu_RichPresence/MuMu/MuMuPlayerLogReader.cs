@@ -102,8 +102,12 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
             }
             _lastStreamPosition = reader.BaseStream.Position;
 
+            // ReSharper disable ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+            // I have noticed that very rarely the session lifetime (x) can be null
+            // TODO: we should investigate the root cause later, for now we treat it as nullable
             var processedEvents = sessions.Select(x => x?.PackageLifetimeEntries?.Count ?? 0).Sum() +
                                   SessionGraveyard.Select(x => x?.PackageLifetimeEntries?.Count ?? 0).Sum();
+            // ReSharper restore ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
 
             Sessions.Clear();
             foreach (var session in sessions)
