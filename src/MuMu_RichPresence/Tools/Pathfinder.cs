@@ -79,7 +79,7 @@ internal static class Pathfinder
 
 
     [SupportedOSPlatform("windows")]
-    internal static bool TryGetFromShortcut(out FileInfo logPath)
+    public static bool TryGetFromShortcut(out FileInfo logPath)
     {
         Log.Verbose("Trying to get path from shortcut");
         logPath = null!;
@@ -124,7 +124,7 @@ internal static class Pathfinder
 
     private static FileInfo GetLogPathFromBaseDirectory(DirectoryInfo mumuDirectory)
     {
-        Log.Verbose("Trying to get from {Directory}", mumuDirectory.FullName);
+        Log.Verbose("Trying to get the logs path from {Directory}", mumuDirectory.FullName);
         // MuMuPlayerGlobal-12.0\vms
         var vms = mumuDirectory.Parent!.GetDirectories("vms").First();
 
