@@ -64,6 +64,31 @@ internal static class Pathfinder
         return retVal;
     }
 
+    public static FileInfo? GetADBFileInfo() => TryGetRootDirectoryFromProcess()?.GetFiles("adb.exe", SearchOption.AllDirectories).FirstOrDefault();
+
+    public static DirectoryInfo? TryGetRootDirectoryFromProcess()
+    {
+        var emulator = Process.GetProcessesByName("MuMuNxDevice").FirstOrDefault();
+        if (emulator == null)
+        {
+            Log.Debug("Could not get root from emulator process: The emulator is not running");
+            return null;
+        }
+
+        // ..\MuMuPlayerGlobal-12.0\nx_device\12.0\shell\MuMuNxDevice.exe
+        var processPath = emulator.MainModule!.FileName;
+
+        // Process Directory: ..\MuMuPlayerGlobal-12.0\nx_device\12.0\shell\
+        // ../../.. is 3 parents up (shell -> 12.0, 12.0 -> nx_device, nx_device -> root
+        // ..\MuMuPlayerGlobal-12.0
+        var rootPath = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(processPath)!, "../../../"));
+
+        if (!rootPath.Exists)
+            Log.Debug("Could not get root from emulator process: Root does not exist. The process path is {ProcessPath}", processPath);
+
+        return !rootPath.Exists ? null : rootPath;
+    }
+
 
     internal static readonly string[] EmulatorProcessNames =
         [
