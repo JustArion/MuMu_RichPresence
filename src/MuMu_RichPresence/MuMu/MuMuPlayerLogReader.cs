@@ -110,29 +110,7 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
             foreach (var session in sessions)
                 Sessions.Add(session);
 
-            // Emitting means that there's a game currently running AFTER we started, meaning we flag it for the Rich Presence to trigger
-            if (sessions.FirstOrDefault(x => x.AppState.Value is AppState.Focused or AppState.Started) is { } lifetime)
-                Log.Verbose(
-                    "Caught up in {ExecutionDuration:F}ms (Processed {EventsProcessed} events), emitting {SessionInfo}",
-                    Stopwatch.GetElapsedTime(ts).TotalMilliseconds, processedEvents, lifetime);
-            else
-            {
-                var game = await MuMuADB.TryFindGame();
-                if (!game.HasValue)
-                    Log.Verbose("Caught up in {ExecutionDuration:F}ms, no games are currently running (Processed {EventsProcessed} events)", Stopwatch.GetElapsedTime(ts).TotalMilliseconds, sessions.Count);
-                else
-                {
-                    var info = game.Value;
-                    Sessions.Add(new MuMuSessionLifetime {
-                        AppState = new() { Value = AppState.Focused },
-                        Title = info.Title,
-                        PackageName = info.AppInfo.PackageName,
-                        StartTime = info.AppInfo.StartTime
-                    });
-
-                    Log.Debug("Set app session via ADB");
-                }
-            }
+            await CatchUpSync(sessions, ts, processedEvents);
 
 
             Log.Debug("CatchUp: Read {FileSize:F2}mb", Math.Round(fileSizeReadMB, 2));
@@ -140,6 +118,36 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
         catch (Exception e)
         {
             Log.Error(e, "Failed to read the file {FilePath}", filePath);
+        }
+    }
+
+    private async Task CatchUpSync(ObservableCollection<MuMuSessionLifetime> sessions, long ts, int processedEvents)
+    {
+        // Emitting means that there's a game currently running AFTER we started, meaning we flag it for the Rich Presence to trigger
+        if (sessions.FirstOrDefault(x => x.AppState.Value is AppState.Focused or AppState.Started) is { } lifetime)
+            Log.Verbose(
+                "Caught up in {ExecutionDuration:F0}ms (Processed {EventsProcessed} events), emitting {SessionInfo}",
+                Stopwatch.GetElapsedTime(ts).TotalMilliseconds, processedEvents, lifetime);
+        else
+        {
+            var mumuInterop = await MuMuInterop.TryCreate();
+
+            var adbTS = Stopwatch.GetTimestamp();
+            if (mumuInterop != null && await mumuInterop.GetFocusedApp() is { } focusedApp)
+            {
+                Sessions.Add(new MuMuSessionLifetime {
+                    AppState = new() { Value = AppState.Focused },
+                    Title = focusedApp.Title,
+                    PackageName = focusedApp.AppInfo.PackageName,
+                    StartTime = focusedApp.AppInfo.StartTime
+                });
+
+                Log.Debug("Got session from ADB ({ExecutionTime:F0})", Stopwatch.GetElapsedTime(adbTS));
+            }
+            else
+                Log.Verbose("Caught up in {ExecutionDuration:F0}ms, no games are currently running (Processed {EventsProcessed} events)",
+                    Stopwatch.GetElapsedTime(ts).TotalMilliseconds,
+                    sessions.Count);
         }
     }
 
