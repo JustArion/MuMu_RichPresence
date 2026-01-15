@@ -21,6 +21,9 @@
         - Reads a single registry key (`\HKCU\Software\Microsoft\Windows\CurrentVersion\Run\MuMu RichPresence`)
             - Run on Startup
         - Reads the first `.env` file it finds in either the current `.exe` directory or in its parent's (recursively)
+        - Walks to the root directory from `MuMuNxDevice.exe` (MuMuPlayerGlobal-12.0)
+          - Searches for any files in the root directory and subdirectories for `adb.exe` 
+          - Searches for the `vms` directory in the root directory, then searches in subdirectories for `vm_config.json`
 - `Network`
     - `Download Access`
         - _Can_ download updates from `https://github.com/JustArion/MuMu_RichPresence`
