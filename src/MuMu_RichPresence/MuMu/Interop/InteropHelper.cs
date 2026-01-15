@@ -11,15 +11,15 @@ public static class InteropHelper
 {
     extension(ConnectionInfo info)
     {
-        public async Task<IAsyncDisposable> Connect()
+        public async Task<IAsyncDisposable> Connect(CancellationToken token = default)
         {
-            if (!await info.ConnectInternal() && !await info.ConnectInternal(true))
+            if (!await info.ConnectInternal(token: token) && !await info.ConnectInternal(true, token))
                 throw new Exception("Could not connect to ADB");
 
             return new AnonymousAsyncDisposable(async ()=> await info.Disconnect());
         }
 
-        private async Task<bool> ConnectInternal(bool useFallback = false)
+        private async Task<bool> ConnectInternal(bool useFallback = false, CancellationToken token = default)
         {
             var port = useFallback
                 ? ConnectionInfo.FALLBACK_PORT
@@ -35,7 +35,7 @@ public static class InteropHelper
                 .WithArguments(arg)
                 .WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdOut))
                 .WithStandardErrorPipe(PipeTarget.ToStringBuilder(stdErr))
-                .ExecuteAsync();
+                .ExecuteAsync(token);
 
             var @out = stdOut.ToString();
             var err = stdErr.ToString();
@@ -56,7 +56,7 @@ public static class InteropHelper
                 .ExecuteAsync();
         }
 
-        public async Task<T> Execute<T>(string command) where T : IParsable<T>
+        public async Task<T> Execute<T>(string command, CancellationToken token = default) where T : IParsable<T>
         {
             var stdOut = new StringBuilder();
             var stdErr = new StringBuilder();
@@ -64,7 +64,7 @@ public static class InteropHelper
                 .WithArguments(["shell", command])
                 .WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdOut))
                 .WithStandardErrorPipe(PipeTarget.ToStringBuilder(stdErr))
-                .ExecuteAsync();
+                .ExecuteAsync(token);
 
             var val = T.Parse(stdOut.ToString().Trim(), CultureInfo.InvariantCulture);
             var errors = stdErr.ToString().Trim();
@@ -72,7 +72,7 @@ public static class InteropHelper
             return val;
         }
 
-        public async Task<string> Execute(string command)
+        public async Task<string> Execute(string command, CancellationToken token = default)
         {
             var stdOut = new StringBuilder();
             var stdErr = new StringBuilder();
@@ -81,7 +81,7 @@ public static class InteropHelper
                 .WithValidation(CommandResultValidation.None)
                 .WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdOut))
                 .WithStandardErrorPipe(PipeTarget.ToStringBuilder(stdErr))
-                .ExecuteAsync();
+                .ExecuteAsync(token);
 
             var val = stdOut.ToString().Trim();
             var errors = stdErr.ToString().Trim();

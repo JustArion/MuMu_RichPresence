@@ -17,7 +17,7 @@ public partial class MuMuInterop(ConnectionInfo info) : IMuMuInterop
         now=$(date +%s)
         echo $((now - boot + start))
      */
-    private async Task<int> GetStartTime(int pid)
+    private async Task<int> GetStartTime(int pid, CancellationToken token = default)
     {
         var sb = new StringBuilder();
         // Gets the amount of ticks per second (Usually 100)
@@ -42,7 +42,7 @@ public partial class MuMuInterop(ConnectionInfo info) : IMuMuInterop
         var command = string.Join(" && ", sb.ToString()
             .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries));
 
-        return await info.Execute<int>(command);
+        return await adb.Execute<int>(command, token: token);
     }
 
     /*  We're executing this:
@@ -51,14 +51,14 @@ public partial class MuMuInterop(ConnectionInfo info) : IMuMuInterop
         pidof <package_name>
         -> GetStartTime
     */
-    public async Task<AppInfo> GetForegroundAppInfo()
+    public async Task<AppInfo> GetForegroundAppInfo(CancellationToken token = default)
     {
-        await using (await info.Connect())
+        await using (await adb.Connect(token: token))
         {
             // topResumedActivity=ActivityRecord{9846be1 u0 com.YoStarEN.Arknights/com.u8.sdk.U8UnityContext t365}
             // topResumedActivity=ActivityRecord{321bd4c u0 app.lawnchair/.LawnchairLauncher t2}
             // ResumedActivity: ActivityRecord{9846be1 u0 com.YoStarEN.Arknights/com.u8.sdk.U8UnityContext t365}
-            var result = await info.Execute("dumpsys activity activities | grep ResumedActivity");
+            var result = await adb.Execute("dumpsys activity activities | grep ResumedActivity", token: token);
             var match = GetForegroundApp().Match(result);
 
             if (!match.Success)
@@ -66,9 +66,9 @@ public partial class MuMuInterop(ConnectionInfo info) : IMuMuInterop
 
             var packageName = match.Groups["PackageName"].Value;
 
-            var pid = await info.Execute<int>($"pidof {packageName}");
+            var pid = await adb.Execute<int>($"pidof {packageName}", token: token);
 
-            var startTime = await GetStartTime(pid);
+            var startTime = await GetStartTime(pid, token);
 
             return new AppInfo(packageName, pid, DateTimeOffset.FromUnixTimeSeconds(startTime));
         }
@@ -78,5 +78,5 @@ public partial class MuMuInterop(ConnectionInfo info) : IMuMuInterop
 
         cat /proc/<pid>/<path>
      */
-    public async Task<string> GetInfo(AppInfo info1, string path) => await info.Execute($"cat /proc/{info1.Pid}/{path}");
+    public async Task<string> GetInfo(AppInfo info, string path, CancellationToken token = default) => await adb.Execute($"cat /proc/{info.Pid}/{path}", token: token);
 }
