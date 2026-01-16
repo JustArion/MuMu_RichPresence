@@ -93,6 +93,7 @@ internal static class ApplicationLogs
                 (_, _) => Log.Information("Shutting Down...");
             #endif
 
+        TaskScheduler.UnobservedTaskException += (_, args) => Log.Error(args.Exception, "Unobserved Exception");
         Log.Information("Initialized on version {ApplicationVersion}", Application.ProductVersion);
     }
 }
