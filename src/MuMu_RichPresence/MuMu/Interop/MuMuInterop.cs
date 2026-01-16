@@ -176,7 +176,7 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
     // MuMu also has 2 identical versions of ADB, we can use them
     private static async Task<VMConfig?> GetVMConfig()
     {
-        var rootPath = Pathfinder.TryGetRootDirectoryFromProcess();
+        var rootPath = Pathfinder.TryGetRootDirectory();
 
         var vms = rootPath?.GetDirectories("vms").FirstOrDefault();
 

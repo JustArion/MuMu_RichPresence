@@ -8,24 +8,23 @@ namespace Dawn.MuMu.RichPresence.Tools;
 internal static class Pathfinder
 {
     [SuppressMessage("ReSharper", "RemoveRedundantBraces")]
-    public static async ValueTask<string> GetOrWaitForFilePath()
+    public static async ValueTask<string> GetOrWaitForLogFilePath()
     {
-        if (TryGetFromProcess(out var logPath)
-            || TryGetFromShortcut(out logPath))
+        if (TryGetLogPathFromProcess(out var logPath) || TryGetFromShortcut(out logPath))
             return logPath.FullName;
 
         Log.Warning("Unable to find MuMu Player path, waiting for the player to start instead");
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
         while (await timer.WaitForNextTickAsync())
         {
-            if (TryGetFromProcess(out logPath))
+            if (TryGetLogPathFromProcess(out logPath))
                 return logPath.FullName;
         }
 
         throw new UnreachableException("Failed to get path from process");
     }
 
-    internal static bool TryGetFromProcess([NotNullWhen(true)] out FileInfo? logPath)
+    internal static bool TryGetLogPathFromProcess([NotNullWhen(true)] out FileInfo? logPath)
     {
         logPath = null;
         try
@@ -64,29 +63,40 @@ internal static class Pathfinder
         return retVal;
     }
 
-    public static FileInfo? GetADBFileInfo() => TryGetRootDirectoryFromProcess()?.GetFiles("adb.exe", SearchOption.AllDirectories).FirstOrDefault();
+    public static FileInfo? GetADBFileInfo() => TryGetRootDirectory()?.GetFiles("adb.exe", SearchOption.AllDirectories).FirstOrDefault();
 
-    public static DirectoryInfo? TryGetRootDirectoryFromProcess()
+    public static DirectoryInfo? TryGetRootDirectory() =>
+        TryGetRootDirectoryFromProcess(out var rootDirectory) || TryGetRootDirectoryFromProcess(out rootDirectory)
+        ? rootDirectory
+        : null;
+
+    private static bool TryGetRootDirectoryFromProcess([NotNullWhen(true)] out DirectoryInfo? rootDirectory)
     {
-        var emulator = Process.GetProcessesByName("MuMuNxDevice").FirstOrDefault();
-        if (emulator == null)
+        rootDirectory = null;
+
+        // NxMain is the emulator manager
+        // NxDevice is the emulator
+        foreach (var procName in (Span<string>)["MuMuNxMain", "MuMuNxDevice"])
         {
-            Log.Debug("Could not get root from emulator process: The emulator is not running");
-            return null;
+            var process = Process.GetProcessesByName(procName).FirstOrDefault();
+
+            if (process == null)
+                continue;
+
+            var procPath = process.MainModule!.FileName;
+
+            rootDirectory = procName switch
+            {
+                // ..\MuMuPlayerGlobal-12.0\nx_main\MuMuNxMain.exe
+                "MuMuNxMain" => new DirectoryInfo(Path.GetDirectoryName(procPath)!).Parent,
+
+                // ..\MuMuPlayerGlobal-12.0\nx_device\12.0\shell\MuMuNxDevice.exe
+                "MuMuNxDevice" => new DirectoryInfo(Path.Combine(Path.GetDirectoryName(procPath)!, "../../../")),
+                _ => rootDirectory
+            };
         }
 
-        // ..\MuMuPlayerGlobal-12.0\nx_device\12.0\shell\MuMuNxDevice.exe
-        var processPath = emulator.MainModule!.FileName;
-
-        // Process Directory: ..\MuMuPlayerGlobal-12.0\nx_device\12.0\shell\
-        // ../../.. is 3 parents up (shell -> 12.0, 12.0 -> nx_device, nx_device -> root
-        // ..\MuMuPlayerGlobal-12.0
-        var rootPath = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(processPath)!, "../../../"));
-
-        if (!rootPath.Exists)
-            Log.Debug("Could not get root from emulator process: Root does not exist. The process path is {ProcessPath}", processPath);
-
-        return !rootPath.Exists ? null : rootPath;
+        return rootDirectory is { Exists: true };
     }
 
 
@@ -101,6 +111,47 @@ internal static class Pathfinder
         "MuMuPlayer",
         "MuMuNxMain", // \MuMuPlayerGlobal-12.0\nx_main\MuMuNxMain.exe
     ];
+
+    private static bool TryGetRootDirectoryFromShortcut([NotNullWhen(true)] out DirectoryInfo? rootDirectory)
+    {
+        Log.Verbose("Trying to get root directory from shortcut");
+        rootDirectory = null!;
+
+        try
+        {
+            var dir = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Programs));
+
+            var mumuShortcutDirectory = dir.GetDirectories("MuMu*").FirstOrDefault();
+            if (mumuShortcutDirectory == null)
+                return false;
+
+            var playerLink = mumuShortcutDirectory.GetFiles("MuMu Player*").FirstOrDefault()
+                             ?? mumuShortcutDirectory.GetFiles("MuMuPlayer*").FirstOrDefault();
+
+            if (playerLink == null)
+                return false;
+
+            var shortcut = Shortcut.ReadFromFile(playerLink.FullName);
+
+            if (shortcut == null)
+                return false;
+
+            var shortcutPath = shortcut.LinkInfo.LocalBasePath;
+
+            // ..\MuMuPlayerGlobal-12.0\nx_main\MuMuNxMain.exe
+            var mumuPath = new FileInfo(shortcutPath);
+            if (!mumuPath.Exists) // The shortcut could be broken, so we check
+                return false;
+
+            rootDirectory = mumuPath.Directory!;
+            return true;
+        }
+        catch (Exception e)
+        {
+            Log.Error(e, "Failed to get path from shortcut");
+            return false;
+        }
+    }
 
 
     [SupportedOSPlatform("windows")]
@@ -153,9 +204,6 @@ internal static class Pathfinder
         // MuMuPlayerGlobal-12.0\vms
         var vms = mumuDirectory.Parent!.GetDirectories("vms").First();
 
-        // The base-vm is 'MuMuPlayerGlobal-12.0-0-base' this probably contains system files, but we need the folder with the 'logs' folder in, so we skip this.
-        var vm = vms.EnumerateDirectories().First(x => !x.Name.Contains("base"));
-
-        return vm.GetDirectories("logs").First().GetFiles("shell.log").First();
+        return vms.GetFiles("shell.log", SearchOption.AllDirectories).First();
     }
 }
