@@ -34,7 +34,7 @@ public struct LaunchArgs
             HasProcessBinding = true;
         }
 
-        ExperimentalADB = Contains("ADB Experimental", args);
+        ExperimentalADB = Contains("Experimental", args);
     }
 
     public IReadOnlyList<string> RawArgs { get; }

@@ -57,7 +57,7 @@
 | --no-file-logging         |         `N/A`         | Disables logging to the file (Located in the current directory)                                   |
 | --no-auto-update          |         `N/A`         | Disables Auto-Updates & Checking for Updates (Only affects Velopack (Portable / Setup) versions)  |
 | --hide-tray-icon-on-start |         `N/A`         | Hides the Tray Icon when running `MuMu Rich Presence`                                             |
-| --adb-experimental        |         `N/A`         | Enables an experimental mode where we don't look for presences in a log file but instead ask MuMu |
+| --experimental            |         `N/A`         | Enables an experimental mode where we don't look for presences in a log file but instead ask MuMu |
 
 **Launch Args Example**
 
