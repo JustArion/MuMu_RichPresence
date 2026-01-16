@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Reactive.Disposables;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Dawn.MuMu.RichPresence.Models;
@@ -8,6 +10,39 @@ namespace Dawn.MuMu.RichPresence.MuMu.Interop;
 
 public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
 {
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
+    private IAsyncDisposable? _connection;
+
+    private async ValueTask KeepAlive()
+    {
+        if (_connection is not null)
+            return;
+
+        await _semaphore.WaitAsync();
+
+        // We do this twice, since the first is a quick path, and the second prevents a race condition
+        if (_connection is not null)
+            return;
+        try
+        {
+            _connection = await adb.Connect();
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    private async ValueTask<IAsyncDisposable> EnsureConnected(CancellationToken token = default)
+    {
+        if (!adb.KeepAlive)
+            return await adb.Connect(token);
+
+        await KeepAlive();
+        // We return None since the methods using this disposes the Disposable after every invocation, so we use a renewable disposable stub
+        return AnonymousAsyncDisposable.None;
+    }
+
     [GeneratedRegex(@"^\W+?ResumedActivity: ActivityRecord{.+?\b(?'PackageName'[a-zA-Z0-9._]+(?:\.[a-zA-Z0-9_]+)*)\/.+?}", RegexOptions.Multiline)]
     private partial Regex GetForegroundApp();
 
@@ -56,7 +91,7 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
     */
     public async Task<AppInfo> GetForegroundAppInfo(CancellationToken token = default)
     {
-        await using (await adb.Connect(token: token))
+        await using (await EnsureConnected(token))
         {
             // topResumedActivity=ActivityRecord{9846be1 u0 com.YoStarEN.Arknights/com.u8.sdk.U8UnityContext t365}
             // topResumedActivity=ActivityRecord{321bd4c u0 app.lawnchair/.LawnchairLauncher t2}
@@ -88,15 +123,17 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
     {
         // This times out if the emulator is starting up, since ADB waits for the emulator to fully start up
         // We can reasonably say that there's no focused app at that point
-        if (token == CancellationToken.None)
-            token = new CancellationTokenSource(TimeSpan.FromSeconds(5)).Token;
         AppInfo app;
         try
         {
             app = await GetForegroundAppInfo(token);
         }
-        catch (OperationCanceledException)
+        catch (Exception e) when (e is OperationCanceledException) { return null; }
+        catch (Exception e) when (e is TaskCanceledException) { return null; }
+        catch (Exception e) when (e is NotConnectedException) { return null; }
+        catch (Exception e)
         {
+            Log.Error(e, "Could not get ForegroundAppInfo");
             return null;
         }
 
@@ -116,7 +153,7 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
     }
 
     // --
-    public static async Task<IMuMuInterop?> TryCreate()
+    public static async Task<IMuMuInterop?> TryCreate(bool keepAlive = false)
     {
         var config = await GetVMConfig();
         if (config is null)
@@ -130,7 +167,7 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
         if (!int.TryParse(port.HostPort, out var portNumber) || string.IsNullOrWhiteSpace(port.GuestIP))
             return null;
 
-        var connectionInfo = new ConnectionInfo(port.GuestIP, portNumber, adb.FullName);
+        var connectionInfo = new ConnectionInfo(port.GuestIP, portNumber, adb.FullName, keepAlive);
         return new MuMuInterop(connectionInfo);
     }
 
@@ -152,5 +189,17 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
         var config = await JsonSerializer.DeserializeAsync<VMConfig>(file);
 
         return config;
+    }
+
+    private bool _disposed;
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed)
+            return;
+        _disposed = true;
+
+        GC.SuppressFinalize(this);
+        if (_connection != null)
+            await _connection.DisposeAsync();
     }
 }

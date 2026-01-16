@@ -2,7 +2,7 @@
 
 namespace Dawn.MuMu.RichPresence.MuMu.Interop;
 
-public interface IMuMuInterop
+public interface IMuMuInterop : IAsyncDisposable
 {
     public Task<AndroidProcess?> GetFocusedApp(CancellationToken token = default);
 
