@@ -132,8 +132,10 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
         {
             var mumuInterop = await MuMuInterop.TryCreate();
 
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
             var adbTS = Stopwatch.GetTimestamp();
-            if (mumuInterop != null && await mumuInterop.GetFocusedApp() is { } focusedApp)
+            if (mumuInterop != null && await mumuInterop.GetFocusedApp(cts.Token) is { } focusedApp)
             {
                 Sessions.Add(new MuMuSessionLifetime {
                     AppState = new() { Value = AppState.Focused },
