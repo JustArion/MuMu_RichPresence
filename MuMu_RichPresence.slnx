@@ -5,6 +5,7 @@
   
   <Folder Name="/repo/documents/">
     <File Path=".github/permissions.md" />
+    <File Path=".github/summary.md" />
     <File Path=".github/readme.md" />
     <File Path=".github/building.md" />
     <File Path=".github/technical-1.md" />

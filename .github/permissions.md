@@ -1,4 +1,7 @@
-﻿- `IO`
+﻿Below is a summary of what the application does in a categorized way.
+A simpler non-technical explanation of what our program does can be found [here](summary.md)
+ 
+- `IO`
     - Connects to named pipe (`discord-ipc-{0}`)
         - Handled by Nuget package [DiscordRichPresence](https://www.nuget.org/packages/DiscordRichPresence)
     - `Write Access`
