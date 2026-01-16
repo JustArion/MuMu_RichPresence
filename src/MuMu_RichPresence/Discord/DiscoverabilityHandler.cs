@@ -151,7 +151,9 @@ public class DiscoverabilityHandler
             var appId = _discoverablePresences?.FirstOrDefault(x => x.Name == appName)?.Id;
 
             if (appId != null)
-                Log.Verbose("Found an Official Presence for Application {ApplicationName} ({ApplicationId})", appName, appId);
+            {
+                // Log.Verbose("Found an Official Presence for Application {ApplicationName} ({ApplicationId})", appName, appId);
+            }
             else
                 Log.Debug("Unable to find an AppId for {ApplicationName}", appName);
 
