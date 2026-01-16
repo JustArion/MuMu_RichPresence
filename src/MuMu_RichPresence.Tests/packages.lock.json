@@ -309,6 +309,11 @@
         "resolved": "2.3.1",
         "contentHash": "Q+mXeiTxiUYG3lKYF6TS82/SyB4F2613Q1yXTMwg4jWGHEEVC3yrzHtNcI4B3qnDI0+eJsezGJ0V+cToUytHWw=="
       },
+      "System.CodeDom": {
+        "type": "Transitive",
+        "resolved": "10.0.2",
+        "contentHash": "eih1MnL4tnSjHUhzae0dmpu50Sm0s54faHZc8yhzYfmubAubkBIIulYYN28fasD1m41mhl6Cenhs9/F0aLv3FA=="
+      },
       "System.Configuration.ConfigurationManager": {
         "type": "Transitive",
         "resolved": "6.0.0",
@@ -324,6 +329,14 @@
         "contentHash": "NfuoKUiP2nUWwKZN6twGqXioIe1zVD0RIj2t976A+czLHr2nY454RwwXs6JU9Htc6mwqL6Dn/nEL3dpVf2jOhg==",
         "dependencies": {
           "Microsoft.Win32.SystemEvents": "6.0.0"
+        }
+      },
+      "System.Management": {
+        "type": "Transitive",
+        "resolved": "10.0.2",
+        "contentHash": "eFftuy3i844lVKCb4lJvvjKfcvPVcW8KrAdSaIOcRL42/Fisj46hwUs8Bky+4avzMe5Snm5t7aSayOI1mybYXg==",
+        "dependencies": {
+          "System.CodeDom": "10.0.2"
         }
       },
       "System.Reactive": {
@@ -399,6 +412,7 @@
           "Serilog.Settings.Configuration": "[10.0.0, )",
           "Serilog.Sinks.Console.LogThemes": "[0.4.0, )",
           "Serilog.Sinks.Seq": "[9.0.0, )",
+          "System.Management": "[10.0.2, )",
           "Vanara.PInvoke.Kernel32": "[4.2.1, )",
           "Velopack": "[0.0.1298, )",
           "securifybv.ShellLink": "[0.1.0, 0.1.0]"
@@ -417,6 +431,14 @@
         "contentHash": "NfuoKUiP2nUWwKZN6twGqXioIe1zVD0RIj2t976A+czLHr2nY454RwwXs6JU9Htc6mwqL6Dn/nEL3dpVf2jOhg==",
         "dependencies": {
           "Microsoft.Win32.SystemEvents": "6.0.0"
+        }
+      },
+      "System.Management": {
+        "type": "Transitive",
+        "resolved": "10.0.2",
+        "contentHash": "eFftuy3i844lVKCb4lJvvjKfcvPVcW8KrAdSaIOcRL42/Fisj46hwUs8Bky+4avzMe5Snm5t7aSayOI1mybYXg==",
+        "dependencies": {
+          "System.CodeDom": "10.0.2"
         }
       },
       "System.Security.Cryptography.ProtectedData": {

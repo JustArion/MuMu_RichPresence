@@ -107,6 +107,12 @@
           "Serilog.Sinks.File": "6.0.0"
         }
       },
+      "System.Management": {
+        "type": "Direct",
+        "requested": "[10.0.2, )",
+        "resolved": "10.0.2",
+        "contentHash": "eFftuy3i844lVKCb4lJvvjKfcvPVcW8KrAdSaIOcRL42/Fisj46hwUs8Bky+4avzMe5Snm5t7aSayOI1mybYXg=="
+      },
       "Vanara.PInvoke.Kernel32": {
         "type": "Direct",
         "requested": "[4.2.1, )",
@@ -238,6 +244,13 @@
         "type": "Project"
       }
     },
-    "net10.0-windows7.0/win-x64": {}
+    "net10.0-windows7.0/win-x64": {
+      "System.Management": {
+        "type": "Direct",
+        "requested": "[10.0.2, )",
+        "resolved": "10.0.2",
+        "contentHash": "eFftuy3i844lVKCb4lJvvjKfcvPVcW8KrAdSaIOcRL42/Fisj46hwUs8Bky+4avzMe5Snm5t7aSayOI1mybYXg=="
+      }
+    }
   }
 }
