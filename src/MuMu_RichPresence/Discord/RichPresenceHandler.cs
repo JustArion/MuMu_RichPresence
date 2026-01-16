@@ -6,7 +6,7 @@ using Serilog.Core;
 
 namespace Dawn.MuMu.RichPresence.Discord;
 
-public class RichPresenceHandler
+public class RichPresenceHandler : IDisposable
 {
     private const string DEFAULT_APPLICATION_ID = "1339586347576328293";
     private readonly string _sessionApplicationId;
