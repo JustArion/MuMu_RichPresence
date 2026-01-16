@@ -3,6 +3,7 @@ using System.Reactive.Disposables;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Dawn.MuMu.RichPresence.Exceptions;
 using Dawn.MuMu.RichPresence.Models;
 using Dawn.MuMu.RichPresence.Tools;
 
