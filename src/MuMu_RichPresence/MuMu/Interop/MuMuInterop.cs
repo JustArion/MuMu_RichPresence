@@ -3,6 +3,7 @@ using System.Reactive.Disposables;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using CliWrap.Exceptions;
 using Dawn.MuMu.RichPresence.Exceptions;
 using Dawn.MuMu.RichPresence.Models;
 using Dawn.MuMu.RichPresence.Tools;
@@ -132,6 +133,7 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
         catch (Exception e) when (e is OperationCanceledException) { return null; }
         catch (Exception e) when (e is TaskCanceledException) { return null; }
         catch (Exception e) when (e is NotConnectedException) { return null; }
+        catch (Exception e) when (e is CommandExecutionException) { return null; }
         catch (Exception e)
         {
             Log.Error(e, "Could not get ForegroundAppInfo");
