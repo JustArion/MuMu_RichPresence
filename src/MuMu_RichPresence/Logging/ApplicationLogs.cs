@@ -37,6 +37,9 @@ internal static class ApplicationLogs
         try
         {
             var config = new LoggerConfiguration()
+                #if !DEBUG
+                .Filter.With(LogFilters.DeduplicationFilter(TimeSpan.FromSeconds(10)))
+                #endif
                 .MinimumLevel.Verbose()
                 .Enrich.WithClassName()
                 .Enrich.WithProcessName()
