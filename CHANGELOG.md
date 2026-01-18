@@ -6,9 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Development]
 - 🦺 Bugfix: In rare cases on v`5.14`, couldn't detect rich presences from MuMu Player
-- 🦺 Our build pipeline is now run through [NUKE](https://nuke.build)!
-    - This allows me to focus less on the administrative side of releases and more on actually writing code
-    - From a user perspective, nothing changes
 - ⚡️Added support for `.env` files
   - Place a file called `.env` in either the MuMu_RichPresence Directory or it's parent 
 - ⚡️Added an experimental launch argument `--experimental` that uses `ADB` instead of watching log files, to show Rich Presences
