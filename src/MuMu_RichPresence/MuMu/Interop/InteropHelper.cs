@@ -86,9 +86,9 @@ public static class InteropHelper
                 .ExecuteAsync(token);
 
             var val = T.Parse(stdOut.ToString().Trim(), CultureInfo.InvariantCulture);
-            var errors = stdErr.ToString().Trim();
 
             #if LISTEN_TO_INTEROP && LISTEN_TO_EXECUTIONS
+            var errors = stdErr.ToString().Trim();
             Log.Debug("[Exec] adb {Command} -> {Result}{Errors}", arg, val, errors);
             #endif
             return val;
