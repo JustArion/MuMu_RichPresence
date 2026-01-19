@@ -91,7 +91,7 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
         pidof <package_name>
         -> GetStartTime
     */
-    public async Task<AppInfo> GetForegroundAppInfo(CancellationToken token = default)
+    public async Task<AppInfo?> GetForegroundAppInfo(CancellationToken token = default)
     {
         await using (await EnsureConnected(token))
         {
@@ -102,7 +102,10 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
             var match = GetForegroundApp().Match(result);
 
             if (!match.Success)
-                throw new Exception($"Could not find AppInfo, can't match {GetForegroundApp()} to {result}");
+            {
+                Log.Verbose("Cound not find AppInfo, can't match {Regex} to {String}", GetForegroundApp(), result);
+                return null;
+            }
 
             var packageName = match.Groups["PackageName"].Value;
 
@@ -125,33 +128,34 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
     {
         // This times out if the emulator is starting up, since ADB waits for the emulator to fully start up
         // We can reasonably say that there's no focused app at that point
-        AppInfo app;
+        AppInfo? app;
         try
         {
             app = await GetForegroundAppInfo(token);
         }
-        catch (Exception e) when (e is OperationCanceledException) { return null; }
-        catch (Exception e) when (e is TaskCanceledException) { return null; }
-        catch (Exception e) when (e is NotConnectedException) { return null; }
-        catch (Exception e) when (e is CommandExecutionException) { return null; }
+        catch (Exception e) when (e is OperationCanceledException or TaskCanceledException or NotConnectedException or CommandExecutionException)
+        {
+            return null;
+        }
         catch (Exception e)
         {
             Log.Error(e, "Could not get ForegroundAppInfo");
             return null;
         }
 
-        if (app == default)
+        if (app is not { } info)
             return null;
 
-        if (AppLifetimeParser.IsSystemLevelPackage(app.PackageName))
+
+        if (AppLifetimeParser.IsSystemLevelPackage(info.PackageName))
             return null;
 
-        var info = await PlayStoreWebScraper.TryGetPackageInfo(app.PackageName);
+        var packageInfo = await PlayStoreWebScraper.TryGetPackageInfo(info.PackageName);
 
-        if (info != null)
-            return new(info.Title, app);
+        if (packageInfo != null)
+            return new(packageInfo.Title, info);
 
-        Log.Debug("Could not find a title for Package '{PackageName}'",  app.PackageName);
+        Log.Debug("Could not find a title for Package '{PackageName}'",  info.PackageName);
         return null;
     }
 
