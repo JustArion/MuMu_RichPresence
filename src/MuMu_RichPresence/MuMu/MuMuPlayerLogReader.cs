@@ -10,7 +10,7 @@ using Dawn.MuMu.RichPresence.Tools;
 
 namespace Dawn.MuMu.RichPresence.MuMu;
 
-public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProcessState) : IDisposable
+public class MuMuPlayerLogReader(FileInfo filePath, MuMuProcessState currentProcessState) : IDisposable
 {
     private bool _started;
     private long _lastStreamPosition;
@@ -31,10 +31,10 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
 
     private async Task InitiateWatchOperation()
     {
-        Log.Verbose("Doing fresh read-operation pass on file {Path}", Path.GetFileName(filePath));
+        Log.Verbose("Doing fresh read-operation pass on file {Path}", filePath.Name);
 
         // Wait till the file exists
-        if (!File.Exists(filePath))
+        if (!filePath.Exists)
         {
             Log.Debug("File not found: Shell.log");
             await Task.Delay(TimeSpan.FromSeconds(5));
@@ -47,7 +47,7 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
             _reading = true;
             try
             {
-                if (File.Exists(filePath))
+                if (filePath.Exists)
                 {
                     await using var fileLock = AquireFileLock();
                     await CatchUpAsync(fileLock);
@@ -89,7 +89,7 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
                     if (oldLogFile.FullName == file.FullName)
                         continue;
 
-                    await using var oldFileLock = FileLock.Aquire(oldLogFile.FullName);
+                    await using var oldFileLock = FileLock.Aquire(oldLogFile);
                     await GetAllSessionInfos(oldFileLock, sessions, SessionGraveyard);
                     fileSizeReadMB += oldFileLock.Reader.BaseStream.Length / Math.Pow(1024, 2);
                 }
@@ -159,7 +159,7 @@ public class MuMuPlayerLogReader(string filePath, MuMuProcessState currentProces
     private void LogFileWatcherOnFileChanged(object? _, FileSystemEventArgs args)
     {
         //              The file might not exist yet, this happens when MuMu clears the file and makes a new one
-        if (_reading || !File.Exists(filePath))
+        if (_reading || !filePath.Exists)
             return;
         _reading = true;
 

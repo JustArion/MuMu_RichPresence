@@ -16,25 +16,19 @@ internal sealed class FileLock : IAsyncDisposable
 
     public FileInfo LockFile { get; }
 
-    private FileLock(string filePath)
+    private FileLock(FileInfo filePath)
     {
-        if (!File.Exists(filePath))
+        if (!filePath.Exists)
             throw new FileNotFoundException(nameof(filePath));
 
-        LockFile = new (filePath);
+        LockFile = filePath;
 
-        _fileLock = _retryPolicy.Execute(() => File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete));
+        _fileLock = _retryPolicy.Execute(() => File.Open(filePath.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete));
         // _fileLock = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         Reader = new StreamReader(_fileLock);
     }
 
-    public static FileLock Aquire(string filePath, out StreamReader reader)
-    {
-        var fileLock = new FileLock(filePath);
-        reader = fileLock.Reader;
-        return fileLock;
-    }
-    public static FileLock Aquire(string filePath) => new(filePath);
+    public static FileLock Aquire(FileInfo fileInfo) => new(fileInfo);
 
     public async ValueTask DisposeAsync()
     {

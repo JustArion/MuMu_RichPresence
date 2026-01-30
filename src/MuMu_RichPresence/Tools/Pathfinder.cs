@@ -8,17 +8,17 @@ namespace Dawn.MuMu.RichPresence.Tools;
 internal static class Pathfinder
 {
     [SuppressMessage("ReSharper", "RemoveRedundantBraces")]
-    public static async ValueTask<string> GetOrWaitForLogFilePath()
+    public static async ValueTask<FileInfo> GetOrWaitForLogFilePath()
     {
         if (TryGetLogPathFromProcess(out var logPath) || TryGetFromShortcut(out logPath))
-            return logPath.FullName;
+            return logPath;
 
         Log.Warning("Unable to find MuMu Player path, waiting for the player to start instead");
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
         while (await timer.WaitForNextTickAsync())
         {
             if (TryGetLogPathFromProcess(out logPath))
-                return logPath.FullName;
+                return logPath;
         }
 
         throw new UnreachableException("Failed to get path from process");

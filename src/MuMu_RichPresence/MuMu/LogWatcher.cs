@@ -4,16 +4,15 @@ namespace Dawn.MuMu.RichPresence.MuMu;
 
 public class LogWatcher : IDisposable
 {
-    private readonly string _filePath;
+    private readonly FileInfo _filePath;
     private FileSystemWatcher? _logFileWatcher;
     private readonly CancellationTokenSource _pokeCTS = new();
 
     [SuppressMessage("ReSharper", "RemoveRedundantBraces")]
-    public LogWatcher(string filePath)
+    public LogWatcher(FileInfo filePath)
     {
         _filePath = filePath;
-        var fi = new FileInfo(filePath);
-        if (fi.Directory is { Exists: true })
+        if (filePath.Directory is { Exists: true })
         {
             CreateLogWatcher();
             return;
@@ -23,7 +22,7 @@ public class LogWatcher : IDisposable
 
         Task.Factory.StartNew(async () =>
         {
-            while (fi.Directory is not { Exists: true })
+            while (filePath.Directory is not { Exists: true })
                 await Task.Delay(TimeSpan.FromMinutes(1));
 
             if (_initializationSubscription != null)
@@ -47,11 +46,9 @@ public class LogWatcher : IDisposable
 
     private void CreateLogWatcher()
     {
-        var file = new FileInfo(_filePath);
-
         _logFileWatcher = new();
-        _logFileWatcher.Path = file.Directory?.FullName ?? ".";
-        _logFileWatcher.Filter = file.Name;
+        _logFileWatcher.Path = _filePath.Directory?.FullName ?? ".";
+        _logFileWatcher.Filter = _filePath.Name;
         _logFileWatcher.NotifyFilter = NotifyFilters.Size;
         _logFileWatcher.Changed += (_, args) => FileChanged?.Invoke(this, args);
         _logFileWatcher.Error += (_, args) => Error?.Invoke(this, args);
@@ -64,7 +61,7 @@ public class LogWatcher : IDisposable
             var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
 
             while (await timer.WaitForNextTickAsync(_pokeCTS.Token))
-                file.LastAccessTime = DateTime.Now;
+                _filePath.LastAccessTime = DateTime.Now;
 
         }, _pokeCTS.Token);
     }
@@ -87,7 +84,7 @@ public class LogWatcher : IDisposable
         Task.Run(onInitialize).ContinueWith(_ =>
         {
             _logFileWatcher.EnableRaisingEvents = true;
-            Log.Verbose("Watching for changes on file {FilePath}", Path.GetFileName(_filePath));
+            Log.Verbose("Watching for changes on file {FilePath}", _filePath.Name);
         });
     }
 

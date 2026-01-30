@@ -12,7 +12,7 @@ public class AppSessionMessageReaderTests
     [SetUp]
     public void SetUp()
     {
-        _sut = new MuMuPlayerLogReader("Assets/shell.log", new());
+        _sut = new MuMuPlayerLogReader(new("Assets/shell.log"), new());
     }
     private MuMuPlayerLogReader _sut;
 
