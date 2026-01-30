@@ -14,7 +14,7 @@ public static partial class MuMuNegotiator
 {
     private static RichPresenceApproach? _currentApproach;
     private static CancellationTokenSource? _processSubscriptionCts = new();
-    private static RichPresenceHandler _richPresenceHandler = null!;
+    private static RichPresenceHandler? _richPresenceHandler;
     private static MuMuPlayerLogReader? _logReader;
     private static DiscoverabilityHandler _discoverabilityHandler = null!;
     private static readonly CompositeDisposable _disposables = new();
@@ -59,13 +59,26 @@ public static partial class MuMuNegotiator
         }, _processSubscriptionCts.Token);
     }
 
-    internal static void OnRichPresenceEnabledChanged(object? sender, bool active)
+    private static async Task CoercePresenceToFocusedLifetime(MuMuSessionLifetime lifetime, string emulatorName)
     {
+        if (await SetPresenceFor(lifetime, new() { Timestamps = new(lifetime.StartTime.DateTime) }, emulatorName!, true))
+            Log.Debug("Presence coerced for {SessionTitle}", lifetime);
+    }
+
+    internal static void OnRichPresenceEnabledChanged(PropertyValue<ApplicationFeatures, bool> pvc)
+    {
+        if (_richPresenceHandler == null)
+            return;
+
+        var active = pvc.Value;
         if (active)
         {
             if (_richPresenceHandler.CurrentPresence is not { } presence)
+            {
+                if (_focusedLifetime != null)
+                    Task.Run(async () => await CoercePresenceToFocusedLifetime(_focusedLifetime, _focusedEmulatorName!));
                 return;
-
+            }
             if (_focusedLifetime == null)
             {
                 Log.Error("Trying to set a rich presence without an associated lifetime! Known details are: AppId: {AppId}, Details: {Details}", _currentApplicationId, presence.Details);
@@ -93,6 +106,9 @@ public static partial class MuMuNegotiator
 
     internal static void ClearPresence(MuMuSessionLifetime? lifetime)
     {
+        if (_richPresenceHandler == null)
+            return;
+
         var appName = _richPresenceHandler.CurrentPresence?.Details ?? lifetime?.Title;
         if (string.IsNullOrWhiteSpace(appName))
         {
@@ -129,10 +145,7 @@ public static partial class MuMuNegotiator
 
             _currentProcessState.CurrentEmulatorProcess = currentMuMuProcess;
 
-            if (await SetPresenceFor(focusedApp, new()
-                {
-                    Timestamps = new(focusedApp.StartTime.DateTime),
-                }, processName))
+            if (await SetPresenceFor(focusedApp, new() { Timestamps = new(focusedApp.StartTime.DateTime) }, processName))
                 Log.Debug("Presence updated for {SessionTitle}", focusedApp);
             return;
         }
@@ -143,11 +156,16 @@ public static partial class MuMuNegotiator
 
     private static string? _currentApplicationId;
     private static MuMuSessionLifetime? _focusedLifetime;
-    private static async Task<bool> SetPresenceFor(MuMuSessionLifetime sessionLifetime, DiscordRPC.RichPresence presence, string emulatorProcessName)
+    private static string? _focusedEmulatorName;
+    private static async Task<bool> SetPresenceFor(MuMuSessionLifetime sessionLifetime, DiscordRPC.RichPresence presence, string emulatorProcessName, bool isForced = false)
     {
-        // A race condition is possible here, so we use Interlocked.Exchange
-        if (Interlocked.Exchange(ref _focusedLifetime, sessionLifetime) == sessionLifetime)
+        if (_richPresenceHandler == null)
             return false;
+
+        // A race condition is possible here, so we use Interlocked.Exchange
+        if (!isForced && Interlocked.Exchange(ref _focusedLifetime, sessionLifetime) == sessionLifetime)
+            return false;
+        _focusedEmulatorName = emulatorProcessName;
 
         var discoverabilityTask = _discoverabilityHandler.TryGetOfficialApplicationId(sessionLifetime.Title);
         var packageInfoTask = PlayStoreWebScraper.TryGetPackageInfo(sessionLifetime.PackageName);

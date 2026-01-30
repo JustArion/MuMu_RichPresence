@@ -100,11 +100,9 @@ public class RichPresence_Tray
         }
     }
 
-    public event EventHandler<bool> RichPresenceEnabledChanged = delegate { };
-
-    private ToolStripMenuItem Enabled()
+    private static ToolStripMenuItem Enabled()
     {
-        ApplicationFeatures.SyncFeature(f => f.RichPresenceEnabled, !Arguments.RichPresenceDisabledOnStart);
+        Features.RichPresenceEnabled = !Arguments.RichPresenceDisabledOnStart;
 
         var enabledItem = new ToolStripMenuItem("Enabled");
 
@@ -116,10 +114,7 @@ public class RichPresence_Tray
 
             ChangeEnabledStateOnStartupIfNecessary(enabled);
 
-            ApplicationFeatures.SetFeature(f => f.RichPresenceEnabled, enabled);
-            enabledItem.Checked = enabled;
-
-            RichPresenceEnabledChanged.Invoke(this, enabled);
+            enabledItem.Checked = Features.RichPresenceEnabled = enabled;
         };
 
         return enabledItem;

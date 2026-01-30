@@ -60,18 +60,17 @@ public class RichPresenceHandler : IDisposable
         {
             using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
 
-            while (await timer.WaitForNextTickAsync(token) && ApplicationFeatures.GetFeature(x => x.RichPresenceEnabled))
+            while (await timer.WaitForNextTickAsync(token) && Features.RichPresenceEnabled)
                 _client?.SetPresence(CurrentPresence);
+
+            Log.Debug("Finishing up polling");
         }, TaskCreationOptions.LongRunning, token);
     }
 
     private void OnPresenceUpdate(object _, PresenceMessage args)
     {
-        if (args.Presence == null)
-            return;
-
-        // We clear up some ghosting
-        if (CurrentPresence != null)
+        //                           We clear up some ghosting
+        if (args.Presence == null || CurrentPresence != null)
             return;
 
         Log.Verbose("Attempting to correct some rich presence ghosting");
@@ -99,7 +98,7 @@ public class RichPresenceHandler : IDisposable
     {
         lock (_sync)
         {
-            if (!ApplicationFeatures.GetFeature(x => x.RichPresenceEnabled) || CurrentPresence == presence)
+            if (!Features.RichPresenceEnabled || CurrentPresence == presence)
             {
                 Log.Verbose("Rich Presence is disabled");
                 return false;
@@ -117,7 +116,7 @@ public class RichPresenceHandler : IDisposable
                 if (applicationId != _sessionApplicationId)
                     PrependOfficialGameTag(ref presenceName);
 
-                Log.Information("Setting Rich Presence for {GameTitle}", presenceName);
+                Log.Information("Setting Rich Presence for {GameTitle}", presenceName.Trim());
             }
 
             CurrentPresence = presence;

@@ -24,6 +24,7 @@ using MuMu;
 internal static class Program
 {
     internal static LaunchArgs Arguments { get; private set; }
+    internal static ApplicationFeatures Features { get; } = new();
 
     private static RichPresence_Tray _trayIcon = null!;
     private static ProcessBinding? _processBinding;
@@ -57,7 +58,8 @@ internal static class Program
             Task.Run(AutoUpdate.CheckForUpdates);
 
         _trayIcon = new(MuMuNegotiator.LogSubject);
-        _trayIcon.RichPresenceEnabledChanged += MuMuNegotiator.OnRichPresenceEnabledChanged;
+        Features.WhenPropertyChanged(x => x.RichPresenceEnabled)
+            .Subscribe(MuMuNegotiator.OnRichPresenceEnabledChanged);
 
         var disposables = MuMuNegotiator.UseApproach(Arguments.ExperimentalADB
             ? RichPresenceApproach.AndroidDebugBridge

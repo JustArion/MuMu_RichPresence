@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - This is a fallback measure for installing MuMu_RichPresence while MuMu is running for a while
 - 🦺 Changed checking the log file for updates from every `100ms` to every `1 second`
 - ⚡️Added opening the log file as a tray option if ExtendedLogging is enabled
+- 🦺 Bugfix: Toggling the Rich Presence from the tray would not re-enable the presence under certain circumstances
 
 ## [2.0.0] / 2025-12-23
 - 🦺 Bugfix: Fixed Rich Presences displaying old game durations in some cases
