@@ -61,7 +61,7 @@ public class RichPresence_Tray
                     {
                         WrapTask(() =>
                         {
-                            if (_logFile.Value is { } fileInfo)
+                            if (_logFile.Value is { Exists: true } fileInfo)
                                 WrapTask(()=> Process.Start(new ProcessStartInfo(fileInfo.FullName) { UseShellExecute = true }));
                         });
                     });
