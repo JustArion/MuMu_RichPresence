@@ -55,6 +55,7 @@
 
   <ItemGroup Label="Other Packages">
     <PackageReference Include="CliWrap" Version="3.10.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="DotNetEnv" Version="3.1.1" />
     <PackageReference Include="DynamicData" Version="9.4.1" />
     <PackageReference Include="Polly" Version="8.6.5" />

@@ -54,6 +54,11 @@
         "resolved": "3.10.0",
         "contentHash": "Igph39WNImUFqQrpTeBDPafcCnM1u/8IooZHqMRF/5JdV5H78p+AbZkeYY1Nkz1WlbI/Gt2Hq/3rYh55jxRF9Q=="
       },
+      "CommunityToolkit.Mvvm": {
+        "type": "Transitive",
+        "resolved": "8.4.0",
+        "contentHash": "tqVU8yc/ADO9oiTRyTnwhFN68hCwvkliMierptWOudIAvWY1mWCh5VFh+guwHJmpMwfg0J0rY+yyd5Oy7ty9Uw=="
+      },
       "DiscordRichPresence": {
         "type": "Transitive",
         "resolved": "1.5.0.51",
@@ -396,6 +401,7 @@
         "type": "Project",
         "dependencies": {
           "CliWrap": "[3.10.0, )",
+          "CommunityToolkit.Mvvm": "[8.4.0, )",
           "Dawn.WinForms.ContextMenu": "[1.0.0, )",
           "DiscordRichPresence": "[1.5.0.51, 1.5.0.51]",
           "DotNetEnv": "[3.1.1, )",
