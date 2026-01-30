@@ -40,6 +40,7 @@
 ### Tray Options
 - Enabled (Checkbox)
 - Open App Directory (Button)
+- Open Log File (Button)
 - Run on Startup (Checkbox)
 - Hide Tray (Button, Hides the Tray Icon until next start)
 - Exit (Closes the program)

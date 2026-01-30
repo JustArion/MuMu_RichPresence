@@ -1,5 +1,6 @@
 ﻿using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Reactive.Subjects;
 using Dawn.MuMu.RichPresence.Models;
 using Dawn.MuMu.RichPresence.Tools;
 using DynamicData.Binding;
@@ -14,6 +15,7 @@ public static partial class MuMuNegotiator
         Task.Run(async () =>
         {
             var filePath = await Pathfinder.GetOrWaitForLogFilePath();
+            LogSubject.OnNext(filePath);
 
             _logReader = new MuMuPlayerLogReader(filePath, _currentProcessState);
             _logReader.Sessions.CollectionChanged += ReaderSessionsChanged;
@@ -60,4 +62,6 @@ public static partial class MuMuNegotiator
             Log.Error(ex, "Error while handling session collection change");
         }
     }
+
+    public static BehaviorSubject<FileInfo?> LogSubject { get; } = new(null);
 }

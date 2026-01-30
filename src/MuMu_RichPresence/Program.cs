@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Reactive.Subjects;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Dawn.MuMu.RichPresence.Discord;
@@ -55,7 +56,7 @@ internal static class Program
         if (!Arguments.NoAutoUpdate)
             Task.Run(AutoUpdate.CheckForUpdates);
 
-        _trayIcon = new();
+        _trayIcon = new(MuMuNegotiator.LogSubject);
         _trayIcon.RichPresenceEnabledChanged += MuMuNegotiator.OnRichPresenceEnabledChanged;
 
         var disposables = MuMuNegotiator.UseApproach(Arguments.ExperimentalADB

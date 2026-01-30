@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using Dawn.MuMu.RichPresence.Models;
 using Dawn.MuMu.RichPresence.Tools;
 
@@ -9,9 +11,11 @@ using WinForms.ContextMenu;
 
 public class RichPresence_Tray
 {
+    private readonly BehaviorSubject<FileInfo?> _logFile;
     internal NotifyIcon Tray { get; }
-    public RichPresence_Tray()
+    public RichPresence_Tray(BehaviorSubject<FileInfo?> logFile)
     {
+        _logFile = logFile;
         Tray = new();
 
         Tray.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
@@ -26,17 +30,19 @@ public class RichPresence_Tray
         AddStripItems(Tray.ContextMenuStrip.Items);
     }
 
-    private static void StartProcess(Action start)
+    private static void WrapTask(Action start)
     {
-        try
+        Task.Run(() =>
         {
-            start();
-        }
-        catch (Exception e)
-        {
-            Log.Error(e, "Failed to start process");
-        }
-
+            try
+            {
+                start();
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "Failed to start process");
+            }
+        });
     }
 
     private void AddStripItems(ToolStripItemCollection items)
@@ -44,7 +50,29 @@ public class RichPresence_Tray
         items.AddRange(Header());
         try
         {
-            items.Add("Open App Directory", null, (_, _) => StartProcess(()=> Process.Start("explorer", $"/select,\"{Application.ExecutablePath}\"")));
+            items.Add("Open App Directory", null, (_, _) => WrapTask(()=> Process.Start("explorer", $"/select,\"{Application.ExecutablePath}\"")));
+            if (Arguments.ExtendedLogging)
+            {
+                Log.Information("Adding extended logging items");
+                // The ADB approach accesses no log file, so we just remove the option
+                if (!Arguments.ExperimentalADB)
+                {
+                    var openLogFileItem = new ToolStripMenuItem("Open Log File", null, (_, _) =>
+                    {
+                        WrapTask(() =>
+                        {
+                            if (_logFile.Value is { } fileInfo)
+                                WrapTask(()=> Process.Start(new ProcessStartInfo(fileInfo.FullName) { UseShellExecute = true }));
+                        });
+                    });
+                    openLogFileItem.Enabled = _logFile.Value?.Exists ?? false;
+                    _logFile
+                        .ObserveOn(SynchronizationContext.Current!)
+                        .Subscribe(info => openLogFileItem.Enabled = info?.Exists ?? false);
+
+                    items.Add(openLogFileItem);
+                }
+            }
             items.Add(Enabled());
             items.Add(RunOnStartup());
             items.Add(HideTray());
