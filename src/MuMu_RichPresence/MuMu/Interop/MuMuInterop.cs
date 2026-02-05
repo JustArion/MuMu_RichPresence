@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using CliWrap.Exceptions;
 using Dawn.MuMu.RichPresence.Exceptions;
 using Dawn.MuMu.RichPresence.Models;
+using Dawn.MuMu.RichPresence.Scrapers;
 using Dawn.MuMu.RichPresence.Tools;
 
 namespace Dawn.MuMu.RichPresence.MuMu.Interop;
@@ -150,7 +151,10 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
         if (AppLifetimeParser.IsSystemLevelPackage(info.PackageName))
             return null;
 
-        var packageInfo = await PlayStoreWebScraper.TryGetPackageInfo(info.PackageName);
+        // TODO: Use something like AAPT to get the package title instead of relying on other places like app stores to fill in the titles
+        // This is currently a hacky solution to us not being able to retreive APK / package labels / titles
+        var session = new MuMuSessionLifetime { AppState = AppState.Focused, PackageName =  info.PackageName, Title = string.Empty};
+        var packageInfo = await PackageScraper.TryGetPackageInfo(session);
 
         if (packageInfo != null)
             return new(packageInfo.Title, info);

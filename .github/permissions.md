@@ -38,6 +38,14 @@ A simpler non-technical explanation of what our program does can be found [here]
             - The id would be the package name of the app used
             - This is used to get the icon for the game you're currently playing  on MuMu
             - HTML data
+        - Accesses the site `https://article.biliimg.com/bfs/game/`
+          - Rich Presence icon url after `/game/`
+          - This is a CDN for the BiliGame store page
+          - Image data
+        - Accesses the site `https://line3-h5-mobile-api.biligame.com/game/center/h5/search/game_name?keyword={gameName}&sdk_type=2`
+          - This is used to get the ID for the BiliGame store page
+          - This is used to get the link fot the Rich Presence icon
+          - JSON data
     - `Upload Access`
         - Sends telemetry (`http://localhost:9999`)
             - Configurable by the user / command line, Handled by Nuget package [Serilog.Sinks.Seq](https://www.nuget.org/packages/Serilog.Sinks.Seq) & external application ([Seq](https://datalust.co/seq))

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Reactive.Disposables;
 using Dawn.MuMu.RichPresence.Discord;
 using Dawn.MuMu.RichPresence.Models;
+using Dawn.MuMu.RichPresence.Scrapers;
 using Dawn.MuMu.RichPresence.Tools;
 using DiscordRPC;
 using DynamicData.Binding;
@@ -168,7 +169,7 @@ public static partial class MuMuNegotiator
         _focusedEmulatorName = emulatorProcessName;
 
         var discoverabilityTask = _discoverabilityHandler.TryGetOfficialApplicationId(sessionLifetime.Title);
-        var packageInfoTask = PlayStoreWebScraper.TryGetPackageInfo(sessionLifetime.PackageName);
+        var packageInfoTask = PackageScraper.TryGetPackageInfo(sessionLifetime);
 
         if (await discoverabilityTask is not { } officialApplicationId)
         {
@@ -179,14 +180,14 @@ public static partial class MuMuNegotiator
             officialApplicationId = null;
             presence.Details ??= sessionLifetime.Title;
             presence.WithStatusDisplay(StatusDisplayType.Details);
-            presence.WithDetailsUrl(PlayStoreWebScraper.GetPlayStoreLinkForPackage(sessionLifetime.PackageName));
+            presence.WithDetailsUrl(await PackageScraper.GetStoreLinkForSession(sessionLifetime));
         }
 
         var packageInfo = await packageInfoTask;
         var iconLink = packageInfo?.IconLink;
 
         if (!string.IsNullOrWhiteSpace(iconLink))
-            PopulatePresenceAssets(sessionLifetime, presence, iconLink, officialApplicationId == null);
+            await PopulatePresenceAssets(sessionLifetime, presence, iconLink, officialApplicationId == null);
 
         var retVal = _richPresenceHandler.TrySetPresence(sessionLifetime.Title, presence, officialApplicationId);
         if (!retVal)
@@ -198,7 +199,7 @@ public static partial class MuMuNegotiator
         return retVal;
     }
 
-    private static void PopulatePresenceAssets(MuMuSessionLifetime sessionLifetime, DiscordRPC.RichPresence presence, string iconLink, bool linkToStorePage)
+    private static async Task PopulatePresenceAssets(MuMuSessionLifetime sessionLifetime, DiscordRPC.RichPresence presence, string iconLink, bool linkToStorePage)
     {
         if (!presence.HasAssets())
             presence.Assets = new();
@@ -208,7 +209,7 @@ public static partial class MuMuNegotiator
         assets.LargeImageText = presence.Details;
 
         if (linkToStorePage)
-            assets.LargeImageUrl = PlayStoreWebScraper.GetPlayStoreLinkForPackage(sessionLifetime.PackageName);
+            assets.LargeImageUrl = await PackageScraper.GetStoreLinkForSession(sessionLifetime);
     }
 
     private static readonly MuMuProcessState _currentProcessState = new();

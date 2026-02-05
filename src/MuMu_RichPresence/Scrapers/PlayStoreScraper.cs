@@ -1,26 +1,28 @@
 ﻿using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
+using Dawn.MuMu.RichPresence.Models;
 using Polly;
 using Polly.Retry;
 
-namespace Dawn.MuMu.RichPresence.MuMu;
+namespace Dawn.MuMu.RichPresence.Scrapers;
 
-public static partial class PlayStoreWebScraper
+public partial class PlayStoreScraper : IWebStoreScraper
 {
     private static readonly HttpClient _client = new();
-    private static readonly ConcurrentDictionary<string, PlayStorePackageInfo> _webCache = new();
+    private static readonly ConcurrentDictionary<string, StorePackageInfo> _webCache = new();
 
-    public record PlayStorePackageInfo(string IconLink, string Title);
-
-    private static readonly AsyncRetryPolicy<PlayStorePackageInfo?> _retryPolicy = Policy<PlayStorePackageInfo?>
+    private static readonly AsyncRetryPolicy<StorePackageInfo?> _retryPolicy = Policy<StorePackageInfo?>
         .Handle<Exception>()
-        .WaitAndRetryAsync(MAX_RETRIES, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt) - 1));
+        .WaitAndRetryAsync(MAX_RETRIES, _ => TimeSpan.FromSeconds(1));
 
     private const int MAX_RETRIES = 3;
 
-    public static string GetPlayStoreLinkForPackage(string packageName) => $"https://play.google.com/store/apps/details?id={packageName}";
-    public static async ValueTask<PlayStorePackageInfo?> TryGetPackageInfo(string packageName, AsyncRetryPolicy<PlayStorePackageInfo?>? retryPolicy = null)
+    public ValueTask<string> GetStoreLinkForSession(MuMuSessionLifetime session) => ValueTask.FromResult($"https://play.google.com/store/apps/details?id={session.PackageName}");
+
+    public async ValueTask<StorePackageInfo?> TryGetPackageInfo(MuMuSessionLifetime session, AsyncRetryPolicy<StorePackageInfo?>? retryPolicy = null)
     {
+        var packageName = session.PackageName;
+
         if (_webCache.TryGetValue(packageName, out var link))
             return link;
 
@@ -30,7 +32,7 @@ public static partial class PlayStoreWebScraper
         {
             return await retryPolicy.ExecuteAsync(async () =>
             {
-                var storePageContent = await _client.GetStringAsync(GetPlayStoreLinkForPackage(packageName));
+                var storePageContent = await _client.GetStringAsync(await GetStoreLinkForSession(session));
 
                 var match = GetImageRegex().Match(storePageContent);
 
@@ -44,15 +46,22 @@ public static partial class PlayStoreWebScraper
                 var titleMatch = GetTitleRegex().Match(storePageContent);
                 var title = titleMatch.Success ? titleMatch.Groups[1].Value : string.Empty;
 
-                var info = new PlayStorePackageInfo(imageLink, title);
+                var info = new StorePackageInfo(imageLink, title);
                 _webCache.TryAdd(packageName, info);
 
                 return info;
             });
         }
+        catch (HttpRequestException e)
+        {
+            #if DEBUG
+            Log.Debug(e, "Failed to get icon link for {Title}", session.Title);
+            #endif
+            return null;
+        }
         catch (Exception e)
         {
-            Log.Error(e, "Failed to get icon link for {PackageName}", packageName);
+            Log.Error(e, "Failed to get icon link for {Title}", session.Title);
             return null;
         }
     }
