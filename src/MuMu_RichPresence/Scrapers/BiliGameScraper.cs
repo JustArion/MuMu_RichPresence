@@ -80,7 +80,11 @@ public class BiliGameScraper : IWebStoreScraper
                 return packageInfo;
             });
         }
+        #if DEBUG
         catch (HttpRequestException e)
+        #else
+        catch (HttpRequestException)
+        #endif
         {
             #if DEBUG
             Log.Debug(e, "Failed to get icon link for {Title}", session.Title);
