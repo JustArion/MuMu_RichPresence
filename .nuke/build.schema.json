@@ -29,6 +29,7 @@
         "InstallOrUpdateVelopack",
         "Restore",
         "Standalone",
+        "TaggedPreRelease",
         "TaggedRelease",
         "Test",
         "Velopack"

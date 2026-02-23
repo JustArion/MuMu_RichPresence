@@ -24,6 +24,18 @@ using JetBrains.Annotations;
         Lfs = true,
         
         OnPushTags = ["v*"]),
+    GitHubActions("Pre-Release on Tag", 
+        GitHubActionsImage.WindowsLatest,
+        InvokedTargets = [nameof(TaggedPreRelease)],
+        EnableGitHubToken = true,
+        PublishArtifacts = true,
+        WritePermissions = [GitHubActionsPermissions.Contents],
+        Submodules = GitHubActionsSubmodules.Recursive,
+        CacheIncludePatterns = ["~/.nuget/packages"],
+        CacheKeyFiles = ["**/global.json", "**/*.csproj", "**/Directory.Packages.props", "**/packages.lock.json"],
+        Lfs = true,
+        
+        OnPushTags = ["p*"]),
     GitHubActions("Manual Release", 
         GitHubActionsImage.WindowsLatest, 
         InvokedTargets = [nameof(TaggedRelease)],
@@ -43,7 +55,40 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
     {
         return Execute<Build>(x => x.Velopack);
     }
-    
+
+    Target TaggedPreRelease => _ => _
+        .DependsOn(Velopack)
+        .DependsOn(Test)
+        .Unlisted()
+        .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(Actions.Token))
+        .OnlyWhenStatic(() => IsServerBuild)
+        .Executes(async () =>
+        {
+            // https://github.com/nuke-build/nuke/blob/develop/source/Nuke.Components/ICreateGitHubRelease.cs#L35
+            GitHubTasks.GitHubClient.Credentials = new(Actions.Token);
+
+            var tag = Version ?? GetLatestTag();
+            var releases = GitHubTasks.GitHubClient.Repository.Release;
+            var release = await GetOrCreateRelease(tag, true);
+
+            var uploadTasks = AssetFiles.Select(async x =>
+            {
+                await using var assetFile = File.OpenRead(x);
+                var asset = new ReleaseAssetUpload
+                {
+                    FileName = x.Name,
+                    ContentType = "application/octet-stream",
+                    RawData = assetFile
+                };
+
+                await releases.UploadAsset(release, asset);
+            }).ToArray();
+
+            Task.WaitAll(uploadTasks);
+
+            Log.Information("All Assets uploaded!");
+        });
+
     Target TaggedRelease => _ => _
         .DependsOn(Velopack)
         .DependsOn(Test)
@@ -97,7 +142,7 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
             Git($"push origin HEAD:{defaultBranch}");
         });
 
-    private async Task<Release> GetOrCreateRelease(string name)
+    private async Task<Release> GetOrCreateRelease(string name, bool preRelease = false)
     {
         var release = GitHubTasks.GitHubClient.Repository.Release;
         try
@@ -108,7 +153,7 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
                 new NewRelease(name)
                 {
                     Name = name,
-                    Prerelease = false,
+                    Prerelease = preRelease,
                     Draft = false,
                     Body = $"""
                            **Dependencies**
@@ -235,7 +280,10 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
             "releases.win.json");
     
     // Extra Methods
-    private static readonly Func<string, bool> _versionPredicate = s => s.StartsWith('v'); 
-    private string GetLatestTag() => (Repository.Tags?.FirstOrDefault(_versionPredicate) ?? GitRepository.GetTag(_versionPredicate)).TrimStart('v');
+    private static readonly Func<string, bool> _versionPredicate = s => s.StartsWith('v') || s.StartsWith('p');
+
+    private string GetLatestTag() =>
+        (Repository.Tags?.FirstOrDefault(_versionPredicate) ?? GitRepository.GetTag(_versionPredicate)).TrimStart('v')
+        .TrimStart('p');
     private static string Quote(string str) => $"\"{str}\"";
 }
