@@ -8,7 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Dawn.MuMu.RichPresence.Models;
 
 [SuppressMessage("ReSharper", "InvertIf")]
-public struct LaunchArgs
+public readonly struct LaunchArgs
 {
     internal const string RP_DISABLED_ON_START = "RP Disabled On Start";
 
@@ -42,10 +42,13 @@ public struct LaunchArgs
 
     // Args
     public bool RichPresenceDisabledOnStart { get; }
+    public bool RichPresenceEnabledOnStart => !RichPresenceDisabledOnStart;
     public bool HideTrayIconOnStart { get; }
     public bool NoFileLogging { get; }
+    public bool FileLogging => !NoFileLogging;
     public bool ExtendedLogging { get; init; }
     public bool NoAutoUpdate { get; }
+    public bool AutoUpdate => !NoAutoUpdate;
     public bool ExperimentalADB { get; }
 
     public bool HasCustomApplicationId { get; }

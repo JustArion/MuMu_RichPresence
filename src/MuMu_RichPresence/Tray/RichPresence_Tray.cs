@@ -102,11 +102,11 @@ public class RichPresence_Tray
 
     private static ToolStripMenuItem Enabled()
     {
-        Features.RichPresenceEnabled = !Arguments.RichPresenceDisabledOnStart;
+        Features.RichPresenceEnabled = Arguments.RichPresenceEnabledOnStart;
 
         var enabledItem = new ToolStripMenuItem("Enabled");
 
-        enabledItem.Checked = !Arguments.RichPresenceDisabledOnStart;
+        enabledItem.Checked = Arguments.RichPresenceEnabledOnStart;
 
         enabledItem.Click += (_, _) =>
         {

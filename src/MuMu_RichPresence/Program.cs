@@ -54,7 +54,7 @@ internal static class Program
 
         ApplicationLogs.ListenToEvents();
 
-        if (!Arguments.NoAutoUpdate)
+        if (Arguments.AutoUpdate)
             Task.Run(AutoUpdate.CheckForUpdates);
 
         _trayIcon = new(MuMuNegotiator.LogSubject);

@@ -49,7 +49,7 @@ internal static class ApplicationLogs
 
 
             var logPath = Path.Combine(Environment.CurrentDirectory, $"{Application.ProductName}.log");
-            if (!Arguments.NoFileLogging)
+            if (Arguments.FileLogging)
                 config.WriteTo.File(logPath,
                     outputTemplate: LOGGING_FORMAT,
                     restrictedToMinimumLevel: Arguments.ExtendedLogging
@@ -74,7 +74,7 @@ internal static class ApplicationLogs
             Log.Logger = config.CreateLogger();
 
             #if DEBUG
-            if (!Arguments.NoFileLogging)
+            if (Arguments.FileLogging)
                 Log.Information("Logging to {LogPath} with current directory: {CurrentDirectory}", logPath, Environment.CurrentDirectory);
             #endif
         }
@@ -82,7 +82,7 @@ internal static class ApplicationLogs
         {
             Console.Error.WriteLine(e);
             // Setting a null logger prevents exceptions when other places within the code tries to log when setting up the logger has failed already.
-            Log.Logger = new NullLogger();
+            Log.Logger = NullLogger.Instance;
         }
     }
 
