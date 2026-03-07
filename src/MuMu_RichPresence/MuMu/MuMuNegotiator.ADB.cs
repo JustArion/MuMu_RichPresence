@@ -54,7 +54,8 @@ public static partial class MuMuNegotiator
         if (interop == null)
         {
             Log.Error("MuMu Interop could not be established for some reason, falling back to FileWatching");
-            throw new NotImplementedException();
+            StartFileWatching();
+            return;
         }
 
         // Wait at least 15sec since emulator start (this is for ADB to boot up)
