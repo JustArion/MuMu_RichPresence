@@ -7,12 +7,23 @@ A simpler non-technical explanation of what our program does can be found [here]
     - `Write Access`
         - Writes a single Log File to the `MuMu RichPresence.exe` directory
             - `MuMu RichPresence.log`
-        - Writes a single JSON File to the `MuMu_RichPresence.exe` directory
+        - Creates a `cache` directory in the `MuMu RichPresence.exe` directory
+        - Writes two JSON Files to the `cache` directory
             - `detectable.json`
+            - `detectable.temp.json`
+              - A temp file that will be moved to be `detectable.json`
             - This is a reduced cached collection of `https://discord.com/api/v9/games/detectable`
         - _Can_ create a single registry key (`\HKCU\Software\Microsoft\Windows\CurrentVersion\Run\MuMu RichPresence`)
             - For running on startup
             - Default is off, configurable by the user
+        - _Can_ write a single XML File to the `cache` directory
+          - `AndroidManifest.xml`
+          - This is normally followed with `resources.arsc`
+          - Are temp files extracted from within MuMu Emulator about an APK file (A Game)
+      - _Can_ write a single ARSC File to the `cache` directory
+          - `resources.arsc`
+          - This is normally followed with `AndroidManifest.xml`
+          - Are temp files extracted from within MuMu Emulator about an APK file (A Game)
     - `Read Access`
         - Reads Start Menu shortcuts for `MuMu Player*` / `MuMuPlayer*`
         - Walks the directory of the file found previously (`MuMu Player*` / `MuMuPlayer*`)
@@ -27,6 +38,21 @@ A simpler non-technical explanation of what our program does can be found [here]
         - Walks to the root directory from `MuMuNxDevice.exe` (MuMuPlayerGlobal-12.0)
           - Searches for any files in the root directory and subdirectories for `adb.exe` 
           - Searches for the `vms` directory in the root directory, then searches in subdirectories for `vm_config.json`
+        - Reads the previously created JSON File from the `cache` directory
+          - `detectable.json`
+        - Reads the previously created XML File from the `cache` directory
+          - `AndroidManifest.xml`
+          - Only reads the application label resource index
+        - Reads the previously created ARSC File from the `cache` directory
+          - `resources.arsc`
+          - Only reads the application label
+    - `Delete Access`      
+      - Moves a single JSON File from the `cache` directory
+        - `detectable.temp.json` -> `detectable.json`
+      - Deletes a single XML File from the `cache` directory
+        - `AndroidManifest.xml`
+      - Deletes a single ARSC File from the `cache` directory
+        - `resources.arsc`
 - `Network`
     - `Download Access`
         - _Can_ download updates from `https://github.com/JustArion/MuMu_RichPresence`
