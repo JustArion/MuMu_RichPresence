@@ -1,8 +1,11 @@
-﻿using System.Diagnostics;
-using System.Reactive.Disposables;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using AlphaOmega.Debug;
+using AlphaOmega.Debug.Manifest;
 using CliWrap.Exceptions;
 using Dawn.MuMu.RichPresence.Exceptions;
 using Dawn.MuMu.RichPresence.Models;
@@ -122,9 +125,167 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
 
         cat /proc/<pid>/<path>
      */
-    public async Task<string> GetInfo(AppInfo info, string path, CancellationToken token = default) => await adb.Execute($"cat /proc/{info.Pid}/{path}", token: token);
+    public async Task<string> GetInfo(AppInfo info, string path, CancellationToken token = default)
+    {
+        await using (await EnsureConnected(token))
+            return await adb.Execute($"cat /proc/{info.Pid}/{path}", token: token);
+    }
 
-    // Gets the focused non-system app
+    /*  We're executing this:
+
+        pm path <packageName>
+    */
+    public async Task<string> GetPackagePath(AppInfo info, CancellationToken token = default)
+    {
+        await using (await EnsureConnected(token))
+            return (await adb.Execute($"pm path {info.PackageName}", token: token))
+            .TrimStart("package:")
+            .ToString();
+    }
+
+    public async Task<FileInfo> PullFile(string path, DirectoryInfo directory, CancellationToken token = default)
+    {
+        var fileName = Path.GetFileName(path);
+        var targetFi = new FileInfo(Path.Combine(directory.FullName, fileName));
+
+        if (targetFi.Exists)
+            targetFi.Delete();
+
+        // pull [-a] [-z ALGORITHM] [-Z] REMOTE... LOCAL
+        //     copy files/dirs from device
+        //     -a: preserve file timestamp and mode
+        //     -q: suppress progress messages
+        //     -Z: disable compression
+        //     -z: enable compression with a specified algorithm (any/none/brotli/lz4/zstd)
+        await using (await EnsureConnected(token))
+        {
+            // System.Exception: /data/local/tmp/resources.arsc: 1 file pulled, 0 skipped. 42.5 MB/s (1599740 bytes in 0.036s)
+            // pulling files seems to use adb's std-err for some reason :shrug: we ignore them anyways via a #define
+            await adb.ExecuteRaw<string>(["pull", path, directory.FullName], token);
+
+            targetFi.Refresh();
+            Debug.Assert(targetFi.Exists);
+
+            return targetFi.Exists
+                ? targetFi
+                : throw new FileNotFoundException(targetFi.FullName);
+        }
+    }
+
+    public async Task PullFile(string path, FileInfo file, CancellationToken token = default)
+    {
+        var fi = await PullFile(path, file.Directory!, token);
+
+        fi.MoveTo(file.FullName);
+        file.Refresh();
+        Debug.Assert(file.Exists);
+
+        if (!file.Exists)
+            throw new FileNotFoundException(file.FullName);
+    }
+
+
+    /*  We're executing this:
+
+        pm list packages -f <packageName>
+        adb pull <packagePath> <directory>
+    */
+    public async Task<FileInfo> PullAPK(AppInfo info, DirectoryInfo directory, CancellationToken token = default)
+    {
+        var path = await GetPackagePath(info, token);
+
+        directory.Create();
+        var dest = new FileInfo(Path.Combine(directory.FullName, $"{info.PackageName}.apk"));
+
+        Log.Debug("Pulling {PackageName} ({FileName}) to {DirectoryPath}", info.PackageName, Path.GetFileName(path), directory.FullName);
+
+        await PullFile(path, dest, token);
+
+        return dest;
+    }
+
+    private static readonly ConcurrentDictionary<string, string> _appLabelCache = new();
+    public async Task<string> GetAppLabel(AppInfo info, CancellationToken token = default)
+    {
+        if (_appLabelCache.TryGetValue(info.PackageName, out var label))
+            return label;
+
+        try
+        {
+            label = await GetLabel(info, token);
+        }
+        catch (Exception e)
+        {
+            Log.Error(e, "Unable to fetch the app label for {PackageName}", info);
+            label = string.Empty;
+        }
+
+        if (!string.IsNullOrWhiteSpace(label))
+            _appLabelCache.TryAdd(info.PackageName, label);
+
+        return label;
+    }
+
+    private const string VIRTUAL_TEMP_FOLDER = "/data/local/tmp";
+    private async Task<string> GetLabel(AppInfo info, CancellationToken token)
+    {
+        Log.Debug("Fetching Label for {PackageName}", info.PackageName);
+        var apkVirtualPath = await GetPackagePath(info, token);
+
+        await using (await EnsureConnected(token))
+        {
+            // usage: unzip [-d DIR] [-lnopqv] ZIP [FILE...] [-x FILE...]
+            //
+            // Extract FILEs from ZIP archive. Default is all files. Both the include and
+            // exclude (-x) lists use shell glob patterns.
+            //
+            // -d DIR  Extract into DIR
+            // -j      Junk (ignore) file paths
+            // -l      List contents (-lq excludes archive name, -lv is verbose)
+            // -n      Never overwrite files (default: prompt)
+            // -o      Always overwrite files
+            // -p      Pipe to stdout
+            // -q      Quiet
+            // -t      Test compressed data (do not extract)
+            // -v      List contents verbosely
+            // -x FILE Exclude files
+
+            // We're overwriting other AndroidManifest.xml files and other resrouces.arsc files
+            // unzip -d /data/local/tmp -o <apk_path> AndroidManifest.xml resources.arsc
+            await adb.Execute(["unzip", $"-d {VIRTUAL_TEMP_FOLDER}", "-o", apkVirtualPath, "AndroidManifest.xml", "resources.arsc"], token);
+
+            FileInfo? manifestFi = null;
+            FileInfo? resourcesFi = null;
+            try
+            {
+                manifestFi = await PullFile($"{VIRTUAL_TEMP_FOLDER}/AndroidManifest.xml", CacheDirectory, token);
+                resourcesFi = await PullFile($"{VIRTUAL_TEMP_FOLDER}/resources.arsc", CacheDirectory, token);
+
+                await using var resourcesStream = resourcesFi.OpenRead();
+                var resources = new ArscFile(resourcesStream);
+
+                using var manifestFile = new AxmlFile(StreamLoader.FromFile(manifestFi.FullName));
+                var manifest = AndroidManifest.Load(manifestFile, resources);
+
+                var labelIndex = manifest.Application.Label
+                    .AsSpan().TrimStart('@');
+
+                var resourceId = int.Parse(labelIndex, NumberStyles.HexNumber);
+
+                var label = resources.ResourceMap[resourceId].First().Value!;
+
+                Log.Debug("Got label for {PackageName} ({Label})", info.PackageName, label);
+
+                return label;
+            }
+            finally
+            {
+                manifestFi?.Delete();
+                resourcesFi?.Delete();
+            }
+        }
+    }
+
     public async Task<AndroidProcess?> GetFocusedApp(CancellationToken token = default)
     {
         // This times out if the emulator is starting up, since ADB waits for the emulator to fully start up
@@ -151,11 +312,13 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
         if (AppLifetimeParser.IsSystemLevelPackage(info.PackageName))
             return null;
 
-        // TODO: Use something like AAPT to get the package title instead of relying on other places like app stores to fill in the titles
-        // This is currently a hacky solution to us not being able to retreive APK / package labels / titles
-        var session = new MuMuSessionLifetime { AppState = AppState.Focused, PackageName =  info.PackageName, Title = string.Empty};
-        var packageInfo = await PackageScraper.TryGetPackageInfo(session);
+        var title = await GetAppLabel(info, token);
+        var session = new MuMuSessionLifetime { AppState = AppState.Focused, PackageName = info.PackageName, Title = title };
 
+        if (!string.IsNullOrWhiteSpace(title))
+            return new(title, info);
+
+        var packageInfo = await PackageScraper.TryGetPackageInfo(session);
         if (packageInfo != null)
             return new(packageInfo.Title, info);
 
@@ -203,6 +366,7 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
     }
 
     private bool _disposed;
+
     public async ValueTask DisposeAsync()
     {
         if (_disposed)
