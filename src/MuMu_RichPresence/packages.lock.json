@@ -2,6 +2,15 @@
   "version": 1,
   "dependencies": {
     "net10.0-windows7.0": {
+      "AlphaOmega.ApkReader": {
+        "type": "Direct",
+        "requested": "[2.0.10, 2.0.10]",
+        "resolved": "2.0.10",
+        "contentHash": "tks0anhhvPmb9FHnLjEHDg7x/h/5v8MNi41ZWfVemGcq129fDZt4GuN4ZBUyUL6D/YUiNSvuuyjnz1OgrKWs8w==",
+        "dependencies": {
+          "SharpZipLib": "1.4.2"
+        }
+      },
       "CliWrap": {
         "type": "Direct",
         "requested": "[3.10.0, )",
@@ -222,6 +231,11 @@
         "dependencies": {
           "Serilog": "4.0.0"
         }
+      },
+      "SharpZipLib": {
+        "type": "Transitive",
+        "resolved": "1.4.2",
+        "contentHash": "yjj+3zgz8zgXpiiC3ZdF/iyTBbz2fFvMxZFEBPUcwZjIvXOf37Ylm+K58hqMfIBt5JgU/Z2uoUS67JmTLe973A=="
       },
       "Sprache": {
         "type": "Transitive",

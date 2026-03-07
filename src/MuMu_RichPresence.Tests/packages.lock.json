@@ -49,6 +49,14 @@
           "Microsoft.Testing.Platform.MSBuild": "2.0.2"
         }
       },
+      "AlphaOmega.ApkReader": {
+        "type": "Transitive",
+        "resolved": "2.0.10",
+        "contentHash": "tks0anhhvPmb9FHnLjEHDg7x/h/5v8MNi41ZWfVemGcq129fDZt4GuN4ZBUyUL6D/YUiNSvuuyjnz1OgrKWs8w==",
+        "dependencies": {
+          "SharpZipLib": "1.4.2"
+        }
+      },
       "CliWrap": {
         "type": "Transitive",
         "resolved": "3.10.0",
@@ -303,6 +311,11 @@
           "Serilog.Sinks.File": "6.0.0"
         }
       },
+      "SharpZipLib": {
+        "type": "Transitive",
+        "resolved": "1.4.2",
+        "contentHash": "yjj+3zgz8zgXpiiC3ZdF/iyTBbz2fFvMxZFEBPUcwZjIvXOf37Ylm+K58hqMfIBt5JgU/Z2uoUS67JmTLe973A=="
+      },
       "Sprache": {
         "type": "Transitive",
         "resolved": "2.3.1",
@@ -400,6 +413,7 @@
       "MuMu RichPresence Standalone": {
         "type": "Project",
         "dependencies": {
+          "AlphaOmega.ApkReader": "[2.0.10, 2.0.10]",
           "CliWrap": "[3.10.0, )",
           "CommunityToolkit.Mvvm": "[8.4.0, )",
           "Dawn.WinForms.ContextMenu": "[1.0.0, )",
