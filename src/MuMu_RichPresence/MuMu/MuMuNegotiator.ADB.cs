@@ -22,7 +22,8 @@ public static partial class MuMuNegotiator
         var monitor = new ProcessMonitor($"{NxDevice}.exe");
         monitor.Started
             .Subscribe(EmulatorStarted);
-        monitor.Closed.Subscribe(EmulatorClosed);
+        monitor.Closed
+            .Subscribe(EmulatorClosed);
 
         if (Process.GetProcessesByName(NxDevice).Length != 0)
             EmulatorStarted(Unit.Default);
@@ -75,6 +76,7 @@ public static partial class MuMuNegotiator
                 if (app == null)
                     await UpdatePresenceIfNecessary();
 
+                // It's the same presence being updated
                 if (app == null || (_focusedLifetime != null && app.AppInfo.PackageName == _focusedLifetime.PackageName))
                     continue;
 
