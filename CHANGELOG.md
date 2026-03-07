@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Development]
+- ⚡️ `--experimental` mode now supports non-Play Store apps
+- 🦺 General optimizations
+  - Less overall web activity
+    - Web scraping results are now cached
+    - Web scraping results aren't retried after respective failures
+  - If `--experimental` mode fails to start up, tries to fall back to normal file watching
 
 ## [2.1.0] / 2026-02-08
 - 🦺 Bugfix: In rare cases on v`5.14`, couldn't detect rich presences from MuMu Player
