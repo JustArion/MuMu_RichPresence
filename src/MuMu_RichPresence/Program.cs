@@ -23,6 +23,8 @@ using MuMu;
 
 internal static class Program
 {
+    internal static DirectoryInfo CacheDirectory { get; private set; } = null!;
+
     internal static LaunchArgs Arguments { get; private set; }
     internal static ApplicationFeatures Features { get; } = new();
 
@@ -33,6 +35,9 @@ internal static class Program
     private static void Main(string[] args)
     {
         Environment.CurrentDirectory = AppContext.BaseDirectory; // Startup sets it to %windir%
+        CacheDirectory = new(Path.Combine(Environment.CurrentDirectory, "cache"));
+        if (!CacheDirectory.Exists)
+            CacheDirectory.Create();
 
         // This might throw an access violation if we don't have permissions to read it, we just don't read further when that happens
         SuppressExceptions(()=> DotNetEnv.Env
