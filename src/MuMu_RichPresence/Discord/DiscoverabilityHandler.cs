@@ -21,6 +21,8 @@ public class DiscoverabilityHandler
     private bool _aquiredInitialLock;
 
     internal DiscoverableRichPresence[]? _discoverablePresences = [];
+    private readonly FileInfo _detectableInfo = new(Path.Combine(CacheDirectory.FullName, "detectable.json"));
+    private readonly FileInfo _tempDetectableInfo = new(Path.Combine(CacheDirectory.FullName, "detectable.temp.json"));
     public DiscoverabilityHandler() => Task.Run(PopulateDiscoverablePresences);
 
     private async Task PopulateDiscoverablePresences()
@@ -32,13 +34,13 @@ public class DiscoverabilityHandler
         {
             try
             {
-                if (File.Exists("detectable.json"))
+                if (_detectableInfo.Exists)
                 {
                     Log.Debug("Found detectable.json");
 
                     _discoverablePresences =
                         JsonSerializer.Deserialize<DiscoverableRichPresence[]>(
-                            await File.ReadAllTextAsync("detectable.json"), _options);
+                            await File.ReadAllTextAsync(_detectableInfo.FullName), _options);
 
                     var count = _discoverablePresences?.Length ?? 0;
                     Log.Debug("Read from disk, found {OfficialPresenceCount} Official Presences", count);
@@ -96,14 +98,14 @@ public class DiscoverabilityHandler
     {
         try
         {
-            await File.WriteAllTextAsync("detectable.temp.json", JsonSerializer.Serialize(_discoverablePresences, _options));
+            await File.WriteAllTextAsync(_tempDetectableInfo.FullName, JsonSerializer.Serialize(_discoverablePresences, _options));
 
-            File.Move("detectable.temp.json", "detectable.json", true);
+            File.Move(_tempDetectableInfo.FullName, _detectableInfo.FullName, true);
         }
         finally
         {
-            if (File.Exists("detectable.temp.json"))
-                File.Delete("detectable.temp.json");
+            if (_tempDetectableInfo.Exists)
+                _tempDetectableInfo.Delete();
         }
 
         Log.Verbose("Saved Official Presences -> detectable.json");
