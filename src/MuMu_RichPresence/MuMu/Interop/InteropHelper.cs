@@ -73,14 +73,21 @@ public static class InteropHelper
                 .ExecuteAsync();
         }
 
-        public async Task<T> Execute<T>(string command, CancellationToken token = default) where T : IParsable<T>
-        {
-            var arg = $"shell {command}";
+        public async Task<T> Execute<T>(string command, CancellationToken token = default) where T : IParsable<T> => await info.ExecuteRaw<T>($"shell {command}", token);
+        public async Task<T> Execute<T>(string[] command, CancellationToken token = default) where T : IParsable<T> =>
+            await info.ExecuteRaw<T>(["shell", ..command], token);
+        public async Task<string> Execute(string command, CancellationToken token = default) => await info.ExecuteRaw<string>($"shell {command}", token);
 
+        public async Task<string> Execute(string[] command, CancellationToken token = default) =>
+            await info.ExecuteRaw<string>(["shell", ..command], token);
+
+        public async Task<T> ExecuteRaw<T>(string[] args, CancellationToken token = default) where T : IParsable<T>
+        {
             var stdOut = new StringBuilder();
             var stdErr = new StringBuilder();
             await Cli.Wrap(info.ADBPath)
-                .WithArguments(arg)
+                .WithArguments(args, true)
+                .WithValidation(CommandResultValidation.None)
                 .WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdOut))
                 .WithStandardErrorPipe(PipeTarget.ToStringBuilder(stdErr))
                 .ExecuteAsync(token);
@@ -89,34 +96,36 @@ public static class InteropHelper
 
             #if LISTEN_TO_INTEROP && LISTEN_TO_EXECUTIONS
             var errors = stdErr.ToString().Trim();
-            Log.Debug("[Exec] adb {Command} -> {Result}{Errors}", arg, val, errors);
+            if (string.IsNullOrWhiteSpace(errors))
+                Log.Debug("[Exec] adb {Command} -> {Result}", string.Join(" ", args), val);
+            else
+                Log.Error(new Exception(errors), "[Exec] adb {Command} -> {Result}", string.Join(" ", args), val);
             #endif
             return val;
         }
 
-        public async Task<string> Execute(string command, CancellationToken token = default)
+        public async Task<T> ExecuteRaw<T>(string command, CancellationToken token = default) where T : IParsable<T>
         {
-            var arg = $"shell {command}";
-
             var stdOut = new StringBuilder();
             var stdErr = new StringBuilder();
             await Cli.Wrap(info.ADBPath)
-                .WithArguments(arg)
+                .WithArguments(command)
                 .WithValidation(CommandResultValidation.None)
                 .WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdOut))
                 .WithStandardErrorPipe(PipeTarget.ToStringBuilder(stdErr))
                 .ExecuteAsync(token);
 
-            var val = stdOut.ToString().Trim();
-            var errors = stdErr.ToString().Trim();
+            var val = T.Parse(stdOut.ToString().Trim(), CultureInfo.InvariantCulture);
 
             #if LISTEN_TO_INTEROP && LISTEN_TO_EXECUTIONS
-            Log.Debug("[Exec] adb {Command} -> {Result}{Errors}", arg, val, errors);
+            var errors = stdErr.ToString().Trim();
+            if (string.IsNullOrWhiteSpace(errors))
+                Log.Debug("[Exec] adb {Command} -> {Result}", command, val);
+            else
+                Log.Debug(new Exception(errors), "[Exec] adb {Command} -> {Result}", command, val);
             #endif
-
-            return errors.Length > 0
-                ? throw new NotConnectedException(errors)
-                : val;
+            return val;
         }
+
     }
 }
