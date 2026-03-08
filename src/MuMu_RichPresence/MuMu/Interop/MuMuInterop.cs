@@ -103,6 +103,10 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
             // topResumedActivity=ActivityRecord{321bd4c u0 app.lawnchair/.LawnchairLauncher t2}
             // ResumedActivity: ActivityRecord{9846be1 u0 com.YoStarEN.Arknights/com.u8.sdk.U8UnityContext t365}
             var result = await adb.Execute("dumpsys activity activities | grep ResumedActivity", token: token);
+
+            if (string.IsNullOrWhiteSpace(result))
+                return null; // There's no ForegroundApp active
+
             var match = GetForegroundApp().Match(result);
 
             if (!match.Success)
