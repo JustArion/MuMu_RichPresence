@@ -36,6 +36,18 @@ using JetBrains.Annotations;
         Lfs = true,
         
         OnPushTags = ["p*"]),
+    GitHubActions("Manual Pre-Release", 
+        GitHubActionsImage.WindowsLatest, 
+        InvokedTargets = [nameof(TaggedPreRelease)],
+        EnableGitHubToken = true,
+        PublishArtifacts = true,
+        WritePermissions = [GitHubActionsPermissions.Contents],
+        Submodules = GitHubActionsSubmodules.Recursive,
+        CacheIncludePatterns = ["~/.nuget/packages"],
+        CacheKeyFiles = ["**/global.json", "**/*.csproj", "**/Directory.Packages.props", "**/packages.lock.json"],
+        Lfs = true,
+        
+        OnWorkflowDispatchRequiredInputs = ["Version"]),
     GitHubActions("Manual Release", 
         GitHubActionsImage.WindowsLatest, 
         InvokedTargets = [nameof(TaggedRelease)],
