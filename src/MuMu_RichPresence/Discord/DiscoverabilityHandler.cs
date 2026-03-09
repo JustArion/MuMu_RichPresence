@@ -21,9 +21,15 @@ public class DiscoverabilityHandler
     private bool _aquiredInitialLock;
 
     internal DiscoverableRichPresence[]? _discoverablePresences = [];
-    private readonly FileInfo _detectableInfo = new(Path.Combine(CacheDirectory.FullName, "detectable.json"));
-    private readonly FileInfo _tempDetectableInfo = new(Path.Combine(CacheDirectory.FullName, "detectable.temp.json"));
-    public DiscoverabilityHandler() => Task.Run(PopulateDiscoverablePresences);
+    private readonly FileInfo _detectableInfo;
+    private readonly FileInfo _tempDetectableInfo;
+    public DiscoverabilityHandler(DirectoryInfo? cacheDirectory = null)
+    {
+        cacheDirectory ??= new(Environment.CurrentDirectory);
+        _detectableInfo = new(Path.Combine(cacheDirectory.FullName, "detectable.json"));
+        _tempDetectableInfo = new(Path.Combine(cacheDirectory.FullName, "detectable.temp.json"));
+        Task.Run(PopulateDiscoverablePresences);
+    }
 
     private async Task PopulateDiscoverablePresences()
     {

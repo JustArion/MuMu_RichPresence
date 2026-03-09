@@ -27,7 +27,7 @@ public static partial class MuMuNegotiator
             throw  new InvalidOperationException("Cannot use an approach more than once");
 
         _currentApproach = approach;
-        _discoverabilityHandler = new();
+        _discoverabilityHandler = new(CacheDirectory);
         _disposables.Add(_richPresenceHandler = new());
 
         if (approach == RichPresenceApproach.LogFileWatcher)
