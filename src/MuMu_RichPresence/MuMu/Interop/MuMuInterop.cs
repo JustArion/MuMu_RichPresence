@@ -11,6 +11,8 @@ using Dawn.MuMu.RichPresence.Exceptions;
 using Dawn.MuMu.RichPresence.Models;
 using Dawn.MuMu.RichPresence.Scrapers;
 using Dawn.MuMu.RichPresence.Tools;
+using Polly;
+using Polly.Retry;
 
 namespace Dawn.MuMu.RichPresence.MuMu.Interop;
 
@@ -18,20 +20,31 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
 {
     private readonly SemaphoreSlim _semaphore = new(1, 1);
     private IAsyncDisposable? _connection;
+    private readonly ResiliencePipeline _pipeline = new ResiliencePipelineBuilder()
+        .AddRetry(new RetryStrategyOptions
+        {
+            ShouldHandle = new PredicateBuilder().Handle<NotConnectedException>(),
+            BackoffType = DelayBackoffType.Exponential,
+            UseJitter = true,
+            MaxRetryAttempts = 5,
+            Delay = TimeSpan.FromSeconds(1)
+        })
+        .Build();
 
-    private async ValueTask KeepAlive()
+    private async ValueTask KeepAlive(CancellationToken token = default)
     {
         if (_connection is not null)
             return;
 
-        await _semaphore.WaitAsync();
+        await _semaphore.WaitAsync(token);
 
         // We do this twice, since the first is a quick path, and the second prevents a race condition
         if (_connection is not null)
             return;
         try
         {
-            _connection = await adb.Connect();
+            // The pipeline handles the retries and the back-off delay internally
+            _connection = await _pipeline.ExecuteAsync(async ct => await adb.Connect(ct), token);
         }
         finally
         {
@@ -44,7 +57,7 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
         if (!adb.KeepAlive)
             return await adb.Connect(token);
 
-        await KeepAlive();
+        await KeepAlive(token);
         // We return None since the methods using this disposes the Disposable after every invocation, so we use a renewable disposable stub
         return AnonymousAsyncDisposable.None;
     }
