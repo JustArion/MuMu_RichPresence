@@ -115,16 +115,33 @@ public static class InteropHelper
                 .WithStandardErrorPipe(PipeTarget.ToStringBuilder(stdErr))
                 .ExecuteAsync(token);
 
-            var val = T.Parse(stdOut.ToString().Trim(), CultureInfo.InvariantCulture);
+            var output = stdOut.ToString().Trim();
+            var errors = stdErr.ToString().Trim();
+            var exceptions = new List<Exception>(2);
+            if (string.IsNullOrWhiteSpace(errors))
+                exceptions.Add(new Exception(errors));
 
             #if LISTEN_TO_INTEROP && LISTEN_TO_EXECUTIONS
-            var errors = stdErr.ToString().Trim();
-            if (string.IsNullOrWhiteSpace(errors))
-                Log.Debug("[Exec] adb {Command} -> {Result}", command, val);
+            if (exceptions.Count == 0 && !string.IsNullOrWhiteSpace(output))
+                Log.Debug("[Exec] adb {Command} -> {Result}", command, output);
             else
-                Log.Debug(new Exception(errors), "[Exec] adb {Command} -> {Result}", command, val);
+                Log.Debug(exceptions.First(), "[Exec] adb {Command} -> {Result}", command, output);
             #endif
-            return val;
+
+            try
+            {
+                return T.Parse(output, CultureInfo.InvariantCulture);
+            }
+            catch (Exception e)
+            {
+                exceptions.Add(e);
+                Log.Debug(e, "[Exec] adb {Command} -> {Result}{Errors}", command, output, errors);
+
+                if (exceptions.Count == 1)
+                    throw;
+
+                throw new AggregateException(exceptions);
+            }
         }
 
     }
