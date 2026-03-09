@@ -51,8 +51,8 @@ public static class InteropHelper
             Log.Debug("[Exec] adb {Args} -> {Output}{StdErr}", arg, @out, err);
             #endif
 
-            const string ERROR = "cannot connect";
-            if (@out.Contains(ERROR) || err.Contains(ERROR))
+            const string CONNECTION_FAILED_INDICATOR = "cannot connect";
+            if (@out.Contains(CONNECTION_FAILED_INDICATOR) || err.Contains(CONNECTION_FAILED_INDICATOR))
                 return false;
 
             var success = result.ExitCode == 0;
