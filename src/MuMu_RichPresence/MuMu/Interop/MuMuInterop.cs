@@ -132,7 +132,17 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
 
             var pid = await adb.Execute<int>($"pidof {packageName}", token: token);
 
-            var startTime = await GetStartTime(pid, token);
+            int startTime;
+            try
+            {
+                startTime = await GetStartTime(pid, token);
+            }
+            catch (FormatException)
+            {
+                // The VM could be exiting, so we there's no AppInfo, the start time fails and returns an empty string.
+                // The exception would be: System.FormatException: The input string '' was not in a correct format.
+                return null;
+            }
 
             return new AppInfo(packageName, pid, DateTimeOffset.FromUnixTimeSeconds(startTime));
         }
