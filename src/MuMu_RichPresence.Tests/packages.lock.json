@@ -418,7 +418,7 @@
           "CommunityToolkit.Mvvm": "[8.4.0, )",
           "Dawn.WinForms.ContextMenu": "[1.0.0, )",
           "DiscordRichPresence": "[1.5.0.51, 1.5.0.51]",
-          "DotNetEnv": "[3.1.1, )",
+          "DotNetEnv": "[3.1.1, 3.1.1]",
           "DynamicData": "[9.4.1, )",
           "Polly": "[8.6.5, )",
           "Serilog": "[4.3.0, )",
