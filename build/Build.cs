@@ -81,7 +81,7 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
 
             var tag = Version ?? GetLatestTag();
             var releases = GitHubTasks.GitHubClient.Repository.Release;
-            var release = await GetOrCreateRelease(tag, true);
+            var release = await GetOrCreateRelease($"p{tag}", true);
 
             var uploadTasks = AssetFiles.Select(async x =>
             {
