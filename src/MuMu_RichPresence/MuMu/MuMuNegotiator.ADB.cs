@@ -42,7 +42,7 @@ public static partial class MuMuNegotiator
         Log.Debug("The emulator is running");
         var token = _adbCTS.Token;
         var timer = new PeriodicTimer(TimeSpan.FromSeconds(2));
-        token.Register(() => timer.Dispose());
+        token.Register(timer.Dispose);
 
         Task.Factory.StartNew(PollADB, timer, TaskCreationOptions.LongRunning);
     }
