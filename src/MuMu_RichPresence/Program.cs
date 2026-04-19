@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Reactive.Disposables;
 using System.Reactive.Subjects;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -29,7 +30,6 @@ internal static class Program
     internal static ApplicationFeatures Features { get; } = new();
 
     private static RichPresence_Tray _trayIcon = null!;
-    private static ProcessBinding? _processBinding;
 
     [STAThread]
     private static void Main(string[] args)
@@ -66,16 +66,31 @@ internal static class Program
         Features.WhenPropertyChanged(x => x.RichPresenceEnabled)
             .Subscribe(MuMuNegotiator.OnRichPresenceEnabledChanged);
 
-        var disposables = MuMuNegotiator.UseApproach(Arguments.ExperimentalADB
+        _disposables = MuMuNegotiator.UseApproach(Arguments.ExperimentalADB
             ? RichPresenceApproach.AndroidDebugBridge
             : RichPresenceApproach.LogFileWatcher);
 
+        // This might trigger when the process is closed outside of something Application.Run can handle
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => EnsureDisposed();
+
         if (Arguments.HasProcessBinding)
-            _processBinding = new ProcessBinding(Arguments.ProcessBinding);
+            _disposables.Add(new ProcessBinding(Arguments.ProcessBinding));
 
         Application.Run();
-        _processBinding?.Dispose();
-        disposables.Dispose();
+        EnsureDisposed();
+    }
+
+    private static bool _disposed;
+    private static CompositeDisposable? _disposables;
+    private static void EnsureDisposed()
+    {
+        if (_disposables == null || _disposed)
+            return;
+
+        _disposed = true;
+
+        _disposables.Dispose();
+        _disposables = null;
     }
 
     private static void InitializeVelopack()
