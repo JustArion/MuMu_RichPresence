@@ -144,8 +144,15 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
             var releases = GitHubTasks.GitHubClient.Repository.Release;
             var release = await GetOrCreateRelease(GetVersion());
 
+            var assets = release.Assets;
             var uploadTasks = AssetFiles.Select(async x =>
             {
+                if (assets.FirstOrDefault(y => x.Name == y.Name) != null)
+                {
+                    Log.Warning("Duplicate release artifact found for {Name}", x.Name);
+                    return Task.CompletedTask;
+                }
+                
                 await using var assetFile = File.OpenRead(x);
                 var asset = new ReleaseAssetUpload
                 {
