@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Development]
+- 🦺 Fix manual update not being able to be applied since the program folder was in use during `--experimental` mode
 
 ## [2.2.0] / 2026-04-19
 - ⚡️ `--experimental` mode now supports non-Play Store apps
