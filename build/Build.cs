@@ -150,7 +150,7 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
                 if (assets.FirstOrDefault(y => x.Name == y.Name) != null)
                 {
                     Log.Warning("Duplicate release artifact found for {Name}", x.Name);
-                    return Task.CompletedTask;
+                    return;
                 }
                 
                 await using var assetFile = File.OpenRead(x);
