@@ -79,9 +79,8 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
             // https://github.com/nuke-build/nuke/blob/develop/source/Nuke.Components/ICreateGitHubRelease.cs#L35
             GitHubTasks.GitHubClient.Credentials = new(Actions.Token);
 
-            var tag = GetVersionTag();
             var releases = GitHubTasks.GitHubClient.Repository.Release;
-            var release = await GetOrCreateRelease($"p{tag}", true);
+            var release = await GetOrCreateRelease(GetVersionTag(), true);
 
             var uploadTasks = AssetFiles.Select(async x =>
             {
@@ -101,6 +100,36 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
             Log.Information("All Assets uploaded!");
         });
 
+    Target UpdateChangelog => _ => _
+        .Unlisted()
+        .Executes(() =>
+        {
+            var unreleasedNotes = ReadChangelog(ChangelogPath).Unreleased;
+            var noNewChanges = unreleasedNotes?.EndIndex <= unreleasedNotes?.StartIndex;
+            if (unreleasedNotes == null || noNewChanges)
+                return;
+
+            // Moves the changes in Unreleased to the latest tag
+            FinalizeChangelog(ChangelogPath, GetVersion(), Repository);
+        });
+
+    Target PushChangelog => _ => _
+        .Unlisted()
+        .Executes(() =>
+        {
+            var defaultBranch = Git("remote show origin")
+                .FirstOrDefault(x => x.Text.Trim().StartsWith("HEAD branch:"))
+                .Text.Split(':')[1]
+                .Trim();
+            
+            Git($"config --global user.name {Quote("github-actions[bot]")}");
+            Git($"config --global user.email {Quote("github-actions[bot]@users.noreply.github.com")}");
+            
+            Git($"add {ChangelogPath}");
+            Git($"commit -m {Quote($"chore: {Path.GetFileName(ChangelogPath)} for {GetVersion()}")}");
+            Git($"push origin HEAD:{defaultBranch}");
+        });
+    
     Target TaggedRelease => _ => _
         .DependsOn(Velopack)
         .DependsOn(Test)
@@ -112,9 +141,8 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
             // https://github.com/nuke-build/nuke/blob/develop/source/Nuke.Components/ICreateGitHubRelease.cs#L35
             GitHubTasks.GitHubClient.Credentials = new(Actions.Token);
 
-            var tag = GetVersionTag();
             var releases = GitHubTasks.GitHubClient.Repository.Release;
-            var release = await GetOrCreateRelease(tag);
+            var release = await GetOrCreateRelease(GetVersion());
 
             var uploadTasks = AssetFiles.Select(async x =>
             {
@@ -133,25 +161,8 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
             
             Log.Information("All Assets uploaded!");
 
-            var unreleasedNotes = ReadChangelog(ChangelogPath).Unreleased;
-            var noNewChanges = unreleasedNotes?.EndIndex <= unreleasedNotes?.StartIndex;
-            if (unreleasedNotes == null || noNewChanges)
-                return;
-            
-            // Moves the changes in Unreleased to the latest tag
-            FinalizeChangelog(ChangelogPath, tag, Repository);
-            
-            var defaultBranch = Git("remote show origin")
-                .FirstOrDefault(x => x.Text.Trim().StartsWith("HEAD branch:"))
-                .Text.Split(':')[1]
-                .Trim();
-            
-            Git($"config --global user.name {Quote("github-actions[bot]")}");
-            Git($"config --global user.email {Quote("github-actions[bot]@users.noreply.github.com")}");
-            
-            Git($"add {ChangelogPath}");
-            Git($"commit -m {Quote($"chore: {Path.GetFileName(ChangelogPath)} for {tag}")}");
-            Git($"push origin HEAD:{defaultBranch}");
+            Execute<Build>(x => x.UpdateChangelog);
+            Execute<Build>(x => x.PushChangelog);
         });
 
     private async Task<Release> GetOrCreateRelease(string name, bool preRelease = false)

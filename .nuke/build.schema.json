@@ -27,11 +27,13 @@
         "Clean",
         "CreateGitHubRelease",
         "InstallOrUpdateVelopack",
+        "PushChangelog",
         "Restore",
         "Standalone",
         "TaggedPreRelease",
         "TaggedRelease",
         "Test",
+        "UpdateChangelog",
         "Velopack"
       ]
     },
