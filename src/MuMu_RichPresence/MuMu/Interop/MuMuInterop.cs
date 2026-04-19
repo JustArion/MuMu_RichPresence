@@ -368,7 +368,7 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
         if (!int.TryParse(port.HostPort, out var portNumber) || string.IsNullOrWhiteSpace(port.GuestIP))
             return null;
 
-        var connectionInfo = new ConnectionInfo(port.GuestIP, portNumber, adb.FullName, keepAlive);
+        var connectionInfo = new ConnectionInfo(port.GuestIP, portNumber, adb.FullName, adb.DirectoryName!, keepAlive);
         return new MuMuInterop(connectionInfo);
     }
 

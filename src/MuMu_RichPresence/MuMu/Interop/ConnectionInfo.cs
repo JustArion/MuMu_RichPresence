@@ -4,6 +4,7 @@ public readonly record struct ConnectionInfo(
     string LocalIP,
     int LocalPort,
     string ADBPath,
+    string WorkingDirectory,
     bool KeepAlive
 )
 {

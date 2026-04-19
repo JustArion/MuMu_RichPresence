@@ -38,6 +38,7 @@ public static class InteropHelper
             var ts = Stopwatch.GetTimestamp();
             var result = await Cli.Wrap(info.ADBPath)
                 .WithValidation(CommandResultValidation.None)
+                .WithWorkingDirectory(info.WorkingDirectory)
                 .WithArguments(arg)
                 .WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdOut))
                 .WithStandardErrorPipe(PipeTarget.ToStringBuilder(stdErr))
@@ -87,6 +88,7 @@ public static class InteropHelper
             var stdErr = new StringBuilder();
             await Cli.Wrap(info.ADBPath)
                 .WithArguments(args, true)
+                .WithWorkingDirectory(info.WorkingDirectory)
                 .WithValidation(CommandResultValidation.None)
                 .WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdOut))
                 .WithStandardErrorPipe(PipeTarget.ToStringBuilder(stdErr))
@@ -110,6 +112,7 @@ public static class InteropHelper
             var stdErr = new StringBuilder();
             await Cli.Wrap(info.ADBPath)
                 .WithArguments(command)
+                .WithWorkingDirectory(info.WorkingDirectory)
                 .WithValidation(CommandResultValidation.None)
                 .WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdOut))
                 .WithStandardErrorPipe(PipeTarget.ToStringBuilder(stdErr))
