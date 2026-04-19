@@ -79,7 +79,7 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
             // https://github.com/nuke-build/nuke/blob/develop/source/Nuke.Components/ICreateGitHubRelease.cs#L35
             GitHubTasks.GitHubClient.Credentials = new(Actions.Token);
 
-            var tag = Version ?? GetLatestTag();
+            var tag = GetVersionTag();
             var releases = GitHubTasks.GitHubClient.Repository.Release;
             var release = await GetOrCreateRelease($"p{tag}", true);
 
@@ -112,7 +112,7 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
             // https://github.com/nuke-build/nuke/blob/develop/source/Nuke.Components/ICreateGitHubRelease.cs#L35
             GitHubTasks.GitHubClient.Credentials = new(Actions.Token);
 
-            var tag = Version ?? GetLatestTag();
+            var tag = GetVersionTag();
             var releases = GitHubTasks.GitHubClient.Repository.Release;
             var release = await GetOrCreateRelease(tag);
 
@@ -200,7 +200,7 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
         {
             StartProcess("vpk", $"pack " +
                                        $"--packId MuMu-RichPresence " +
-                                       $"-v {Version ?? GetLatestTag()} " +
+                                       $"-v {GetVersion()} " +
                                        $"--outputDir velopack " +
                                        $"--mainExe {Quote("MuMu RichPresence Standalone.exe")} " +
                                        $"--packDir bin " +
@@ -227,7 +227,7 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
             DotNetPublish(options => options
             .SetProject(Solution.src.MuMu_RichPresence)
             .SetRuntime(DotNetRuntimeIdentifier.win_x64)
-            .SetProperty("Version", Version ?? GetLatestTag())
+            .SetProperty("Version", GetVersion())
             .SetOutput(StandaloneDirectory)));
 
     Target InstallOrUpdateVelopack => _ => _
@@ -273,7 +273,7 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
     //
 
     private GitHubActions Actions => GitHubActions.Instance;
-    public string Name => Version ?? GetLatestTag();
+    public string Name => GetVersionTag();
     public IEnumerable<AbsolutePath> AssetFiles => StandaloneFiles.Concat(VelopackFiles);
     
     // Paths
@@ -292,10 +292,12 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
             "releases.win.json");
     
     // Extra Methods
-    private static readonly Func<string, bool> _versionPredicate = s => s.StartsWith('v') || s.StartsWith('p');
+    private string GetVersion() => StripPrefixes(GetVersionTag());
 
-    private string GetLatestTag() =>
-        (Repository.Tags?.FirstOrDefault(_versionPredicate) ?? GitRepository.GetTag(_versionPredicate)).TrimStart('v')
-        .TrimStart('p');
+    private string GetVersionTag() => Version ?? Repository.Tags?.FirstOrDefault(_versionPredicate) ?? GitRepository.GetTag(_versionPredicate); 
+    
+    private static readonly Func<string, bool> _versionPredicate = s => s.StartsWith('v') || s.StartsWith('p');
+    private static string StripPrefixes([CanBeNull] string str) => str?.TrimStart('v').TrimStart('p');
+
     private static string Quote(string str) => $"\"{str}\"";
 }
