@@ -130,7 +130,7 @@ public class MuMuPlayerLogReader(FileInfo filePath, MuMuProcessState currentProc
                 Stopwatch.GetElapsedTime(ts).TotalMilliseconds, processedEvents, lifetime);
         else
         {
-            var mumuInterop = await MuMuInterop.TryCreate();
+            await using var mumuInterop = await MuMuInterop.TryCreate();
 
             var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
