@@ -1,6 +1,47 @@
 ﻿Below is a summary of what the application does in a categorized way.
 A simpler non-technical explanation of what our program does can be found [here](summary.md)
  
+> [!NOTE]
+> `???` represents an unknown / variable folder or path
+> `~` represents the application's directory "MuMu_RichPresence Standalone.exe"
+> `*` represents a wildcard for a file / folder name
+> `\\.\pipe\` represents a named pipe
+
+### Files / Pipes / Registry
+
+| Path                                                                        | Reason                                                                                         |
+|-----------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
+| `\\.\pipe\discord-ipc-*`                                                    | Sending the Rich Presence to your Discord                                                      |
+| `~\MuMu RichPresence.log`                                                   | Log file                                                                                       |
+| `~\cache\detectible.json`                                                   | Cache of all Official Discord Rich Presences                                                   |
+| `~\cache\detectible.temp.json`                                              | Temporary file of the above. Used to reduce the chances of file corruption                     |
+| `~\cache\AndroidManifest.xml`                                               | Used to help `resources.arsc`                                                                  |
+| `~\cache\resources.arsc`                                                    | Used to determine the current app's display name                                               |
+| `\HKCU\Software\Microsoft\Windows\CurrentVersion\Run\MuMu RichPresence`     | Run on Startup                                                                                 |
+| `%APPDATA%\Microsoft\Windows\Start Menu\Programs\MuMuPlayer\MuMuPlayer.lnk` | Shortcut to help in finding where MuMu Emulator is installed                                   |
+| `???\..\vms\???\logs\shell.log`                                             | (From the shortcut) Reads and parses some of the log file to know what app is being ran if any |
+| `???\..\vms\MuMuPlayerGlobal-*\configs\vm_config.json`                      | (From the shortcut) Used to find the IP and Port for ADB to connect to the MuMu Emulator       |
+| `???\adb.exe`                                                               | (From the shortcut) Used to query running apps and activity info from MuMu Emulator            |
+
+### Network
+
+> [!NOTE]
+> `{EXAMPLE}` represents a variable name that will be substituted in called "EXAMPLE"
+
+| URL                                                                                                      | Reason                                                              | Type   |
+|----------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------|--------|
+| `https://github.com/JustArion/MuMu_RichPresence`                                                         | Optional Auto-Update check                                          | Update |
+| `https://discord.com/api/v9/games/detectable`                                                            | Used to get the application ids of registered games on Discord      | JSON   |
+| `https://play.google.com/store/apps/details?id={PackageName}`                                            | Used to get the icon for the game you're currently playing  on MuMu | HTML   |
+| `https://article.biliimg.com/bfs/game/{IconURL}`                                                         | This is a CDN for the BiliGame store page                           | Image  |
+| `https://line3-h5-mobile-api.biligame.com/game/center/h5/search/game_name?keyword={GameName}&sdk_type=2` | Used to search for an associated app for the display name           | JSON   |
+| `http://localhost:9999`                                                                                  | Local Telemetry (Does not leave your device)                        | JSON   |
+
+
+
+---
+# Old Permissions (No longer updated)
+
 - `IO`
     - Connects to named pipe (`discord-ipc-{0}`)
         - Handled by Nuget package [DiscordRichPresence](https://www.nuget.org/packages/DiscordRichPresence)
@@ -70,7 +111,7 @@ A simpler non-technical explanation of what our program does can be found [here]
           - Image data
         - Accesses the site `https://line3-h5-mobile-api.biligame.com/game/center/h5/search/game_name?keyword={gameName}&sdk_type=2`
           - This is used to get the ID for the BiliGame store page
-          - This is used to get the link fot the Rich Presence icon
+          - This is used to get the link for the Rich Presence icon
           - JSON data
     - `Upload Access`
         - Sends telemetry (`http://localhost:9999`)
