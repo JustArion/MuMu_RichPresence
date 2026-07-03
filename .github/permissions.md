@@ -2,9 +2,9 @@
 A simpler non-technical explanation of what our program does can be found [here](summary.md)
  
 > [!NOTE]
-> `???` represents an unknown / variable folder or path
-> `~` represents the application's directory "MuMu_RichPresence Standalone.exe"
-> `*` represents a wildcard for a file / folder name
+> `???` represents an unknown / variable folder or path<br/>
+> `~` represents the application's directory "MuMu_RichPresence Standalone.exe"<br/>
+> `*` represents a wildcard for a file / folder name<br/>
 > `\\.\pipe\` represents a named pipe
 
 ### Files / Pipes / Registry
