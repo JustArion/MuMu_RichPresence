@@ -1,3 +1,3 @@
-﻿namespace Dawn.MuMu.RichPresence.Exceptions;
+﻿namespace Dawn.MuMu.RichPresence.Models.Exceptions;
 
 public class NotConnectedException(string message) : Exception(message);

@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using CliWrap;
-using Dawn.MuMu.RichPresence.Exceptions;
+using Dawn.MuMu.RichPresence.Models.Exceptions;
 
 namespace Dawn.MuMu.RichPresence.MuMu.Interop;
 

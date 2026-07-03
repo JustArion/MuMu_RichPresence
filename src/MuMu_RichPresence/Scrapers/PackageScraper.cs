@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using Dawn.MuMu.RichPresence.Models;
+using Dawn.MuMu.RichPresence.Scrapers.Models;
 using Polly.Retry;
 
 namespace Dawn.MuMu.RichPresence.Scrapers;

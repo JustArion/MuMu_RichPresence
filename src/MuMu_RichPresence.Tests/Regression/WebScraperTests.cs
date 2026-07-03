@@ -1,5 +1,6 @@
 ﻿using Dawn.MuMu.RichPresence.Models;
 using Dawn.MuMu.RichPresence.Scrapers;
+using Dawn.MuMu.RichPresence.Scrapers.Models;
 using Polly;
 using Polly.Retry;
 

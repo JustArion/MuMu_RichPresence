@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using Dawn.MuMu.RichPresence.Models;
+using Dawn.MuMu.RichPresence.Scrapers.Models;
 using Polly;
 using Polly.Retry;
 
