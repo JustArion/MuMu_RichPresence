@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -64,6 +65,7 @@ internal static class Program
 
         _trayIcon = new(MuMuNegotiator.LogSubject);
         Features.WhenPropertyChanged(x => x.RichPresenceEnabled)
+            .Select(x => x.Value)
             .Subscribe(MuMuNegotiator.OnRichPresenceEnabledChanged);
 
         _disposables = MuMuNegotiator.UseApproach(Arguments.ExperimentalADB

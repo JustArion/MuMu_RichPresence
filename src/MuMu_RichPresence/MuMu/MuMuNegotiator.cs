@@ -66,13 +66,12 @@ public static partial class MuMuNegotiator
             Log.Debug("Presence coerced for {SessionTitle}", lifetime);
     }
 
-    internal static void OnRichPresenceEnabledChanged(PropertyValue<ApplicationFeatures, bool> pvc)
+    internal static void OnRichPresenceEnabledChanged(bool presenceActive)
     {
         if (_richPresenceHandler == null)
             return;
 
-        var active = pvc.Value;
-        if (active)
+        if (presenceActive)
         {
             if (_richPresenceHandler.CurrentPresence is not { } presence)
             {
