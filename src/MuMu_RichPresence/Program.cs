@@ -36,9 +36,6 @@ internal static class Program
     private static void Main(string[] args)
     {
         Environment.CurrentDirectory = AppContext.BaseDirectory; // Startup sets it to %windir%
-        CacheDirectory = new(Path.Combine(Environment.CurrentDirectory, "cache"));
-        if (!CacheDirectory.Exists)
-            CacheDirectory.Create();
 
         // This might throw an access violation if we don't have permissions to read it, we just don't read further when that happens
         SuppressExceptions(()=> DotNetEnv.Env
@@ -62,6 +59,10 @@ internal static class Program
 
         if (Arguments.AutoUpdate)
             Task.Run(AutoUpdate.CheckForUpdates);
+
+        CacheDirectory = new(Path.Combine(Environment.CurrentDirectory, "cache"));
+        if (!CacheDirectory.Exists)
+            CacheDirectory.Create();
 
         _trayIcon = new(MuMuNegotiator.LogSubject);
         Features.WhenPropertyChanged(x => x.RichPresenceEnabled)
