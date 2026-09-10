@@ -95,6 +95,11 @@
           "System.Reactive": "6.1.0"
         }
       },
+      "JetBrains.Annotations": {
+        "type": "Transitive",
+        "resolved": "2025.2.4",
+        "contentHash": "TwbgxAkXxY+vNEhNVx/QXjJ4vqxmepOjsgRvvImQPbHkHMMb4W+ahL3laMsxXKtNT7iMy+E1B3xkqao2hf1n3A=="
+      },
       "Microsoft.ApplicationInsights": {
         "type": "Transitive",
         "resolved": "2.23.0",
@@ -406,6 +411,7 @@
           "DiscordRichPresence": "[1.5.0.51, 1.5.0.51]",
           "DotNetEnv": "[3.1.1, 3.1.1]",
           "DynamicData": "[9.4.31, )",
+          "JetBrains.Annotations": "[2025.2.4, )",
           "Polly": "[8.6.6, )",
           "Serilog": "[4.3.1, )",
           "Serilog.Enrichers.Process": "[3.0.0, )",
