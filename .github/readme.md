@@ -1,3 +1,6 @@
+<a href="https://github.com/JustArion/MuMu_RichPresence/releases/latest">
+  <img src="./images/github-badge.png" alt="Download from GitHub Releases" width="200" />
+</a>
 
 > [!NOTE]
 > - The project has a [sister-repo](https://github.com/JustArion/PlayGames_RichPresence) for `Google Play Games`
