@@ -9,7 +9,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <!-- Don't change this without changing the same in the building.md and Nuke -->
+    <!-- Don't change this without changing the same in the building.md and FALLOUT -->
     <AssemblyName>MuMu RichPresence Standalone</AssemblyName>
     <!--                                                                         -->
 
@@ -23,7 +23,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="Versioning">
-    <!-- The version will be specified via a property flag in CI or in nuke to the latest tag -->
+    <!-- The version will be specified via a property flag in CI or in FALLOUT to the latest tag -->
     <!-- <Version>2.0.0</Version>-->
 
     <AssemblyVersion>$(Version)</AssemblyVersion>

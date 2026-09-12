@@ -404,5 +404,5 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
-/.nuke/temp
+/.fallout/temp
 *.DotSettings

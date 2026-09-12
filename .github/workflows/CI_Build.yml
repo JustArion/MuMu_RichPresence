@@ -9,7 +9,7 @@
 #
 #     - To trigger manual generation invoke:
 #
-#         nuke --generate-configuration GitHubActions_CI_Build --host GitHubActions
+#         fallout --generate-configuration GitHubActions_CI_Build --host GitHubActions
 #
 # </auto-generated>
 # ------------------------------------------------------------------------------
@@ -28,26 +28,32 @@ jobs:
     name: windows-latest
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: 'Cache: ~/.nuget/packages'
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.nuget/packages
           key: ${{ runner.os }}-${{ hashFiles('**/global.json', '**/*.csproj', '**/Directory.Packages.props', '**/packages.lock.json') }}
+      - name: 'Setup: .NET SDK'
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - name: 'Restore: dotnet tools'
+        run: dotnet tool restore
       - name: 'Run: Velopack'
-        run: ./build.cmd Velopack
+        run: dotnet fallout Velopack
         env:
           Version: ${{ github.event.inputs.Version }}
       - name: 'Publish: bin'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: bin
           path: bin
       - name: 'Publish: velopack'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: velopack
           path: velopack

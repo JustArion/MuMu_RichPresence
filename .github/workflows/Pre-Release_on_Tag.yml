@@ -9,7 +9,7 @@
 #
 #     - To trigger manual generation invoke:
 #
-#         nuke --generate-configuration GitHubActions_Pre-Release_on_Tag --host GitHubActions
+#         fallout --generate-configuration GitHubActions_Pre-Release_on_Tag --host GitHubActions
 #
 # </auto-generated>
 # ------------------------------------------------------------------------------
@@ -29,27 +29,33 @@ jobs:
     name: windows-latest
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
           lfs: true
       - name: 'Cache: ~/.nuget/packages'
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.nuget/packages
           key: ${{ runner.os }}-${{ hashFiles('**/global.json', '**/*.csproj', '**/Directory.Packages.props', '**/packages.lock.json') }}
+      - name: 'Setup: .NET SDK'
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - name: 'Restore: dotnet tools'
+        run: dotnet tool restore
       - name: 'Run: TaggedPreRelease'
-        run: ./build.cmd TaggedPreRelease
+        run: dotnet fallout TaggedPreRelease
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: 'Publish: bin'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: bin
           path: bin
       - name: 'Publish: velopack'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: velopack
           path: velopack

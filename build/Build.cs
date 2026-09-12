@@ -1,5 +1,5 @@
+#nullable disable
 using Extensions;
-using JetBrains.Annotations;
 
 [
     GitHubActions("Tests", GitHubActionsImage.WindowsLatest, InvokedTargets = [nameof(Test)],        
@@ -61,12 +61,10 @@ using JetBrains.Annotations;
         
         OnWorkflowDispatchRequiredInputs = ["Version"])
 ]
-class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
+class Build : FalloutBuild, ICreateGitHubRelease, IHasArtifacts
 {
-    public static int Main ()
-    {
-        return Execute<Build>(x => x.Velopack);
-    }
+    public Build() => NoLogo = true;
+    public static int Main () => Execute<Build>(x => x.Velopack);
 
     Target TaggedPreRelease => _ => _
         .DependsOn(Velopack)
@@ -76,7 +74,7 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
         .OnlyWhenStatic(() => IsServerBuild)
         .Executes(async () =>
         {
-            // https://github.com/nuke-build/nuke/blob/develop/source/Nuke.Components/ICreateGitHubRelease.cs#L35
+            // https://github.com/Fallout-build/Fallout/blob/develop/src/Fallout.Components/ICreateGitHubRelease.cs#L36
             GitHubTasks.GitHubClient.Credentials = new(Actions.Token);
 
             var releases = GitHubTasks.GitHubClient.Repository.Release;
@@ -236,17 +234,17 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
         .DependsOn(Restore)
         .Executes(() => 
             DotNetTest(options => options
-                .SetProjectFile(Solution.src.MuMu_RichPresence_Tests)));
+            .SetProjectFile(Solution.src.MuMu_RichPresence_Tests)));
 
-    Target Standalone => _ => _
-        .DependsOn(Restore)
-        .Produces(StandaloneDirectory)
-        .Executes(() => 
-            DotNetPublish(options => options
-            .SetProject(Solution.src.MuMu_RichPresence)
-            .SetRuntime(DotNetRuntimeIdentifier.win_x64)
-            .SetProperty("Version", GetVersion())
-            .SetOutput(StandaloneDirectory)));
+        Target Standalone => _ => _
+            .DependsOn(Restore)
+            .Produces(StandaloneDirectory)
+            .Executes(() => 
+                DotNetPublish(options => options
+                .SetProject(Solution.src.MuMu_RichPresence)
+                .SetRuntime(DotNetRuntimeIdentifier.win_x64)
+                .SetProperty("Version", GetVersion())
+                .SetOutput(StandaloneDirectory)));
 
     Target InstallOrUpdateVelopack => _ => _
         .Executes(() =>
@@ -284,7 +282,7 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
     
-    [Optional, Parameter, CanBeNull] string Version;
+    [Optional, Parameter] string Version;
     [Optional, Parameter] string VelopackDotnetFrameworkVersion = "net10-x64-desktop";
     
     // Injected
@@ -292,7 +290,7 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
     [GitRepository]
     GitRepository Repository;
     
-    [Solution(GenerateProjects = true)] 
+    [Fallout.Solutions.Solution(GenerateProjects = true)] 
     readonly Solution Solution;
     
     //
@@ -322,7 +320,7 @@ class Build : NukeBuild, ICreateGitHubRelease, IHazArtifacts
     private string GetVersionTag() => Version ?? Repository.Tags?.FirstOrDefault(_versionPredicate) ?? GitRepository.GetTag(_versionPredicate); 
     
     private static readonly Func<string, bool> _versionPredicate = s => s.StartsWith('v') || s.StartsWith('p');
-    private static string StripPrefixes([CanBeNull] string str) => str?.TrimStart('v').TrimStart('p');
+    private static string StripPrefixes(string str) => str?.TrimStart('v').TrimStart('p');
 
     private static string Quote(string str) => $"\"{str}\"";
 }
