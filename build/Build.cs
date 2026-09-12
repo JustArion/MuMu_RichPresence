@@ -133,7 +133,7 @@ class Build : FalloutBuild, ICreateGitHubRelease, IHasArtifacts
         .OnlyWhenStatic(() => IsServerBuild)
         .Executes(async () =>
         {
-            // https://github.com/nuke-build/nuke/blob/develop/source/Nuke.Components/ICreateGitHubRelease.cs#L35
+            // https://github.com/Fallout-build/Fallout/blob/develop/src/Fallout.Components/ICreateGitHubRelease.cs#L36
             GitHubTasks.GitHubClient.Credentials = new(Actions.Token);
 
             var releases = GitHubTasks.GitHubClient.Repository.Release;
