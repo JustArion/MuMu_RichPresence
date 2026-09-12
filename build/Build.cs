@@ -2,6 +2,8 @@
 using Extensions;
 
 [
+    GitHubActionsInput("Version", Required = false, Workflows = ["CI Build"]),
+    GitHubActionsInput("Version", Required = true, Workflows = ["Manual Pre-Release", "Manual Release"]),
     GitHubActions("Tests", GitHubActionsImage.WindowsLatest, InvokedTargets = [nameof(Test)],        
         On = [GitHubActionsTrigger.WorkflowDispatch],
         CacheIncludePatterns = ["~/.nuget/packages"],
@@ -10,8 +12,7 @@ using Extensions;
     GitHubActions("CI Build", GitHubActionsImage.WindowsLatest, InvokedTargets = [nameof(Velopack)], PublishArtifacts = true,
         Submodules = GitHubActionsSubmodules.Recursive,
         CacheIncludePatterns = ["~/.nuget/packages"],
-        CacheKeyFiles = ["**/global.json", "**/*.csproj", "**/Directory.Packages.props", "**/packages.lock.json"], 
-        OnWorkflowDispatchOptionalInputs = ["Version"]),
+        CacheKeyFiles = ["**/global.json", "**/*.csproj", "**/Directory.Packages.props", "**/packages.lock.json"]),
     GitHubActions("Release on Tag", 
         GitHubActionsImage.WindowsLatest,
         InvokedTargets = [nameof(TaggedRelease)],
@@ -45,9 +46,7 @@ using Extensions;
         Submodules = GitHubActionsSubmodules.Recursive,
         CacheIncludePatterns = ["~/.nuget/packages"],
         CacheKeyFiles = ["**/global.json", "**/*.csproj", "**/Directory.Packages.props", "**/packages.lock.json"],
-        Lfs = true,
-        
-        OnWorkflowDispatchRequiredInputs = ["Version"]),
+        Lfs = true),
     GitHubActions("Manual Release", 
         GitHubActionsImage.WindowsLatest, 
         InvokedTargets = [nameof(TaggedRelease)],
@@ -57,9 +56,7 @@ using Extensions;
         Submodules = GitHubActionsSubmodules.Recursive,
         CacheIncludePatterns = ["~/.nuget/packages"],
         CacheKeyFiles = ["**/global.json", "**/*.csproj", "**/Directory.Packages.props", "**/packages.lock.json"],
-        Lfs = true,
-        
-        OnWorkflowDispatchRequiredInputs = ["Version"])
+        Lfs = true)
 ]
 class Build : FalloutBuild, ICreateGitHubRelease, IHasArtifacts
 {
