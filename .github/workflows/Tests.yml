@@ -9,12 +9,12 @@
 #
 #     - To trigger manual generation invoke:
 #
-#         nuke --generate-configuration GitHubActions_Run_Tests --host GitHubActions
+#         nuke --generate-configuration GitHubActions_Tests --host GitHubActions
 #
 # </auto-generated>
 # ------------------------------------------------------------------------------
 
-name: Run_Tests
+name: Tests
 
 on: [workflow_dispatch]
 

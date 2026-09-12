@@ -2,7 +2,7 @@ using Extensions;
 using JetBrains.Annotations;
 
 [
-    GitHubActions("Run Tests", GitHubActionsImage.WindowsLatest, InvokedTargets = [nameof(Test)],        
+    GitHubActions("Tests", GitHubActionsImage.WindowsLatest, InvokedTargets = [nameof(Test)],        
         On = [GitHubActionsTrigger.WorkflowDispatch],
         CacheIncludePatterns = ["~/.nuget/packages"],
         CacheKeyFiles = ["**/global.json", "**/*.csproj", "**/Directory.Packages.props", "**/packages.lock.json"],
