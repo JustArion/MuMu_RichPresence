@@ -3,7 +3,7 @@
 > - Additional options available in the Tray Icon
 
 <a href="https://github.com/JustArion/MuMu_RichPresence/releases/latest">
-  <img src="./images/github-badge.png" alt="Download from GitHub Releases" width="200" />
+  <img src="/.github/images/github-badge.png" alt="Download from GitHub Releases" width="200" />
 </a>
 
 [![](https://github.com/JustArion/MuMu_RichPresence/actions/workflows/Tests.yml/badge.svg "Tests Passing Badge")](https://github.com/JustArion/MuMu_RichPresence/actions/workflows/Tests.yml)
