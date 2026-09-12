@@ -6,7 +6,7 @@
   <img src="./images/github-badge.png" alt="Download from GitHub Releases" width="200" />
 </a>
 
-[![](https://github.com/JustArion/MuMu_RichPresence/actions/workflows/Tests.yml/badge.svg "Tests Passing Badge")](https://github.com/JustArion/MuMu_RichPresence/actions/workflows/tests.yml)
+[![](https://github.com/JustArion/MuMu_RichPresence/actions/workflows/Tests.yml/badge.svg "Tests Passing Badge")](https://github.com/JustArion/MuMu_RichPresence/actions/workflows/Tests.yml)
 
 ## Table of Contents
 - [Requirements](#requirements)
