@@ -1,8 +1,6 @@
 ﻿using System.Diagnostics;
-using System.Management;
 using System.Reactive;
 using System.Reactive.Disposables;
-using System.Reactive.Linq;
 using Dawn.MuMu.RichPresence.Extensions;
 using Dawn.MuMu.RichPresence.Models;
 using Dawn.MuMu.RichPresence.MuMu.Interop;

@@ -1,12 +1,10 @@
-﻿using System.Collections.Specialized;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Reactive.Disposables;
 using Dawn.MuMu.RichPresence.Discord;
 using Dawn.MuMu.RichPresence.Models;
 using Dawn.MuMu.RichPresence.Scrapers;
 using Dawn.MuMu.RichPresence.Tools;
 using DiscordRPC;
-using DynamicData.Binding;
 
 namespace Dawn.MuMu.RichPresence.MuMu;
 

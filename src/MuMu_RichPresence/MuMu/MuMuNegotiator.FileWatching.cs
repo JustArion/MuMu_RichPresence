@@ -1,5 +1,4 @@
 ﻿using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Reactive.Subjects;
 using Dawn.MuMu.RichPresence.Models;
 using Dawn.MuMu.RichPresence.Tools;

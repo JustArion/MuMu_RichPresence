@@ -1,5 +1,4 @@
 ﻿using Dawn.MuMu.RichPresence.Models;
-using Dawn.MuMu.RichPresence.MuMu;
 using Dawn.MuMu.RichPresence.Scrapers;
 
 namespace MuMu_RichPresence.Tests.Integration;

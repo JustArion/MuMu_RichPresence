@@ -1,25 +1,16 @@
 // #define DEBUG
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.Diagnostics;
+
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using Dawn.MuMu.RichPresence.Discord;
-using Dawn.MuMu.RichPresence.MuMu.Interop;
 using DynamicData.Binding;
 using NuGet.Versioning;
 using Velopack;
 
 namespace Dawn.MuMu.RichPresence;
 
-using DiscordRPC;
 using Logging;
 using Models;
 using Tools;
-using Serilog;
 using Tray;
 using MuMu;
 

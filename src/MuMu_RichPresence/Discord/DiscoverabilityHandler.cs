@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using System.Text.Json;
 using Dawn.MuMu.RichPresence.Models;
 using Polly;

@@ -1,5 +1,4 @@
-﻿using Dawn.MuMu.RichPresence.Logging;
-using Polly;
+﻿using Polly;
 using Polly.Retry;
 using Velopack;
 using Velopack.Sources;
