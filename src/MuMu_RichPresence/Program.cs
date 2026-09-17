@@ -40,16 +40,7 @@ internal static class Program
             #endif
         };
 
-        InitializeVelopack();
-
-        ApplicationLogs.Initialize();
-
-        SingleInstanceApplication.Ensure();
-
-        ApplicationLogs.ListenToEvents();
-
-        if (Arguments.AutoUpdate)
-            Task.Run(AutoUpdate.CheckForUpdates);
+        InitializeApplication();
 
         CacheDirectory = new(Path.Combine(Environment.CurrentDirectory, "cache"));
         if (!CacheDirectory.Exists)
@@ -74,6 +65,32 @@ internal static class Program
         EnsureDisposed();
     }
 
+    private static void InitializeApplication()
+    {
+        InitializeVelopack();
+        InitializeLogs();
+
+        SingleInstanceApplication.Ensure();
+
+        ApplicationLogs.ListenToEvents();
+
+        if (Arguments.AutoUpdate)
+            Task.Run(AutoUpdate.CheckForUpdates);
+    }
+
+    private static bool _logsInitialized;
+    private static void InitializeLogs()
+    {
+        if (_logsInitialized)
+            return;
+
+        var wd = new DirectoryInfo(Environment.CurrentDirectory);
+        ApplicationLogs.Initialize(AutoUpdate.UpdateManager.Value is { IsInstalled: true, IsPortable: false }
+            ? wd.Parent! // The setup version's persistent storage is in the parent directory (This would be %LocalAppData%/MuMu-RichPresence)
+            : wd);
+        _logsInitialized = true;
+    }
+
     private static bool _disposed;
     private static CompositeDisposable? _disposables;
     private static void EnsureDisposed()
@@ -91,10 +108,16 @@ internal static class Program
     {
         var app = VelopackApp.Build();
         app.OnBeforeUninstallFastCallback(OnUninstall);
+        app.OnAfterUpdateFastCallback(OnUpdate);
         app.Run();
     }
 
     private static void OnUninstall(SemanticVersion version) => Startup.RemoveStartup(Application.ProductName!);
+    private static void OnUpdate(SemanticVersion version)
+    {
+        InitializeLogs();
+        Log.Information("Updated to {Version}!", version);
+    }
 
     internal static void SuppressExceptions(Action act)
     {

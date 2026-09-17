@@ -13,6 +13,7 @@ A simpler non-technical explanation of what our program does can be found [here]
 |-----------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
 | `\\.\pipe\discord-ipc-*`                                                    | Sending the Rich Presence to your Discord                                                      |
 | `~\MuMu RichPresence.log`                                                   | Log file                                                                                       |
+| `~\..\MuMu RichPresence.log`                                                | Setup version log file                                                                         |
 | `~\cache\detectable.json`                                                   | Cache of all Official Discord Rich Presences                                                   |
 | `~\cache\detectable.temp.json`                                              | Temporary file of the above. Used to reduce the chances of file corruption                     |
 | `~\cache\AndroidManifest.xml`                                               | Used to help `resources.arsc`                                                                  |

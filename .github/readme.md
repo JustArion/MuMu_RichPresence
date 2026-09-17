@@ -32,7 +32,7 @@
     - Auto Update
     - Shortcut in Start Menu
     - Can be uninstalled by right-clicking uninstall in Start Menu
-    - Installed to `%appdata%/Local/MuMu-RichPresence`
+    - Installed to `%LocalAppData%\MuMu-RichPresence\`
 
 ---
 ### Previews
@@ -69,7 +69,7 @@
 `& '.\MuMu RichPresence.exe' --extended-logging --seq-url=http://localhost:9999`
 
 You can also provide a `.env` file in the MuMu_RichPresence's directory or it's parent folders.<br/>
-For the Setup version of Velopack, it's recommended to place the `.env` file in the parent directory (`%AppData%\Local\MuMu-RichPresence\`) since every update wipes everything in the `%AppData%\Local\MuMu-RichPresence\current` folder
+For the Setup version of Velopack, it's recommended to place the `.env` file in the parent directory (`%LocalAppData%\MuMu-RichPresence\`) since every update wipes everything in the `%LocalAppData%\MuMu-RichPresence\current` folder
 
 `.env` file example:
 ```env
@@ -101,7 +101,7 @@ Based on what version of the program you're using, do the following
 - Standalone & Portable
     - Download and copy the [.env](./.env) file to your `MuMu_RichPresence.exe` folder
 - Setup
-    - Download and copy the [.env](./.env) file to your `%AppData%\Local\MuMu-RichPresence\` folder
+    - Download and copy the [.env](./.env) file to your `%LocalAppData%\MuMu-RichPresence\` folder
 
 Alternatively you can run the following PowerShell script to achieve similar functionality!
 

@@ -8,12 +8,14 @@ namespace Dawn.MuMu.RichPresence.Tools;
 internal static class AutoUpdate
 {
     private const string REPO_NAME = "MuMu_RichPresence";
-    
+
     private const int MAX_RETRIES = 3;
     private static readonly AsyncRetryPolicy<UpdateInfo?> _retryPolicy = Policy<UpdateInfo?>
         .Handle<Exception>()
         .WaitAndRetryAsync(MAX_RETRIES,
             retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt) - 1)); // 4, 8, 16
+
+    public static readonly Lazy<UpdateManager> UpdateManager = new(() => new UpdateManager(new GithubSource($"https://github.com/JustArion/{REPO_NAME}", null, false)));
 
     /// <summary>
     /// Checks for updates with a retry policy of retrying 3 times, with the time between each retry expanding exponentially
@@ -23,11 +25,11 @@ internal static class AutoUpdate
     /// If checking for updates fails, returns false<br/>
     /// If there's no update, returns false
     /// </returns>
-    internal static async Task CheckForUpdates()
+    public static async Task CheckForUpdates()
     {
         try
         {
-            var manager = new UpdateManager(new GithubSource($"https://github.com/JustArion/{REPO_NAME}", null, false));
+            var manager = UpdateManager.Value;
 
             if (manager.IsInstalled)
                 Log.Information("The Velopack Update Manager is present");

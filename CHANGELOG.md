@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Development]
 - 🦺 Fix manual update not being able to be applied since the program folder was in use during `--experimental` mode
+- ⚡ The Setup version of the program will now log to `%LocalAppData%\MuMu-RichPresence\`
+  - Previously logged to `%LocalAppData%\MuMu-RichPresence\current\`
 
 ## [2.2.0] / 2026-04-19
 - ⚡️ `--experimental` mode now supports non-Play Store apps
