@@ -13,6 +13,8 @@ public class RichPresence_Tray
 {
     private readonly BehaviorSubject<FileInfo?> _logFile;
     internal NotifyIcon Tray { get; }
+
+    private ToolStripItemCollection? Items => Tray.ContextMenuStrip?.Items;
     public RichPresence_Tray(BehaviorSubject<FileInfo?> logFile)
     {
         _logFile = logFile;
@@ -27,10 +29,10 @@ public class RichPresence_Tray
 
         Tray.ContextMenuStrip = new RiotContextMenuStrip();
 
-        AddStripItems(Tray.ContextMenuStrip.Items);
+        AddStripItems(Items!);
     }
 
-    private static void WrapTask(Action start)
+    private static void WrapProcessStart(Action start)
     {
         Task.Run(() =>
         {
@@ -50,29 +52,9 @@ public class RichPresence_Tray
         items.AddRange(Header());
         try
         {
-            items.Add("Open App Directory", null, (_, _) => WrapTask(()=> Process.Start("explorer", $"/select,\"{Application.ExecutablePath}\"")));
-            if (Arguments.ExtendedLogging)
-            {
-                Log.Information("Adding extended logging items");
-                // The ADB approach accesses no log file, so we just remove the option
-                if (!Arguments.ExperimentalADB)
-                {
-                    var openLogFileItem = new ToolStripMenuItem("Open Log File", null, (_, _) =>
-                    {
-                        WrapTask(() =>
-                        {
-                            if (_logFile.Value is { Exists: true } fileInfo)
-                                WrapTask(()=> Process.Start(new ProcessStartInfo(fileInfo.FullName) { UseShellExecute = true }));
-                        });
-                    });
-                    openLogFileItem.Enabled = _logFile.Value?.Exists ?? false;
-                    _logFile
-                        .ObserveOn(SynchronizationContext.Current!)
-                        .Subscribe(info => openLogFileItem.Enabled = info?.Exists ?? false);
-
-                    items.Add(openLogFileItem);
-                }
-            }
+            items.Add("Open App Directory", null, (_, _) => WrapProcessStart(()=> Process.Start("explorer", $"/select,\"{Application.ExecutablePath}\"")));
+            items.AddRange(AddExtendedLoggingFeatures());
+            items.AddRange(AddVelopackFeatures());
             items.Add(Enabled());
             items.Add(RunOnStartup());
             items.Add(HideTray());
@@ -89,6 +71,74 @@ public class RichPresence_Tray
         }
     }
 
+    private ToolStripItem[] AddVelopackFeatures()
+    {
+        if (AutoUpdate.UpdateManager is { IsInstalled: false })
+            return []; // We're using Standalone
+
+        // Index 1 is right under the program name header and under the separator
+        if (AutoUpdate.HasPendingUpdate.Value)
+            Items?.Insert(1, AddPendingUpdateMessage());
+        else
+            AutoUpdate.HasPendingUpdate
+                .Where(x => x)
+                .ObserveOn(SynchronizationContext.Current!)
+                .Subscribe(_ => Items?.Insert(1, AddPendingUpdateMessage()));
+
+        var downloadPreReleases = new ToolStripMenuItem("Download Pre-Releases");
+        downloadPreReleases.Checked = Arguments.CheckPreReleases;
+
+        downloadPreReleases.Click += (_, _) =>
+        {
+            var enabled = !downloadPreReleases.Checked;
+
+            ChangeEnabledStateOnStartupIfNecessary(enabled);
+
+            downloadPreReleases.Checked = Features.CheckPreReleases = enabled;
+            if (enabled)
+                Task.Run(AutoUpdate.CheckForUpdates);
+        };
+
+        return [downloadPreReleases];
+    }
+
+    private static ToolStripMenuItem AddPendingUpdateMessage()
+    {
+        var pendingUpdate = new ToolStripMenuItem("Apply Pending Update");
+        pendingUpdate.Click += (_, _) =>
+        {
+            if (AutoUpdate.UpdateManager is not { } manager)
+                return;
+
+            manager.ApplyUpdatesAndRestart(manager.UpdatePendingRestart);
+        };
+
+        return pendingUpdate;
+    }
+
+    private ToolStripItem[] AddExtendedLoggingFeatures()
+    {
+        // The ADB approach accesses no log file, so we just remove the option
+        if (Arguments.ExperimentalADB)
+            return [];
+
+        Log.Verbose("Adding extended logging features");
+        var openLogFileItem = new ToolStripMenuItem("Open Log File", null, (_, _) =>
+        {
+            WrapProcessStart(() =>
+            {
+                if (_logFile.Value is { Exists: true } fileInfo)
+                    WrapProcessStart(()=> Process.Start(new ProcessStartInfo(fileInfo.FullName) { UseShellExecute = true }));
+            });
+        });
+        openLogFileItem.Enabled = _logFile.Value?.Exists ?? false;
+        _logFile
+            .ObserveOn(SynchronizationContext.Current!)
+            .Subscribe(info => openLogFileItem.Enabled = info?.Exists ?? false);
+
+        return [openLogFileItem];
+    }
+
     private static void LogInteractionsRecursively(ToolStripItemCollection items)
     {
         foreach (ToolStripItem item in items)
@@ -102,8 +152,6 @@ public class RichPresence_Tray
 
     private static ToolStripMenuItem Enabled()
     {
-        Features.RichPresenceEnabled = Arguments.RichPresenceEnabledOnStart;
-
         var enabledItem = new ToolStripMenuItem("Enabled");
 
         enabledItem.Checked = Arguments.RichPresenceEnabledOnStart;
@@ -122,10 +170,22 @@ public class RichPresence_Tray
 
     private static void ChangeEnabledStateOnStartupIfNecessary(bool enabled)
     {
+        var arg = $"--{LaunchArgs.ToKebabCase(LaunchArgs.RP_DISABLED_ON_START)}";
+
+        ChangeArgumentStateOnStartupIfNecessary(enabled, arg);
+    }
+
+    private static void ChangeBranchStateOnStartupIfNecessary(bool enabled)
+    {
+        var arg = $"--{LaunchArgs.ToKebabCase(LaunchArgs.CHECK_PRE_RELEASES)}";
+
+        ChangeArgumentStateOnStartupIfNecessary(enabled, arg);
+    }
+
+    private static void ChangeArgumentStateOnStartupIfNecessary(bool enabled, string arg)
+    {
         if (!Startup.StartsWithWindows(Application.ProductName!, Application.ExecutablePath))
             return;
-
-        var arg = $"--{LaunchArgs.ToKebabCase(LaunchArgs.RP_DISABLED_ON_START)}";
 
         Startup.StartWithWindows(Application.ProductName!,
             $"\"{Application.ExecutablePath}\" {(
