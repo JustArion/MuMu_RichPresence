@@ -42,7 +42,7 @@
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>embedded</DebugType>
-    <PathMap>$(MSBuildProjectDirectory)=/</PathMap>
+    <PathMap>$(SolutionDir)\=\</PathMap>
   </PropertyGroup>
 
   <ItemGroup Label="Remove lock file in SLN view">
