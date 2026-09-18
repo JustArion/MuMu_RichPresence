@@ -314,7 +314,11 @@ class Build : FalloutBuild, ICreateGitHubRelease, IHasArtifacts
     // Extra Methods
     private string GetVersion() => StripPrefixes(GetVersionTag());
 
-    private string GetVersionTag() => Version ?? Repository.Tags?.FirstOrDefault(_versionPredicate) ?? GitRepository.GetTag(_versionPredicate); 
+    private string GetVersionTag() => string.IsNullOrWhiteSpace(Version) 
+        ? Repository.Tags?.FirstOrDefault(_versionPredicate) ?? (GitRepository.GetTag(_versionPredicate) is var tag && string.IsNullOrWhiteSpace(tag) 
+            ? "1.0.0" 
+            : tag) 
+        : Version; 
     
     private static readonly Func<string, bool> _versionPredicate = s => s.StartsWith('v') || s.StartsWith('p');
     private static string StripPrefixes(string str) => str?.TrimStart('v').TrimStart('p');
