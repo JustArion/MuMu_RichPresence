@@ -30,12 +30,12 @@ public static partial class MuMuNegotiator
 
         if (approach == RichPresenceApproach.LogFileWatcher)
         {
-            Log.Debug("Using File Watching approach");
+            Log.Information("Using File Watching approach");
             StartFileWatching();
         }
         else
         {
-            Log.Debug("Using ADB approach");
+            Log.Information("Using ADB approach");
             StartADB();
         }
 
