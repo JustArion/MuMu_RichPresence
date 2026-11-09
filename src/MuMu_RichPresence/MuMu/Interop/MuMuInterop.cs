@@ -267,6 +267,8 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
     private async Task<string> GetLabel(AppInfo info, CancellationToken token)
     {
         Log.Debug("Fetching Label for {PackageName}", info.PackageName);
+        var ts = Stopwatch.GetTimestamp();
+
         var apkVirtualPath = await GetPackagePath(info, token);
 
         await using (await EnsureConnected(token))
@@ -313,6 +315,9 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
                 var label = resources.ResourceMap[resourceId].First().Value!;
 
                 Log.Debug("Got label for {PackageName} ({Label})", info.PackageName, label);
+
+                var elapsed = Stopwatch.GetElapsedTime(ts);
+                Log.Debug("Getting label for {PackageName} took {Connection:F2} sec", info.PackageName, elapsed.TotalSeconds);
 
                 return label;
             }
