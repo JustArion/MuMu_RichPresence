@@ -12,11 +12,11 @@ internal partial class ApplicationFeatures : ObservableObject
     public ApplicationFeatures()
     {
         // We should prob use some sort of reflection or smthn to show which property changed, and it's value, but I can't find how to rn, so we use duplication :)
-        this.WhenPropertyChanged(x => RichPresenceEnabled)
+        this.WhenPropertyChanged(x => x.RichPresenceEnabled)
             .Subscribe(value =>
                 Log.Verbose($"ApplicationFeature changed {nameof(RichPresenceEnabled)} ({{Value}})", value.Value));
 
-        this.WhenPropertyChanged(x => CheckPreReleases)
+        this.WhenPropertyChanged(x => x.CheckPreReleases)
             .Subscribe(value =>
                 Log.Verbose($"ApplicationFeature changed {nameof(CheckPreReleases)} ({{Value}})", value.Value));
     }
