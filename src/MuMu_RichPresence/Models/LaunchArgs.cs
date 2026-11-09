@@ -52,7 +52,7 @@ public readonly struct LaunchArgs
     public bool NoAutoUpdate { get; }
     public bool AutoUpdate => !NoAutoUpdate;
     public bool CheckPreReleases { get; }
-    public bool ExperimentalADB { get; }
+    public bool ExperimentalADB { get; init; }
 
     public bool HasCustomApplicationId { get; }
     public string CustomApplicationId { get; }
