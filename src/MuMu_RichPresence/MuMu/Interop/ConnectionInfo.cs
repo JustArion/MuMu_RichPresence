@@ -1,6 +1,6 @@
 ﻿namespace Dawn.MuMu.RichPresence.MuMu.Interop;
 
-public readonly record struct ConnectionInfo(
+public record ConnectionInfo(
     string LocalIP,
     int LocalPort,
     string ADBPath,
@@ -8,5 +8,8 @@ public readonly record struct ConnectionInfo(
     bool KeepAlive
 )
 {
+    public string ConnectionString => $"{LocalIP}:{LocalPort}";
+
+    public int LocalPort { get; set; } = LocalPort;
     public const int FALLBACK_PORT = 5555;
 }

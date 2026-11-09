@@ -166,9 +166,18 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
     public async Task<string> GetPackagePath(AppInfo info, CancellationToken token = default)
     {
         await using (await EnsureConnected(token))
-            return (await adb.Execute($"pm path {info.PackageName}", token: token))
-            .TrimStart("package:")
-            .ToString();
+        {
+            var output = await adb.Execute($"pm path {info.PackageName}", token: token);
+
+            var line = output
+                .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+                .Select(l => l.Trim())
+                .FirstOrDefault(l => l.StartsWith("package:", StringComparison.Ordinal));
+
+            return line is null
+                ? string.Empty
+                : line["package:".Length..];
+        }
     }
 
     public async Task<FileInfo> PullFile(string path, DirectoryInfo directory, CancellationToken token = default)
@@ -262,6 +271,7 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
 
         await using (await EnsureConnected(token))
         {
+
             // usage: unzip [-d DIR] [-lnopqv] ZIP [FILE...] [-x FILE...]
             //
             // Extract FILEs from ZIP archive. Default is all files. Both the include and
@@ -359,17 +369,27 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
     {
         var config = await GetVMConfig();
         if (config is null)
+        {
+            Log.Warning("VM Config is unavailable");
             return null;
+        }
 
         var adb = Pathfinder.GetADBFileInfo();
         if (adb is null)
+        {
+            Log.Warning("ADB is unavailable");
             return null;
+        }
 
-        var port = config.VM.NAT.PortForward.ADB;
-        if (!int.TryParse(port.HostPort, out var portNumber) || string.IsNullOrWhiteSpace(port.GuestIP))
+        var adbConfig = config.VM.NAT.PortForward.ADB;
+        var guestIp = adbConfig.GuestIP ?? "localhost";
+        if (!int.TryParse(adbConfig.HostPort, out var portNumber))
+        {
+            Log.Warning("Could not parse Host port {GuestIp}:{HostPort}", guestIp, adbConfig.HostPort);
             return null;
+        }
 
-        var connectionInfo = new ConnectionInfo(port.GuestIP, portNumber, adb.FullName, adb.DirectoryName!, keepAlive);
+        var connectionInfo = new ConnectionInfo(guestIp, portNumber, adb.FullName, adb.DirectoryName!, keepAlive);
         return new MuMuInterop(connectionInfo);
     }
 
