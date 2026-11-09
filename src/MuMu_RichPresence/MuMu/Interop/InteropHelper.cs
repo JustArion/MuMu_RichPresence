@@ -1,5 +1,7 @@
 ﻿#define LISTEN_TO_INTEROP
-#define LISTEN_TO_EXECUTIONS
+#if DEBUG
+// #define LISTEN_TO_EXECUTIONS
+#endif
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
