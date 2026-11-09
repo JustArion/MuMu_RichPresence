@@ -162,7 +162,7 @@ public class DiscoverabilityHandler
                 // Log.Verbose("Found an Official Presence for Application {ApplicationName} ({ApplicationId})", appName, appId);
             }
             else
-                Log.Debug("Unable to find an AppId for {ApplicationName}", appName);
+                Log.Verbose("Unable to find an AppId for {ApplicationName}", appName);
 
             return appId;
         }
