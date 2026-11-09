@@ -5,11 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Development]
-- 🦺 Fix manual update not being able to be applied since the program folder was in use during `--experimental` mode
+- 🦺 Fix: manual update not being able to be applied since the program folder was in use during `--experimental` mode
 - ⚡ The Setup version of the program will now log to `%LocalAppData%\MuMu-RichPresence\`
   - Previously logged to `%LocalAppData%\MuMu-RichPresence\current\`
 - ⚡ Added tray option for opting into pre-release versions
 - ⚡ Now displays a quick restart button in the tray when there's a pending update
+- 🦺 Fix: If using `Experimental ADB` mode, Rich Presences wouldn't be displayed when multiple ADB devices were detected
+- 🦺 Fix: If using `Experimental ADB` mode, Rich Presences wouldn't be displayed for some apps that had multiple .apk packages
 
 ## [2.2.0] / 2026-04-19
 - ⚡️ `--experimental` mode now supports non-Play Store apps
