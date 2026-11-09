@@ -1,5 +1,5 @@
 ﻿#define LISTEN_TO_INTEROP
-// #define LISTEN_TO_EXECUTIONS
+#define LISTEN_TO_EXECUTIONS
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -18,7 +18,7 @@ public static class InteropHelper
         {
             // We do the fallback first then the specified port
             // On my observation, the fallback port is more used in my case, this should theoretically shave off +- 5sec to initial ADB connections
-            if (!await info.ConnectInternal(useFallback: true, token) && !await info.ConnectInternal(useFallback: false, token))
+            if (!await info.ConnectInternal(useFallback: false, token) && !await info.ConnectInternal(useFallback: true, token))
                 throw new NotConnectedException("Could not connect to ADB");
 
             return new AnonymousAsyncDisposable(async ()=> await info.Disconnect());
@@ -29,6 +29,9 @@ public static class InteropHelper
             var port = useFallback
                 ? ConnectionInfo.FALLBACK_PORT
                 : info.LocalPort;
+
+            if (useFallback)
+                Log.Debug("Using fallback port of {FallbackPort} instead of {LocalPort}", ConnectionInfo.FALLBACK_PORT, info.LocalPort);
 
             var arg = $"connect {info.LocalIP}:{port}";
 
@@ -56,28 +59,32 @@ public static class InteropHelper
             if (@out.Contains(CONNECTION_FAILED_INDICATOR) || err.Contains(CONNECTION_FAILED_INDICATOR))
                 return false;
 
-            var success = result.ExitCode == 0;
+            if (result.ExitCode != 0)
+                return false;
 
-            if (success)
-                Log.Debug("Connected to MuMuNxDevice in {Connection:F2} sec", elapsed.TotalSeconds);
+            Log.Debug("Connected to MuMuNxDevice in {Connection:F2} sec", elapsed.TotalSeconds);
+            if (useFallback)
+                info.LocalPort = ConnectionInfo.FALLBACK_PORT;
 
-            return success;
+            return true;
         }
 
         private async Task Disconnect()
         {
             #if LISTEN_TO_INTEROP
-            Log.Debug("[Exec] adb disconnect");
+            Log.Debug("[Exec] adb disconnect {Instance}", info.ConnectionString);
             #endif
             await Cli.Wrap(info.ADBPath)
                 .WithArguments("disconnect")
                 .ExecuteAsync();
         }
 
-        public async Task<T> Execute<T>(string command, CancellationToken token = default) where T : IParsable<T> => await info.ExecuteRaw<T>($"shell {command}", token);
+        public async Task<T> Execute<T>(string command, CancellationToken token = default) where T : IParsable<T> =>
+            await info.ExecuteRaw<T>($"shell {command}", token);
         public async Task<T> Execute<T>(string[] command, CancellationToken token = default) where T : IParsable<T> =>
             await info.ExecuteRaw<T>(["shell", ..command], token);
-        public async Task<string> Execute(string command, CancellationToken token = default) => await info.ExecuteRaw<string>($"shell {command}", token);
+        public async Task<string> Execute(string command, CancellationToken token = default) =>
+            await info.ExecuteRaw<string>($"shell {command}", token);
 
         public async Task<string> Execute(string[] command, CancellationToken token = default) =>
             await info.ExecuteRaw<string>(["shell", ..command], token);
@@ -86,6 +93,9 @@ public static class InteropHelper
         {
             var stdOut = new StringBuilder();
             var stdErr = new StringBuilder();
+
+            args = ["-s", info.ConnectionString, .. args];
+
             await Cli.Wrap(info.ADBPath)
                 .WithArguments(args, true)
                 .WithWorkingDirectory(info.WorkingDirectory)
@@ -110,8 +120,11 @@ public static class InteropHelper
         {
             var stdOut = new StringBuilder();
             var stdErr = new StringBuilder();
+
+            string[] args = ["-s", info.ConnectionString, command];
+
             await Cli.Wrap(info.ADBPath)
-                .WithArguments(command)
+                .WithArguments(args, false)
                 .WithWorkingDirectory(info.WorkingDirectory)
                 .WithValidation(CommandResultValidation.None)
                 .WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdOut))
@@ -121,14 +134,14 @@ public static class InteropHelper
             var output = stdOut.ToString().Trim();
             var errors = stdErr.ToString().Trim();
             var exceptions = new List<Exception>(2);
-            if (string.IsNullOrWhiteSpace(errors))
+            if (!string.IsNullOrWhiteSpace(errors))
                 exceptions.Add(new Exception(errors));
 
             #if LISTEN_TO_INTEROP && LISTEN_TO_EXECUTIONS
-            if (exceptions.Count == 0 && !string.IsNullOrWhiteSpace(output))
-                Log.Debug("[Exec] adb {Command} -> {Result}", command, output);
+            if (exceptions.Count == 0)
+                Log.Debug("[Exec] adb {Command} -> {Result}", string.Join(" ", args), output);
             else
-                Log.Debug(exceptions.First(), "[Exec] adb {Command} -> {Result}", command, output);
+                Log.Debug(exceptions.First(), "[Exec] adb {Command} -> {Result}",  string.Join(" ", args), output);
             #endif
 
             try
@@ -138,7 +151,7 @@ public static class InteropHelper
             catch (Exception e)
             {
                 exceptions.Add(e);
-                Log.Debug(e, "[Exec] adb {Command} -> {Result}{Errors}", command, output, errors);
+                Log.Debug(e, "[Exec] adb {Command} -> {Result}{Errors}", string.Join(" ", args), output, errors);
 
                 if (exceptions.Count == 1)
                     throw;
