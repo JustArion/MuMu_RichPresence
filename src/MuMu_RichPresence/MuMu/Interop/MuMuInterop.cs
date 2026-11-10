@@ -38,11 +38,12 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
 
         await _semaphore.WaitAsync(token);
 
-        // We do this twice, since the first is a quick path, and the second prevents a race condition
-        if (_connection is not null)
-            return;
         try
         {
+            // We do this twice, since the first is a quick path, and the second prevents a race condition
+            if (_connection is not null)
+                return;
+
             // The pipeline handles the retries and the back-off delay internally
             _connection = await _pipeline.ExecuteAsync(async ct => await adb.Connect(ct), token);
         }
@@ -370,10 +371,17 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
     }
 
     // --
+    // We could in theory try supporting multiple ADB connections to multiple NxDevice processes across different versions
+    // But this would be a significant code change for something no user has asked for or experienced such an issue yet
+    // I'll probably reconsider if someone wants Rich Presences to show up while they're playing on 2 different MuMu versions at the same time
+    // We can use GetForegroundWindow or walk the window visibility stack to determine which emulator should hold the current presence if this needs to be implemented
     public static async Task<IMuMuInterop?> TryCreate(bool keepAlive = false)
     {
+        // Implement a priority for the running device's version
+        var _priorityTarget = Pathfinder.GetRunningNxDeviceVersion();
+
         // We try to connect to MuMu using all available vms
-        foreach (var vm in Pathfinder.GetVMs().Reverse())
+        foreach (var vm in Pathfinder.GetVMs().OrderByDescending(x => _priorityTarget != null && x.Name.Contains(_priorityTarget.ToString())))
         {
             Log.Debug("Probing VM: {VMName}", vm.Name);
 
@@ -411,12 +419,13 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
 
             try
             {
-                await using (await info.Connect())
+                var connection = await info.Connect();
+                Log.Debug("Connected to ADB via {VMName} probe", vm.Name);
+                var interop = new MuMuInterop(info)
                 {
-                    Log.Debug("Connected to ADB via {VMName} probe", vm.Name);
-                    var interop = new MuMuInterop(info);
-                    return interop;
-                }
+                    _connection = connection
+                };
+                return interop;
             }
             catch (NotConnectedException) { }
         }

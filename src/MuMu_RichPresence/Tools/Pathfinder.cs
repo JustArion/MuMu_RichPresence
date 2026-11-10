@@ -218,6 +218,37 @@ internal static class Pathfinder
         }
     }
 
+    public static Version? GetRunningNxDeviceVersion()
+    {
+        Version? _priorityTarget = null;
+        var nxDevicePaths = Process.GetProcessesByName(NxDevice)
+            .Select(x => x.MainModule?.FileName)
+            .Where(x => x != null)
+            .Distinct()
+            .Select(x => new FileInfo(x!))
+            .ToArray();
+
+        if (nxDevicePaths.Length > 1)
+            Log.Warning("Multiple Nx Devices detected, will prioritize last (Highest version) ({Versions})", string.Join(", ", nxDevicePaths.Select(x => x.FullName)));
+
+        var nxDevicePath = nxDevicePaths.LastOrDefault();
+        if (nxDevicePath == null)
+            return _priorityTarget;
+
+        var current = nxDevicePath.Directory;
+        while (current != null)
+        {
+            if (Version.TryParse(current.Name, out _priorityTarget))
+            {
+                Log.Verbose("Found a priority target for interop: {Path}", current.Name);
+                break;
+            }
+            current = current.Parent;
+        }
+
+        return _priorityTarget;
+    }
+
     //                                                 C:\Program Files\Netease\MuMuPlayer\nx_main
     private static FileInfo GetLogPathFromBaseDirectory(DirectoryInfo mumuDirectory)
     {
@@ -232,4 +263,6 @@ internal static class Pathfinder
             .GetFiles("shell.log", SearchOption.AllDirectories)
             .First();
     }
+
+    public const string NxDevice = "MuMuNxDevice";
 }

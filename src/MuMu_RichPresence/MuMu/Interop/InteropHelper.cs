@@ -18,6 +18,14 @@ public static class InteropHelper
     {
         public async Task<IAsyncDisposable> Connect(CancellationToken token = default)
         {
+
+            // We prioritize the fallback IP first over anything since on MuMu 12, the connection would be something like 10.0.2.15:16416
+            if (await info.ConnectInternal(ConnectionInfo.FALLBACK_IP, info.LocalPort, token))
+            {
+                info.LocalIP = ConnectionInfo.FALLBACK_IP;
+                return new AnonymousAsyncDisposable(async () => await info.Disconnect());
+            }
+
             // We do the fallback first then the specified port
             // On my observation, the fallback port is more used in my case, this should theoretically shave off +- 5sec to initial ADB connections
             // Reversed the order again
@@ -26,22 +34,17 @@ public static class InteropHelper
 
             Log.Debug("Initial connection supplied as {IPAddress}:{Port} couldn't connect, using a fallback instead", info.LocalIP, info.LocalPort);
 
-            if (await info.ConnectInternal(ConnectionInfo.FALLBACK_IP, info.LocalPort, token))
-                info.LocalIP = ConnectionInfo.FALLBACK_IP;
+            if (await info.ConnectInternal(info.LocalIP, ConnectionInfo.FALLBACK_PORT, token))
+                info.LocalPort = ConnectionInfo.FALLBACK_PORT;
             else
             {
-                if (await info.ConnectInternal(info.LocalIP, ConnectionInfo.FALLBACK_PORT, token))
-                    info.LocalPort = ConnectionInfo.FALLBACK_PORT;
-                else
+                if (await info.ConnectInternal(ConnectionInfo.FALLBACK_IP, ConnectionInfo.FALLBACK_PORT, token))
                 {
-                    if (await info.ConnectInternal(ConnectionInfo.FALLBACK_IP, ConnectionInfo.FALLBACK_PORT, token))
-                    {
-                        info.LocalIP = ConnectionInfo.FALLBACK_IP;
-                        info.LocalPort = ConnectionInfo.FALLBACK_PORT;
-                    }
-                    else
-                        throw new NotConnectedException("Could not connect to ADB");
+                    info.LocalIP = ConnectionInfo.FALLBACK_IP;
+                    info.LocalPort = ConnectionInfo.FALLBACK_PORT;
                 }
+                else
+                    throw new NotConnectedException("Could not connect to ADB");
             }
 
             return new AnonymousAsyncDisposable(async ()=> await info.Disconnect());
