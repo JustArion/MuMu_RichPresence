@@ -11,5 +11,7 @@ public record ConnectionInfo(
     public string ConnectionString => $"{LocalIP}:{LocalPort}";
 
     public int LocalPort { get; set; } = LocalPort;
+    public string LocalIP { get; set; } = LocalIP;
     public const int FALLBACK_PORT = 5555;
+    public const string FALLBACK_IP = "localhost";
 }

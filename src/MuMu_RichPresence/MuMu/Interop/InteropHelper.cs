@@ -20,22 +20,36 @@ public static class InteropHelper
         {
             // We do the fallback first then the specified port
             // On my observation, the fallback port is more used in my case, this should theoretically shave off +- 5sec to initial ADB connections
-            if (!await info.ConnectInternal(useFallback: false, token) && !await info.ConnectInternal(useFallback: true, token))
-                throw new NotConnectedException("Could not connect to ADB");
+            // Reversed the order again
+            if (await info.ConnectInternal(info.LocalIP, info.LocalPort, token))
+                return new AnonymousAsyncDisposable(async () => await info.Disconnect());
+
+            Log.Debug("Initial connection supplied as {IPAddress}:{Port} couldn't connect, using a fallback instead", info.LocalIP, info.LocalPort);
+
+            if (await info.ConnectInternal(ConnectionInfo.FALLBACK_IP, info.LocalPort, token))
+                info.LocalIP = ConnectionInfo.FALLBACK_IP;
+            else
+            {
+                if (await info.ConnectInternal(info.LocalIP, ConnectionInfo.FALLBACK_PORT, token))
+                    info.LocalPort = ConnectionInfo.FALLBACK_PORT;
+                else
+                {
+                    if (await info.ConnectInternal(ConnectionInfo.FALLBACK_IP, ConnectionInfo.FALLBACK_PORT, token))
+                    {
+                        info.LocalIP = ConnectionInfo.FALLBACK_IP;
+                        info.LocalPort = ConnectionInfo.FALLBACK_PORT;
+                    }
+                    else
+                        throw new NotConnectedException("Could not connect to ADB");
+                }
+            }
 
             return new AnonymousAsyncDisposable(async ()=> await info.Disconnect());
         }
 
-        private async Task<bool> ConnectInternal(bool useFallback = false, CancellationToken token = default)
+        private async Task<bool> ConnectInternal(string ipAddress, int port, CancellationToken token = default)
         {
-            var port = useFallback
-                ? ConnectionInfo.FALLBACK_PORT
-                : info.LocalPort;
-
-            if (useFallback)
-                Log.Debug("Using fallback port of {FallbackPort} instead of {LocalPort}", ConnectionInfo.FALLBACK_PORT, info.LocalPort);
-
-            var arg = $"connect {info.LocalIP}:{port}";
+            var arg = $"connect {ipAddress}:{port}";
 
             var stdOut = new StringBuilder();
             var stdErr = new StringBuilder();
@@ -65,9 +79,6 @@ public static class InteropHelper
                 return false;
 
             Log.Debug("Connected to MuMuNxDevice in {Connection:F2} sec", elapsed.TotalSeconds);
-            if (useFallback)
-                info.LocalPort = ConnectionInfo.FALLBACK_PORT;
-
             return true;
         }
 
