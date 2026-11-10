@@ -63,10 +63,30 @@ internal static class Pathfinder
         return retVal;
     }
 
-    public static FileInfo? GetADBFileInfo() => TryGetRootDirectory()?.GetFiles("adb.exe", SearchOption.AllDirectories).FirstOrDefault();
+    public static FileInfo? GetADBFileInfo(DirectoryInfo vm) => vm.GetFiles("adb.exe", SearchOption.AllDirectories).FirstOrDefault();
+
+    /// C:\Program Files\Netease\MuMuPlayer\nx_device
+    public static DirectoryInfo[] GetDevices() => FromRootDirectory("nx_device")?.GetDirectories() ?? [];
+
+    /// C:\Program Files\Netease\MuMuPlayer\vms
+    public static DirectoryInfo[] GetVMs() => FromRootDirectory("vms")?.GetDirectories() ?? [];
+
+    private static DirectoryInfo? FromRootDirectory(string directoryName)
+    {
+        // C:\Program Files\Netease\MuMuPlayer\
+        var root = TryGetRootDirectory();
+
+        if (root != null)
+            return root.GetDirectories(directoryName)
+                .FirstOrDefault();
+
+        Log.Debug("Couldn't find any MuMu root directories");
+        return null;
+
+    }
 
     public static DirectoryInfo? TryGetRootDirectory() =>
-        TryGetRootDirectoryFromProcess(out var rootDirectory) || TryGetRootDirectoryFromProcess(out rootDirectory)
+        TryGetRootDirectoryFromProcess(out var rootDirectory) || TryGetRootDirectoryFromShortcut(out rootDirectory)
         ? rootDirectory
         : null;
 
@@ -91,7 +111,7 @@ internal static class Pathfinder
                 "MuMuNxMain" => new DirectoryInfo(Path.GetDirectoryName(procPath)!).Parent,
 
                 // ..\MuMuPlayerGlobal-12.0\nx_device\12.0\shell\MuMuNxDevice.exe
-                "MuMuNxDevice" => new DirectoryInfo(Path.Combine(Path.GetDirectoryName(procPath)!, "../../../")),
+                "MuMuNxDevice" => new DirectoryInfo(Path.Combine(Path.GetDirectoryName(procPath)!, @"..\..\..\")),
                 _ => rootDirectory
             };
         }
@@ -198,12 +218,18 @@ internal static class Pathfinder
         }
     }
 
+    //                                                 C:\Program Files\Netease\MuMuPlayer\nx_main
     private static FileInfo GetLogPathFromBaseDirectory(DirectoryInfo mumuDirectory)
     {
         Log.Verbose("Trying to get the logs path from {Directory}", mumuDirectory.FullName);
         // MuMuPlayerGlobal-12.0\vms
-        var vms = mumuDirectory.Parent!.GetDirectories("vms").First();
+        // C:\Program Files\Netease\MuMuPlayer\vms
+        var vms = mumuDirectory.Parent!.GetDirectories("vms")
+            .First();
 
-        return vms.GetFiles("shell.log", SearchOption.AllDirectories).First();
+        return vms.GetDirectories()
+            .Last() // Last is usually the highest version of Android
+            .GetFiles("shell.log", SearchOption.AllDirectories)
+            .First();
     }
 }

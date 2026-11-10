@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ⚡ Now displays a quick restart button in the tray when there's a pending update
 - 🦺 Fix: If using `Experimental ADB` mode, Rich Presences wouldn't be displayed when multiple ADB devices were detected
 - 🦺 Fix: If using `Experimental ADB` mode, Rich Presences wouldn't be displayed for some apps that had multiple .apk packages
+- 🦺 Fix: When having older versions of MuMu Player still installed, MuMu RichPresence wouldn't display any rich presence activity #7
+  - This was due to how we searched for `shell.log` for the LogFile Approach, and for `vm_config.json` on the ADB Approach
 
 ## [2.2.0] / 2026-04-19
 - ⚡️ `--experimental` mode now supports non-Play Store apps
@@ -48,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Huge apologies for updating the runtime again!**
     - Won't change the runtime version for a really long time now
     - A missing dependencies popup will appear with an option to install the update. Pressing "Install Update" will update the app
-- 🦺 Improved startup times for `Auto Update` users. Checking for updates caused the app to wait until checking was done..
+- 🦺 Improved startup times for `Auto Update` users. Checking for updates caused the app to wait until checking was done.
 - 🦺 Bugfix: In some cases Rich Presence wasn't removed after MuMu Player closes.
     - This occurs when MuMu Player is run as admin while this program was not admin.
 
@@ -83,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Run with `--no-auto-update`
 
 ## [1.1.3] / 2025-02-18
-- ⚡️ Releases are now provided and built by [Github Actions](https://github.com/JustArion/MuMu_RichPresence/actions)
+- ⚡️ Releases are now provided and built by [GitHub Actions](https://github.com/JustArion/MuMu_RichPresence/actions)
 
 ## [1.1.1] / 2025-02-18
 - 🦺 Bugfix: Presence wouldn't show if you switch tabs from Presence -> System App -> Same Presence

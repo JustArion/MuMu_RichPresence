@@ -372,41 +372,64 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
     // --
     public static async Task<IMuMuInterop?> TryCreate(bool keepAlive = false)
     {
-        var config = await GetVMConfig();
-        if (config is null)
+        // We try to connect to MuMu using all available vms
+        foreach (var vm in Pathfinder.GetVMs().Reverse())
         {
-            Log.Warning("VM Config is unavailable");
-            return null;
+            Log.Debug("Probing VM: {VMName}", vm.Name);
+
+            var config = await GetVMConfig(vm);
+            if (config == null)
+            {
+                Log.Warning("VM Config is unavailable");
+                continue;
+            }
+
+            // We don't really need to look for a SPECIFIC version of adb across MuMu versions
+            var lastDevice = Pathfinder.GetDevices()
+                .LastOrDefault();
+            if (lastDevice is null)
+            {
+                Log.Warning("ADB is unavailable");
+                continue;
+            }
+            var adb = Pathfinder.GetADBFileInfo(lastDevice);
+            if (adb is null)
+            {
+                Log.Warning("ADB is unavailable");
+                continue;
+            }
+
+            var adbConfig = config.VM.NAT.PortForward.ADB;
+            var guestIp = adbConfig.GuestIP ?? ConnectionInfo.FALLBACK_IP;
+            if (!int.TryParse(adbConfig.HostPort, out var portNumber))
+            {
+                Log.Warning("Could not parse Host port {GuestIp}:{HostPort}", guestIp, adbConfig.HostPort);
+                continue;
+            }
+
+            var info = new ConnectionInfo(guestIp, portNumber, adb.FullName, adb.DirectoryName!, keepAlive);
+
+            try
+            {
+                await using (await info.Connect())
+                {
+                    Log.Debug("Connected to ADB via {VMName} probe", vm.Name);
+                    var interop = new MuMuInterop(info);
+                    return interop;
+                }
+            }
+            catch (NotConnectedException) { }
         }
 
-        var adb = Pathfinder.GetADBFileInfo();
-        if (adb is null)
-        {
-            Log.Warning("ADB is unavailable");
-            return null;
-        }
-
-        var adbConfig = config.VM.NAT.PortForward.ADB;
-        var guestIp = adbConfig.GuestIP ?? "localhost";
-        if (!int.TryParse(adbConfig.HostPort, out var portNumber))
-        {
-            Log.Warning("Could not parse Host port {GuestIp}:{HostPort}", guestIp, adbConfig.HostPort);
-            return null;
-        }
-
-        var connectionInfo = new ConnectionInfo(guestIp, portNumber, adb.FullName, adb.DirectoryName!, keepAlive);
-        return new MuMuInterop(connectionInfo);
+        Log.Warning("Could not create an Interop Channel via ADB to MuMu Player");
+        return null;
     }
 
     // The VM Config contains the local IP of the emulator, which we can use to connect to via ADB,
     // MuMu also has 2 identical versions of ADB, we can use them
-    private static async Task<VMConfig?> GetVMConfig()
+    private static async Task<VMConfig?> GetVMConfig(DirectoryInfo vm)
     {
-        var rootPath = Pathfinder.TryGetRootDirectory();
-
-        var vms = rootPath?.GetDirectories("vms").FirstOrDefault();
-
-        var configFile = vms?.GetFiles("vm_config.json", SearchOption.AllDirectories).FirstOrDefault();
+        var configFile = vm.GetFiles("vm_config.json", SearchOption.AllDirectories).FirstOrDefault();
 
         if (configFile is not { Exists: true})
             return null;
@@ -428,6 +451,9 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
 
         GC.SuppressFinalize(this);
         if (_connection != null)
+        {
             await _connection.DisposeAsync();
+            _connection = null;
+        }
     }
 }
