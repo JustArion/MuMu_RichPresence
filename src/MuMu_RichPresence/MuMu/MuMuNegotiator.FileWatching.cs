@@ -1,5 +1,8 @@
 ﻿using System.Collections.Specialized;
+using System.Reactive.Concurrency;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using Dawn.MuMu.RichPresence.Extensions;
 using Dawn.MuMu.RichPresence.Models;
 using Dawn.MuMu.RichPresence.Tools;
 using DynamicData.Binding;
@@ -8,58 +11,59 @@ namespace Dawn.MuMu.RichPresence.MuMu;
 
 public static partial class MuMuNegotiator
 {
-    private static void StartFileWatching()
+    private static IDisposable StartFileWatching()
     {
-        // The below code is within a Task block since 'GetOrWaitForFilePath' can take an unknown amount of time to complete
-        Task.Run(async () =>
-        {
-            var filePath = await Pathfinder.GetOrWaitForLogFilePath();
-            LogSubject.OnNext(filePath);
-
-            _logReader = new MuMuPlayerLogReader(filePath, _currentProcessState);
-            _logReader.Sessions.CollectionChanged += ReaderSessionsChanged;
-            _logReader.StartAsync(); // This starts a long running operation, the method doesn't need to be awaited
-        });
-    }
-
-    private static void ReaderSessionsChanged(object? sender, NotifyCollectionChangedEventArgs e)
-    {
-        if (e.Action == NotifyCollectionChangedAction.Reset)
-            return; // We don't care about reset events
-        try
-        {
-            Log.Debug("[{ChangeType}] Session Updated {PossibleNewItems}", e.Action, e.NewItems);
-
-            var logReader = _logReader!;
-            if (e.Action != NotifyCollectionChangedAction.Add)
-                Task.Run(() => UpdatePresenceIfNecessary(logReader.GetFocusedApp()));
-            else
+        return _deviceWatcher.CurrentDevice
+            .ObserveOn(new NewThreadScheduler())
+            .Subscribe(device =>
             {
-                if (e.NewItems == null)
-                    return;
-
-                foreach (var lifetime in e.NewItems.Cast<MuMuSessionLifetime>())
+                // When the emulator closes and there's no other emulators present, then we stop reading
+                if (device == null)
                 {
-                    if (AppLifetimeParser.IsSystemLevelPackage(lifetime.PackageName))
-                        continue;
-
-                    lifetime.AppState.WhenPropertyChanged(entry => entry.Value).Subscribe(a =>
-                    {
-
-                        if (a.Value == AppState.Focused)
-                            Task.Run(() => UpdatePresenceIfNecessary(lifetime));
-                        else
-                            Task.Run(() => UpdatePresenceIfNecessary(logReader.GetFocusedApp()));
-
-                        Log.Debug("Updating from AppState Change {NewState}", a.Value);
-                    });
+                    Interlocked.Exchange(ref _logReader, null)?
+                        .Dispose();
+                    return;
                 }
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Error while handling session collection change");
-        }
+
+                var filePath = device.FindLogFile();
+                if (filePath == null)
+                {
+                    Log.Debug("Couldn't find a log file associated with {ProcessName}<{ProcessId}>", device.UnderlyingProcess.ProcessName, device.UnderlyingProcess.Id);
+                    return;
+                }
+
+                LogFileChanged.OnNext(filePath);
+
+                // Stop the previous read operation if any and create a new one
+                Interlocked.Exchange(ref _logReader, new MuMuPlayerLogReader(device))?
+                    .Dispose();
+
+                var reader = _logReader;
+                var sessions = reader.Sessions;
+
+                // TODO: Check if there's some redundant things happening here
+                // The else on focused seems redundant, but will need to check
+                sessions.ItemsAdded.Where(x => !AppLifetimeParser.IsSystemLevelPackage(x.PackageName))
+                    .Subscribe(lt => lt.AppState
+                        .WhenPropertyChanged(x => x.Value)
+                        .Select(x => x.Value)
+                        .Subscribe(state =>
+                        {
+                            if (state == AppState.Focused)
+                                Task.Run(() => UpdatePresenceIfNecessary(lt));
+                            else
+                                Task.Run(() => UpdatePresenceIfNecessary(reader.GetFocusedApp()));
+
+                            Log.Debug("Updating from AppState Change {NewState}", state);
+                        }));
+                sessions.ItemsRemoved.Subscribe(lifetime =>
+                {
+                    Log.Verbose("Session updated: {Lifetime}", lifetime.Title);
+                    Task.Run(() => UpdatePresenceIfNecessary(reader.GetFocusedApp()));
+                });
+
+                reader.StartAsync(); // This starts a long running operation, the method doesn't need to be awaited
+            });
     }
 
     public static BehaviorSubject<FileInfo?> LogSubject { get; } = new(null);

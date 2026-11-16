@@ -5,16 +5,26 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Dawn.MuMu.RichPresence.Logging.Serilog;
 using Dawn.MuMu.RichPresence.Models;
+using Dawn.MuMu.RichPresence.MuMu.Devices;
 using Dawn.MuMu.RichPresence.MuMu.Interop;
 using Dawn.MuMu.RichPresence.Tools;
 
 namespace Dawn.MuMu.RichPresence.MuMu;
 
-public class MuMuPlayerLogReader(FileInfo filePath, MuMuProcessState currentProcessState) : IDisposable
+public class MuMuPlayerLogReader : IDisposable
 {
+    public MuMuPlayerLogReader(IMuMuDevice mumuDevice)
+    {
+        _device = mumuDevice;
+        _filePath = mumuDevice.FindLogFile()!;
+        _logWatcher = new LogWatcher(_filePath);
+    }
+
+    private readonly IMuMuDevice _device;
+    private readonly FileInfo _filePath;
     private bool _started;
     private long _lastStreamPosition;
-    private readonly LogWatcher _logWatcher = new(filePath);
+    private readonly LogWatcher _logWatcher;
     public ObservableCollection<MuMuSessionLifetime> Sessions { get; } = [];
     public ObservableCollection<MuMuSessionLifetime> SessionGraveyard { get; } = [];
 
@@ -27,14 +37,14 @@ public class MuMuPlayerLogReader(FileInfo filePath, MuMuProcessState currentProc
         Task.Factory.StartNew(InitiateWatchOperation, TaskCreationOptions.LongRunning);
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal FileLock AquireFileLock() => FileLock.Aquire(filePath);
+    internal FileLock AquireFileLock() => FileLock.Aquire(_filePath);
 
     private async Task InitiateWatchOperation()
     {
-        Log.Verbose("Doing fresh read-operation pass on file {Path}", filePath.Name);
+        Log.Verbose("Doing fresh read-operation pass on file {Path}", _filePath.Name);
 
         // Wait till the file exists
-        if (!filePath.Exists)
+        if (!_filePath.Exists)
         {
             Log.Debug("File not found: Shell.log");
             await Task.Delay(TimeSpan.FromSeconds(5));
@@ -47,7 +57,7 @@ public class MuMuPlayerLogReader(FileInfo filePath, MuMuProcessState currentProc
             _reading = true;
             try
             {
-                if (filePath.Exists)
+                if (_filePath.Exists)
                 {
                     await using var fileLock = AquireFileLock();
                     await CatchUpAsync(fileLock);
@@ -117,7 +127,7 @@ public class MuMuPlayerLogReader(FileInfo filePath, MuMuProcessState currentProc
         }
         catch (Exception e)
         {
-            Log.Error(e, "Failed to read the file {FilePath}", filePath);
+            Log.Error(e, "Failed to read the file {FilePath}", _filePath);
         }
     }
 
@@ -130,7 +140,7 @@ public class MuMuPlayerLogReader(FileInfo filePath, MuMuProcessState currentProc
                 Stopwatch.GetElapsedTime(ts).TotalMilliseconds, processedEvents, lifetime);
         else
         {
-            await using var mumuInterop = await MuMuInterop.TryCreate();
+            await using var mumuInterop = await MuMuInterop.TryCreate(_device);
 
             var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
@@ -159,7 +169,7 @@ public class MuMuPlayerLogReader(FileInfo filePath, MuMuProcessState currentProc
     private void LogFileWatcherOnFileChanged(object? _, FileSystemEventArgs args)
     {
         //              The file might not exist yet, this happens when MuMu clears the file and makes a new one
-        if (_reading || !filePath.Exists)
+        if (_reading || !_filePath.Exists)
             return;
         _reading = true;
 
@@ -170,21 +180,21 @@ public class MuMuPlayerLogReader(FileInfo filePath, MuMuProcessState currentProc
     {
         try
         {
-            await using var fileLock = FileLock.Aquire(filePath);
+            await using var fileLock = FileLock.Aquire(_filePath);
 
             var reader = fileLock.Reader;
             if (_lastStreamPosition > reader.BaseStream.Length)
             {
                 var prevSize = Math.Round(_lastStreamPosition / Math.Pow(1024, 1), 2);
 
-                if (currentProcessState.CurrentEmulatorProcess == null)
-                {
-                    Log.Verbose("{Path} file was truncated, resetting stream position", filePath);
-                    await CatchUpAsync(fileLock);
-                    Log.Debug("The log file has been reset, likely indicates MuMu is starting up, previous size: {PreviousSize:F2} kb", prevSize);
-                    Log.Information("MuMu Player is starting up");
-                    return;
-                }
+                // if (currentProcessState.CurrentEmulatorProcess == null)
+                // {
+                //     Log.Verbose("{Path} file was truncated, resetting stream position", _filePath);
+                //     await CatchUpAsync(fileLock);
+                //     Log.Debug("The log file has been reset, likely indicates MuMu is starting up, previous size: {PreviousSize:F2} kb", prevSize);
+                //     Log.Information("MuMu Player is starting up");
+                //     return;
+                // }
 
                 var newPosition = reader.BaseStream.Position;
                 // What is a running truncation event?
@@ -210,7 +220,7 @@ public class MuMuPlayerLogReader(FileInfo filePath, MuMuProcessState currentProc
         }
         catch (Exception e)
         {
-            Log.Error(e, "Failed to read the change in file {FilePath}", filePath);
+            Log.Error(e, "Failed to read the change in file {FilePath}", _filePath);
         }
     }
 

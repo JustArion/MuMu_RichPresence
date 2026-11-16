@@ -1,4 +1,6 @@
 ﻿using Dawn.MuMu.RichPresence.MuMu;
+using Dawn.MuMu.RichPresence.MuMu.Devices;
+using NSubstitute;
 
 namespace MuMu_RichPresence.Tests.Integration;
 
@@ -12,7 +14,10 @@ public class AppSessionMessageReaderTests
     [SetUp]
     public void SetUp()
     {
-        _sut = new MuMuPlayerLogReader(new("Assets/shell.log"), new());
+        var device = Substitute.For<IMuMuDevice>();
+        device.FindLogFile()
+            .Returns(new FileInfo(@"Assets\shell.log"));
+        _sut = new MuMuPlayerLogReader(device);
     }
     private MuMuPlayerLogReader _sut;
 
@@ -41,9 +46,11 @@ public class AppSessionMessageReaderTests
         await _sut.GetAllSessionInfos(fileLock, sessions, graveyard);
 
         // Assert
-        sessions.Count.Should().Be(0); // MuMu player isn't running
+        sessions.Count
+            .Should().Be(0); // MuMu player isn't running
 
-        graveyard.Count.Should().Be(54);
+        graveyard.Count
+            .Should().Be(54);
     }
 
     [Test]
@@ -59,13 +66,17 @@ public class AppSessionMessageReaderTests
 
         // Assert
         var playedGames = graveyard.Where(x => !AppLifetimeParser.IsSystemLevelPackage(x.PackageName)).ToArray();
-        playedGames.Should().HaveCountGreaterThanOrEqualTo(1);
+        playedGames
+            .Should().HaveCountGreaterThanOrEqualTo(1);
 
         var first = playedGames.First();
 
-        first.Title.Should().Be("Triglav");
-        first.PackageName.Should().Be("com.SmokymonkeyS.Triglav");
-        first.AppState.Value.Should().Be(AppState.Stopped);
+        first.Title
+            .Should().Be("Triglav");
+        first.PackageName
+            .Should().Be("com.SmokymonkeyS.Triglav");
+        first.AppState.Value
+            .Should().Be(AppState.Stopped);
     }
     
     [Test]
@@ -81,12 +92,16 @@ public class AppSessionMessageReaderTests
 
         // Assert
         var playedGames = graveyard.Where(x => !AppLifetimeParser.IsSystemLevelPackage(x.PackageName)).ToArray();
-        playedGames.Should().HaveCountGreaterThanOrEqualTo(1);
+        playedGames
+            .Should().HaveCountGreaterThanOrEqualTo(1);
 
         var last = playedGames.Last();
 
-        last.Title.Should().Be("Night of the Full Moon");
-        last.PackageName.Should().Be("com.ztgame.yyzy");
-        last.AppState.Value.Should().Be(AppState.Stopped);
+        last.Title
+            .Should().Be("Night of the Full Moon");
+        last.PackageName
+            .Should().Be("com.ztgame.yyzy");
+        last.AppState.Value
+            .Should().Be(AppState.Stopped);
     }
 }

@@ -9,6 +9,7 @@ using AlphaOmega.Debug.Manifest;
 using CliWrap.Exceptions;
 using Dawn.MuMu.RichPresence.Models;
 using Dawn.MuMu.RichPresence.Models.Exceptions;
+using Dawn.MuMu.RichPresence.MuMu.Devices;
 using Dawn.MuMu.RichPresence.Scrapers;
 using Dawn.MuMu.RichPresence.Tools;
 using Polly;
@@ -265,8 +266,12 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
     }
 
     private const string VIRTUAL_TEMP_FOLDER = "/data/local/tmp";
+    private static readonly ConcurrentDictionary<string, string> _labelCache = [];
     private async Task<string> GetLabel(AppInfo info, CancellationToken token)
     {
+        if (_labelCache.TryGetValue(info.PackageName, out var label))
+            return label;
+
         Log.Debug("Fetching Label for {PackageName}", info.PackageName);
         var ts = Stopwatch.GetTimestamp();
 
@@ -313,7 +318,8 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
 
                 var resourceId = int.Parse(labelIndex, NumberStyles.HexNumber);
 
-                var label = resources.ResourceMap[resourceId].First().Value!;
+                label = resources.ResourceMap[resourceId].First().Value!;
+                _labelCache.TryAdd(info.PackageName, label);
 
                 Log.Debug("Got label for {PackageName} ({Label})", info.PackageName, label);
 
@@ -371,66 +377,48 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
     }
 
     // --
-    // We could in theory try supporting multiple ADB connections to multiple NxDevice processes across different versions
-    // But this would be a significant code change for something no user has asked for or experienced such an issue yet
-    // I'll probably reconsider if someone wants Rich Presences to show up while they're playing on 2 different MuMu versions at the same time
-    // We can use GetForegroundWindow or walk the window visibility stack to determine which emulator should hold the current presence if this needs to be implemented
-    public static async Task<IMuMuInterop?> TryCreate(bool keepAlive = false)
+    public static async Task<IMuMuInterop?> TryCreate(IMuMuDevice device, bool keepAlive = false)
     {
-        // Implement a priority for the running device's version
-        var _priorityTarget = Pathfinder.GetRunningNxDeviceVersion();
-
-        // We try to connect to MuMu using all available vms
-        foreach (var vm in Pathfinder.GetVMs().OrderByDescending(x => _priorityTarget != null && x.Name.Contains(_priorityTarget.ToString())))
+        var config = await device.GetVMConfig();
+        if (config == null)
         {
-            Log.Debug("Probing VM: {VMName}", vm.Name);
-
-            var config = await GetVMConfig(vm);
-            if (config == null)
-            {
-                Log.Warning("VM Config is unavailable");
-                continue;
-            }
-
-            // We don't really need to look for a SPECIFIC version of adb across MuMu versions
-            var lastDevice = Pathfinder.GetDevices()
-                .LastOrDefault();
-            if (lastDevice is null)
-            {
-                Log.Warning("ADB is unavailable");
-                continue;
-            }
-            var adb = Pathfinder.GetADBFileInfo(lastDevice);
-            if (adb is null)
-            {
-                Log.Warning("ADB is unavailable");
-                continue;
-            }
-
-            var adbConfig = config.VM.NAT.PortForward.ADB;
-            var guestIp = adbConfig.GuestIP ?? ConnectionInfo.FALLBACK_IP;
-            if (!int.TryParse(adbConfig.HostPort, out var portNumber))
-            {
-                Log.Warning("Could not parse Host port {GuestIp}:{HostPort}", guestIp, adbConfig.HostPort);
-                continue;
-            }
-
-            var info = new ConnectionInfo(guestIp, portNumber, adb.FullName, adb.DirectoryName!, keepAlive);
-
-            try
-            {
-                var connection = await info.Connect();
-                Log.Debug("Connected to ADB via {VMName} probe", vm.Name);
-                var interop = new MuMuInterop(info)
-                {
-                    _connection = connection
-                };
-                return interop;
-            }
-            catch (NotConnectedException) { }
+            Log.Warning("Could not find VM Config for device {Device}", device.File.FullName);
+            return null;
         }
 
-        Log.Warning("Could not create an Interop Channel via ADB to MuMu Player");
+        var adb = device.FindADB();
+        if (adb == null)
+        {
+            Log.Warning("Could not find ADB for device {Device}", device.File.FullName);
+            return null;
+        }
+
+        // FindADB and GetVMConfig both use FindVM, so it's guaranteed to not be null
+        var vm = device.FindVM()!;
+
+        var adbConfig = config.VM.NAT.PortForward.ADB;
+        var guestIp = adbConfig.GuestIP ?? ConnectionInfo.FALLBACK_IP;
+        if (!int.TryParse(adbConfig.HostPort, out var portNumber))
+        {
+            Log.Warning("Could not parse Host port {GuestIp}:{HostPort}", guestIp, adbConfig.HostPort);
+            return null;
+        }
+
+        var info = new ConnectionInfo(guestIp, portNumber, adb.FullName, adb.DirectoryName!, keepAlive);
+
+        try
+        {
+            var connection = await info.Connect();
+            Log.Debug("Connected to ADB via {VMName} probe", vm.Name);
+            var interop = new MuMuInterop(info)
+            {
+                _connection = connection
+            };
+            return interop;
+        }
+        catch (NotConnectedException) { }
+
+        Log.Warning("Couldn't connect to {VM}", vm.Name);
         return null;
     }
 

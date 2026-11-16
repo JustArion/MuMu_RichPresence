@@ -1,7 +1,7 @@
-﻿using System.Diagnostics;
-using System.Reactive.Disposables;
+﻿using System.Reactive.Disposables;
 using Dawn.MuMu.RichPresence.Discord;
 using Dawn.MuMu.RichPresence.Models;
+using Dawn.MuMu.RichPresence.MuMu.Devices;
 using Dawn.MuMu.RichPresence.Scrapers;
 using Dawn.MuMu.RichPresence.Tools;
 using DiscordRPC;
@@ -12,11 +12,11 @@ namespace Dawn.MuMu.RichPresence.MuMu;
 public static partial class MuMuNegotiator
 {
     private static RichPresenceApproach? _currentApproach;
-    private static CancellationTokenSource? _processSubscriptionCts = new();
     private static RichPresenceHandler? _richPresenceHandler;
     private static MuMuPlayerLogReader? _logReader;
     private static DiscoverabilityHandler _discoverabilityHandler = null!;
     private static readonly CompositeDisposable _disposables = new();
+    private static readonly DeviceWatcher _deviceWatcher = new();
 
 
     public static CompositeDisposable UseApproach(RichPresenceApproach approach)
@@ -27,6 +27,13 @@ public static partial class MuMuNegotiator
         _currentApproach = approach;
         _discoverabilityHandler = new(CacheDirectory);
         _disposables.Add(_richPresenceHandler = new());
+
+        // Clear presence when we switch devices
+        // The ADB approach already clears the presence before the emulator exits via
+        // StartADB -> DispatchFocusedApp -> UpdatePresenceIfNecessary -> RemovePresence
+        // In a graceful exit. But the device watcher should catch and clean up ungraceful exits (MuMu Player crashes)
+        // Same should in theory happen for the File Watching approach
+        _deviceWatcher.CurrentDevice.Subscribe(_ => RemovePresence());
 
         if (approach == RichPresenceApproach.LogFileWatcher)
         {
@@ -42,55 +49,42 @@ public static partial class MuMuNegotiator
         return _disposables;
     }
 
-    private static async Task RemovePresenceOnMuMuPlayerExit(string emulatorProcessName)
-    {
-        if (_processSubscriptionCts != null)
-        {
-            await _processSubscriptionCts.CancelAsync();
-            _processSubscriptionCts.Dispose();
-        }
-        _processSubscriptionCts = new();
-
-        ProcessExit.Subscribe(emulatorProcessName, _ =>
-        {
-            RemovePresence();
-            _currentProcessState.CurrentEmulatorProcess = null;
-        }, _processSubscriptionCts.Token);
-    }
-
     private static async Task CoercePresenceToFocusedLifetime(MuMuSessionLifetime lifetime, string emulatorName)
     {
-        if (await SetPresenceFor(lifetime, new() { Timestamps = new(lifetime.StartTime.DateTime) }, emulatorName!, true))
+        if (await SetPresenceFor(lifetime, new() { Timestamps = new(lifetime.StartTime.DateTime) }, emulatorName, true))
             Log.Debug("Presence coerced for {SessionTitle}", lifetime);
     }
 
+    // User toggled by the tray whether to enable or disable dispatching presences to Discord
     internal static void OnRichPresenceEnabledChanged(bool presenceActive)
     {
         if (_richPresenceHandler == null)
             return;
 
-        if (presenceActive)
-        {
-            if (_richPresenceHandler.CurrentPresence is not { } presence)
-            {
-                if (_focusedLifetime != null)
-                    Task.Run(async () => await CoercePresenceToFocusedLifetime(_focusedLifetime, _focusedEmulatorName!));
-                return;
-            }
-            if (_focusedLifetime == null)
-            {
-                Log.Error("Trying to set a rich presence without an associated lifetime! Known details are: AppId: {AppId}, Details: {Details}", _currentApplicationId, presence.Details);
-                return;
-            }
+        var lifetime = _focusedLifetime;
 
-            _richPresenceHandler.TrySetPresence(_focusedLifetime.Title, presence, _currentApplicationId);
+        if (!presenceActive)
+        {
+            ClearPresence(lifetime);
             return;
         }
 
-        ClearPresence(_focusedLifetime);
+        if (!_deviceWatcher.CurrentDevice.TryGetValue(out var device) || device == null)
+            return; // There's no NxDevice / Emulator running
+
+        // There was no prior presence, but there is a lifetime
+        if (_richPresenceHandler.CurrentPresence is not { } presence)
+        {
+            if (lifetime != null)
+                Task.Run(async () => await CoercePresenceToFocusedLifetime(lifetime, _focusedEmulatorName!));
+        }
+        else if (lifetime == null)
+            Log.Error("Trying to set a rich presence without an associated lifetime! Known details are: AppId: {AppId}, Details: {Details}", _currentApplicationId, presence.Details);
+        else
+            _richPresenceHandler.TrySetPresence(lifetime.Title, presence, _currentApplicationId);
     }
 
-    internal static void RemovePresence()
+    private static void RemovePresence()
     {
         // Basically an atomic version of
         // var lifetime = _focusedLifetime;
@@ -102,7 +96,7 @@ public static partial class MuMuNegotiator
         ClearPresence(lifetime);
     }
 
-    internal static void ClearPresence(MuMuSessionLifetime? lifetime)
+    private static void ClearPresence(MuMuSessionLifetime? lifetime)
     {
         if (_richPresenceHandler == null)
             return;
@@ -135,15 +129,11 @@ public static partial class MuMuNegotiator
             return;
         }
 
-        foreach (var processName in Pathfinder.EmulatorProcessNames)
+        Log.Debug("Trying to update focused app: {App}", focusedApp.Title);
+
+        if (_deviceWatcher.CurrentDevice.TryGetValue(out var device) && device != null && device.IsActive())
         {
-            var currentMuMuProcess = Process.GetProcessesByName(processName).FirstOrDefault();
-            if (currentMuMuProcess == null)
-                continue;
-
-            _currentProcessState.CurrentEmulatorProcess = currentMuMuProcess;
-
-            if (await SetPresenceFor(focusedApp, new() { Timestamps = new(focusedApp.StartTime.DateTime) }, processName))
+            if (await SetPresenceFor(focusedApp, new() { Timestamps = new(focusedApp.StartTime.DateTime) }, device.UnderlyingProcess.ProcessName))
                 Log.Debug("Presence updated for {SessionTitle}", focusedApp);
             return;
         }
@@ -191,8 +181,6 @@ public static partial class MuMuNegotiator
             return retVal;
 
         _currentApplicationId = officialApplicationId;
-        await RemovePresenceOnMuMuPlayerExit(emulatorProcessName);
-
         return retVal;
     }
 
@@ -208,6 +196,4 @@ public static partial class MuMuNegotiator
         if (linkToStorePage)
             assets.LargeImageUrl = await PackageScraper.GetStoreLinkForSession(sessionLifetime);
     }
-
-    private static readonly MuMuProcessState _currentProcessState = new();
 }
