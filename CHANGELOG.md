@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🦺 Fix: If using `Experimental ADB` mode, Rich Presences wouldn't be displayed for some apps that had multiple .apk packages
 - 🦺 Fix: When having older versions of MuMu Player still installed, MuMu RichPresence wouldn't display any rich presence activity #7
   - This was due to how we searched for `shell.log` for the LogFile Approach, and for `vm_config.json` on the ADB Approach
+- ⚡ Rich Presences are now supported while running multiple instances of MuMu emulators, including across different Android versions!
+  - This took a while to make do.
 
 ## [2.2.0] / 2026-04-19
 - ⚡️ `--experimental` mode now supports non-Play Store apps
