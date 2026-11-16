@@ -2,26 +2,27 @@
 
 namespace Dawn.MuMu.RichPresence.Tools;
 
-internal sealed class ProcessBinding : IDisposable
+public sealed class ProcessBinding : IDisposable
 {
+    private readonly Action<int> _onExit;
     private readonly Process? _boundProcess;
     private CancellationTokenSource? _exitWaitCts;
 
-    public ProcessBinding(int pid)
+    public ProcessBinding(int pid, Action<int> onExit)
     {
+        _onExit = onExit;
         try
         {
             _boundProcess = Process.GetProcessById(pid);
 
             SubscribeOrWaitForExit(_boundProcess);
 
-            Log.Information("Bound to process ({Pid})", pid);
+            // Log.Debug("Bound to process ({Pid})", pid);
         }
         catch (Exception e)
         {
             Log.Warning(e, "Failed to bind to process ({Pid})", pid);
         }
-
     }
 
     private void SubscribeOrWaitForExit(Process proc)
@@ -49,12 +50,12 @@ internal sealed class ProcessBinding : IDisposable
     private void OnProcessExit(object? sender, EventArgs e)
     {
         var exitCode = _boundProcess!.ExitCode;
-        Log.Information("Bound process has exited (Exit Code: {ExitCode})", exitCode);
-        Environment.Exit(exitCode);
+        _onExit(exitCode);
     }
 
     public void Dispose()
     {
+        // Log.Verbose("Binding on ({Pid}) {Process} is disposed", _boundProcess?.Id, _boundProcess?.ProcessName);
         _exitWaitCts?.Cancel();
         _boundProcess?.Dispose();
     }

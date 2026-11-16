@@ -131,7 +131,8 @@ internal static partial class AppLifetimeParser
                 return;
             }
 
-            ProcessExit.Subscribe(pid, OnExit, cts.Token);
+            var binding = new ProcessBinding(pid, OnExit);
+            cts.Token.Register(binding.Dispose);
         }
         catch
         {

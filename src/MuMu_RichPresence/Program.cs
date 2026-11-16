@@ -61,7 +61,11 @@ internal static class Program
         AppDomain.CurrentDomain.ProcessExit += (_, _) => EnsureDisposed();
 
         if (Arguments.HasProcessBinding)
-            _disposables.Add(new ProcessBinding(Arguments.ProcessBinding));
+            _disposables.Add(new ProcessBinding(Arguments.ProcessBinding, exitCode =>
+            {
+                Log.Information("Bound process has exited (Exit Code: {ExitCode})", exitCode);
+                Environment.Exit(exitCode);
+            }));
 
         Application.Run();
         EnsureDisposed();
