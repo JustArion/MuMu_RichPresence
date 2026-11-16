@@ -64,7 +64,7 @@
     <!--  Shortcut (.lnk) File parsing  -->
     <PackageReference Include="securifybv.ShellLink" Version="[0.1.0]" />
     <PackageReference Include="System.Management" Version="10.0.7" />
-    <PackageReference Include="Vanara.PInvoke.Kernel32" Version="5.0.4" />
+    <PackageReference Include="Vanara.PInvoke.User32" Version="5.0.4" />
 
     <!-- 1.6.1 is a bad release, https://github.com/Lachee/discord-rpc-csharp/pull/282 is already fixed, but not released yet -->
     <!-- Only update when there's a higher version than 1.6.1 -->
