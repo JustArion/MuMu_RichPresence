@@ -66,5 +66,6 @@ public static partial class MuMuNegotiator
             });
     }
 
-    public static BehaviorSubject<FileInfo?> LogSubject { get; } = new(null);
+    // The tray uses this to check if a button should be shown to open the respective log file
+    public static BehaviorSubject<FileInfo?> LogFileChanged { get; } = new(null);
 }

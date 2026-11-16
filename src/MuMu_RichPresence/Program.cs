@@ -35,9 +35,9 @@ internal static class Program
 
         Arguments = new(args)
         {
-            #if DEBUG
-            ExtendedLogging = true
-            #endif
+             #if DEBUG
+             ExtendedLogging = true
+             #endif
         };
 
         InitializeApplication();
@@ -48,7 +48,7 @@ internal static class Program
 
         Features.Sync();
 
-        _trayIcon = new(MuMuNegotiator.LogSubject);
+        _trayIcon = new(MuMuNegotiator.LogFileChanged);
         Features.WhenPropertyChanged(x => x.RichPresenceEnabled)
             .Select(x => x.Value)
             .Subscribe(MuMuNegotiator.OnRichPresenceEnabledChanged);
