@@ -39,6 +39,9 @@ internal static class ApplicationLogs
                 #if !DEBUG
                 .Filter.With(LogFilters.DeduplicationFilter(TimeSpan.FromSeconds(10)))
                 #endif
+                 // .MinimumLevel.Is(Arguments.ExtendedLogging
+                 //     ? LogEventLevel.Verbose
+                 //     : LogEventLevel.Information)
                 .MinimumLevel.Verbose()
                 .Enrich.WithClassName()
                 .Enrich.WithProcessName()
