@@ -55,9 +55,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.12, )",
-        "resolved": "10.0.12",
-        "contentHash": "xi+BDjFpW+Sb+MHFHaH6Y/gV9I8BluFwRXc1QyCdoZbIK26eNiBeFuMTe/FMwc33G1wdHCyDg7CVTmb8OdQrMQ=="
+        "requested": "[10.0.15, )",
+        "resolved": "10.0.15",
+        "contentHash": "u0WnRcZgBZYHlVFpbe/3Adpmb9rmNJ8/fmEwqc/xjB7fFppq+gfaLJd3Sdaw+J02zV0eP/T9dneQ3Dv5jWw6bw=="
       },
       "Polly": {
         "type": "Direct",
@@ -128,13 +128,15 @@
         "resolved": "10.0.7",
         "contentHash": "urkYf/JYCGUSF7+95BF2yM5E+QwnpR1Sf23vBw/niZfNbIkxvwYgRV0eoOq5wmz44JLEZ2Jojxa6nvgkrPVGfg=="
       },
-      "Vanara.PInvoke.Kernel32": {
+      "Vanara.PInvoke.User32": {
         "type": "Direct",
         "requested": "[5.0.4, )",
         "resolved": "5.0.4",
-        "contentHash": "46nE9JZk4v8Ees1P7mfNIi0RGTBLVv1dVCd1+V7dUm1oU838p5jPyFRzZ0CmSqMk+TnIVQV6MMnZHdOf5iZy8A==",
+        "contentHash": "TmVogOMHcXP9SAI5EOWX7VP4EzWNu+gmNGEoLHbxuaUxceOceI+xvj3Bwy3DSjCQ6ElATnibNS1eVspw8L7NYw==",
         "dependencies": {
-          "Vanara.Core": "5.0.4"
+          "Vanara.Core": "5.0.4",
+          "Vanara.PInvoke.Gdi32": "5.0.4",
+          "Vanara.PInvoke.Kernel32": "5.0.4"
         }
       },
       "Velopack": {
@@ -250,6 +252,22 @@
         "type": "Transitive",
         "resolved": "5.0.4",
         "contentHash": "HuLDyjW4+9db/8OrM0EEUhRiLOw3+tuH74a57VeAEbkCiretu5a/ipm2Tga6SMnzY0DWfiac19VMt/Fp9kxPtQ=="
+      },
+      "Vanara.PInvoke.Gdi32": {
+        "type": "Transitive",
+        "resolved": "5.0.4",
+        "contentHash": "8GVahDNMv+xNDM0rhnVZ5qsckGQCQ52G8oAzXxp4v4ey503+8FJtLni9ngI/CBh0E3omC2Z0W9iaNiJD5hBf3A==",
+        "dependencies": {
+          "Vanara.Core": "5.0.4"
+        }
+      },
+      "Vanara.PInvoke.Kernel32": {
+        "type": "Transitive",
+        "resolved": "5.0.4",
+        "contentHash": "46nE9JZk4v8Ees1P7mfNIi0RGTBLVv1dVCd1+V7dUm1oU838p5jPyFRzZ0CmSqMk+TnIVQV6MMnZHdOf5iZy8A==",
+        "dependencies": {
+          "Vanara.Core": "5.0.4"
+        }
       },
       "Dawn.WinForms.ContextMenu": {
         "type": "Project"
