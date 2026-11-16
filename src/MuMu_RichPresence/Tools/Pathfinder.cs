@@ -184,6 +184,7 @@ internal static class Pathfinder
         {
             var dir = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Programs));
 
+            // C:\Users\<USER>\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\MuMuPlayer
             var mumuShortcutDirectory = dir.GetDirectories("MuMu*").FirstOrDefault();
             if (mumuShortcutDirectory == null)
                 return false;
@@ -200,6 +201,8 @@ internal static class Pathfinder
                 return false;
 
             var shortcutPath = shortcut.LinkInfo.LocalBasePath;
+
+            // C:\Program Files\Netease\MuMuPlayer\nx_main
             var mumuPath = new FileInfo(shortcutPath);
             if (!mumuPath.Exists)
                 return false;
@@ -221,6 +224,8 @@ internal static class Pathfinder
     public static Version? GetRunningNxDeviceVersion()
     {
         Version? _priorityTarget = null;
+        // C:\Program Files\Netease\MuMuPlayer\nx_device\12.0\shell\MuMuNxDevice.exe
+        // C:\Program Files\Netease\MuMuPlayer\nx_device\15.0\shell\MuMuNxDevice.exe
         var nxDevicePaths = Process.GetProcessesByName(NxDevice)
             .Select(x => x.MainModule?.FileName)
             .Where(x => x != null)
