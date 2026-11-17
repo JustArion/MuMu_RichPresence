@@ -34,7 +34,7 @@ public class MuMuPlayerLogReader : IDisposable
             return;
         _started = true;
 
-        Task.Factory.StartNew(InitiateWatchOperation, TaskCreationOptions.LongRunning);
+        Task.Run(InitiateWatchOperation);
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal FileLock AquireFileLock() => FileLock.Aquire(_filePath);
@@ -173,7 +173,8 @@ public class MuMuPlayerLogReader : IDisposable
             return;
         _reading = true;
 
-        Task.Run(ProcessFileChanges).ContinueWith(_ => _reading = false);
+        Task.Factory.StartNew(ProcessFileChanges, TaskCreationOptions.LongRunning)
+            .ContinueWith(_ => _reading = false);
     }
 
     private async Task ProcessFileChanges()
