@@ -377,7 +377,7 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
     }
 
     // --
-    public static async Task<IMuMuInterop?> TryCreate(IMuMuDevice device, bool keepAlive = false)
+    public static async Task<IMuMuInterop?> TryCreate(IMuMuDevice device, bool keepAlive = false, CancellationToken token = default)
     {
         var config = await device.GetVMConfig();
         if (config == null)
@@ -408,17 +408,16 @@ public partial class MuMuInterop(ConnectionInfo adb) : IMuMuInterop
 
         try
         {
-            var connection = await info.Connect();
+            var connection = await info.Connect(token: token);
             Log.Debug("Connected to ADB via {VMName} probe", vm.Name);
-            var interop = new MuMuInterop(info)
-            {
-                _connection = connection
-            };
+            var interop = new MuMuInterop(info) { _connection = connection };
             return interop;
         }
         catch (NotConnectedException) { }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { return null; }
 
-        Log.Warning("Couldn't connect to {VM}", vm.Name);
+        if (!token.IsCancellationRequested)
+            Log.Warning("Couldn't connect to {VM}", vm.Name);
         return null;
     }
 
