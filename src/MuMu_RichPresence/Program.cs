@@ -2,6 +2,7 @@
 
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using Dawn.MuMu.RichPresence.Extensions;
 using DynamicData.Binding;
 using NuGet.Versioning;
 using Velopack;
@@ -97,18 +98,10 @@ internal static class Program
         _logsInitialized = true;
     }
 
-    private static bool _disposed;
     private static CompositeDisposable? _disposables;
-    private static void EnsureDisposed()
-    {
-        if (_disposables == null || _disposed)
-            return;
-
-        _disposed = true;
-
-        _disposables.Dispose();
-        _disposables = null;
-    }
+    private static void EnsureDisposed() =>
+        Interlocked.Exchange(ref _disposables, null)
+            ?.Dispose();
 
     private static void InitializeVelopack()
     {
@@ -125,7 +118,7 @@ internal static class Program
         Log.Information("Updated to {Version}!", version);
     }
 
-    internal static void SuppressExceptions(Action act)
+    private static void SuppressExceptions(Action act)
     {
         try
         {
