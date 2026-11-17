@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using Dawn.MuMu.RichPresence.Extensions;
 using Dawn.MuMu.RichPresence.Models;
 using Dawn.MuMu.RichPresence.MuMu.Devices;
@@ -11,14 +13,18 @@ namespace Dawn.MuMu.RichPresence.MuMu;
 public static partial class MuMuNegotiator
 {
     // Wait at least 15sec since emulator start (this is for ADB to boot up)
-    private static async ValueTask WaitForADB(NxDevice device)
+    private static async ValueTask WaitForADB(NxDevice device, CancellationToken token = default)
     {
         var deviceStartTime = DateTime.Now - device.UnderlyingProcess.StartTime;
         if (deviceStartTime < TimeSpan.FromSeconds(15))
-            await Task.Delay(TimeSpan.FromSeconds(15) - deviceStartTime);
+        {
+            Log.Verbose("Device is booting up");
+            await Task.Delay(TimeSpan.FromSeconds(15) - deviceStartTime, token);
+        }
     }
 
     [SuppressMessage("ReSharper", "MethodSupportsCancellation")]
+    [SuppressMessage("ReSharper", "MethodHasAsyncOverload")]
     private static void StartADB()
     {
         // When a new device is dispatched, we cancel the previous device's operations
@@ -26,9 +32,10 @@ public static partial class MuMuNegotiator
         // So a CTS is better here imo
         CancellationTokenSource? cts = null;
         _deviceWatcher
-            .Subscribe(device =>
+            .SubscribeAsync(NewThreadScheduler.Default, async device =>
             {
-                Interlocked.Exchange(ref cts, new())?
+                var ourCTS = new CancellationTokenSource();
+                Interlocked.Exchange(ref cts, ourCTS)?
                     .Cancel();
 
                 // We dispose the previous polling ahead of this check since if we don't the previous poll would continue
@@ -36,60 +43,63 @@ public static partial class MuMuNegotiator
                 if (device == null)
                     return;
 
-                var token = cts.Token;
-                var timer = new PeriodicTimer(TimeSpan.FromSeconds(2));
-                token.Register(timer.Dispose);
+                try
+                {
+                    await OnDeviceSwitched(device, ourCTS.Token);
+                }
+                catch (OperationCanceledException) when (ourCTS.IsCancellationRequested)
+                {
+                    // Expected: a newer device replaced this one. Not an error.
+                }
 
-                Task.Factory.StartNew(async () =>
-                    {
-                        var interop = await MuMuInterop.TryCreate(device, keepAlive: true);
-                        if (interop == null)
-                        {
-                            Log.Error("MuMu Interop could not be established for some reason, falling back to FileWatching");
-                            var fileWatchingOperation = StartFileWatching();
-                            token.Register(()=>
-                            {
-                                fileWatchingOperation.Dispose();
-                                Interlocked.Exchange(ref _logReader, null)?
-                                    .Dispose();
-                            });
-                            return;
-                        }
+            }, static e => Log.Error(e, "Couldn't execute ADB approach on new device"));
+    }
 
-                        await WaitForADB(device);
+    private static async Task OnDeviceSwitched(NxDevice device, CancellationToken token = default)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(2));
+        await using var _ = token.Register(timer.Dispose);
 
-                        var disposable = Disposable.Create(interop, s => s.DisposeAsync().AsTask().Wait());
-                        _disposables.Add(disposable);
-                        try
-                        {
-                            // Will perf log once every time the device context is switched
-                            var once = false;
-                            // One of the few valid uses of do-while right here lol
-                            do
-                            {
-                                var sw = Stopwatch.GetTimestamp();
-                                var app = await interop.GetFocusedApp()
-                                    .Catch(e => Log.Error(e, "Exception while getting focused app"));
+        await WaitForADB(device, token);
 
-                                var elapsed = Stopwatch.GetElapsedTime(sw);
-                                if (!once)
-                                {
-                                    Log.Verbose("Getting focused app took {Elapsed:F2} sec", elapsed.TotalSeconds);
-                                    once = true;
-                                }
+        var interop = await MuMuInterop.TryCreate(device, keepAlive: true, token);
+        if (interop == null)
+        {
+            Log.Error("MuMu Interop on {VM} could not be established for some reason, falling back to FileWatching", device.FindVM()?.Name ?? "Unknown Device");
+            var fileWatchingOperation = StartFileWatching();
+            token.Register(fileWatchingOperation.Dispose);
+            return;
+        }
 
-                                await DispatchFocusedApp(app);
-                            } while (await timer.WaitForNextTickAsync());
-                        }
-                        finally
-                        {
-                            _disposables.Remove(disposable);
-                            await interop.DisposeAsync();
-                        }
+        // ReSharper disable once MethodSupportsCancellation
+        var disposable = Disposable.Create(interop, s => s.DisposeAsync().AsTask().Wait());
+        _disposables.Add(disposable);
+        try
+        {
+            // Will perf log once every time the device context is switched
+            var once = false;
+            // One of the few valid uses of do-while right here lol
+            do
+            {
+                var sw = Stopwatch.GetTimestamp();
+                var app = await interop.GetFocusedApp(token)
+                    .Catch(e => Log.Error(e, "Exception while getting focused app"));
 
-                    }, TaskCreationOptions.LongRunning)
-                    .Catch(e => Log.Error(e, "Exception in long running ADB poll"));
-            });
+                var elapsed = Stopwatch.GetElapsedTime(sw);
+                if (!once)
+                {
+                    Log.Verbose("Getting focused app took {Elapsed:F2} sec", elapsed.TotalSeconds);
+                    once = true;
+                }
+
+                await DispatchFocusedApp(app);
+            } while (await timer.WaitForNextTickAsync(token));
+        }
+        finally
+        {
+            _disposables.Remove(disposable);
+            await interop.DisposeAsync();
+        }
     }
 
     private static async Task DispatchFocusedApp(AndroidProcess? app)
