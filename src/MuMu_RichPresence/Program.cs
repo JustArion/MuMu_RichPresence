@@ -52,7 +52,8 @@ internal static class Program
         _trayIcon = new(MuMuNegotiator.LogFileChanged);
         Features.WhenPropertyChanged(x => x.RichPresenceEnabled)
             .Select(x => x.Value)
-            .Subscribe(MuMuNegotiator.OnRichPresenceEnabledChanged);
+            .SubscribeGuarded(MuMuNegotiator.OnRichPresenceEnabledChanged,
+                static e => Log.Error(e, "Error occured when the user changed Enable / Disabling the Rich Presence"));
 
         _disposables = MuMuNegotiator.UseApproach(Arguments.ExperimentalADB
             ? RichPresenceApproach.AndroidDebugBridge
