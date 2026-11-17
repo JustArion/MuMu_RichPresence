@@ -81,11 +81,12 @@ public class LogWatcher : IDisposable
             return;
         }
 
-        Task.Run(onInitialize).ContinueWith(_ =>
-        {
-            _logFileWatcher.EnableRaisingEvents = true;
-            Log.Verbose("Watching for changes on file {FilePath}", _filePath.Name);
-        });
+        Task.Factory.StartNew(onInitialize, TaskCreationOptions.LongRunning)
+            .ContinueWith(_ =>
+            {
+                _logFileWatcher.EnableRaisingEvents = true;
+                Log.Verbose("Watching for changes on file {FilePath}", _filePath.Name);
+            });
     }
 
     public void Stop()
