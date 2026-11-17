@@ -13,7 +13,6 @@ public static partial class MuMuNegotiator
 {
     private static RichPresenceApproach? _currentApproach;
     private static RichPresenceHandler? _richPresenceHandler;
-    private static MuMuPlayerLogReader? _logReader;
     private static DiscoverabilityHandler _discoverabilityHandler = null!;
     private static readonly CompositeDisposable _disposables = new();
     private static readonly DeviceWatcher _deviceWatcher = new();
@@ -33,18 +32,14 @@ public static partial class MuMuNegotiator
         // StartADB -> DispatchFocusedApp -> UpdatePresenceIfNecessary -> RemovePresence
         // In a graceful exit. But the device watcher should catch and clean up ungraceful exits (MuMu Player crashes)
         // Same should in theory happen for the File Watching approach
-        _deviceWatcher.CurrentDevice.Subscribe(_ => RemovePresence());
+        _deviceWatcher.CurrentDevice
+            .Subscribe(_ => RemovePresence());
 
+        Log.Information("Using {Approach} approach", approach);
         if (approach == RichPresenceApproach.LogFileWatcher)
-        {
-            Log.Information("Using File Watching approach");
             StartFileWatching();
-        }
         else
-        {
-            Log.Information("Using ADB approach");
             StartADB();
-        }
 
         return _disposables;
     }
