@@ -14,7 +14,8 @@ public class RichPresence_Tray
     private readonly BehaviorSubject<FileInfo?> _logFile;
     internal NotifyIcon Tray { get; }
 
-    private ToolStripItemCollection? Items => Tray.ContextMenuStrip?.Items;
+    private ToolStripItemCollection Items => _contextMenu.Items;
+    private readonly RiotContextMenuStrip _contextMenu;
     public RichPresence_Tray(BehaviorSubject<FileInfo?> logFile)
     {
         _logFile = logFile;
@@ -27,9 +28,9 @@ public class RichPresence_Tray
         AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
         Tray.Disposed += OnTrayDisposed;
 
-        Tray.ContextMenuStrip = new RiotContextMenuStrip();
+        Tray.ContextMenuStrip = _contextMenu = new RiotContextMenuStrip();
 
-        AddStripItems(Items!);
+        AddStripItems(Items);
     }
 
     private static void WrapProcessStart(Action start)
@@ -55,7 +56,7 @@ public class RichPresence_Tray
             items.Add("Open App Directory", null, (_, _) => WrapProcessStart(()=> Process.Start("explorer", $"/select,\"{Application.ExecutablePath}\"")));
             items.AddRange(AddExtendedLoggingFeatures());
             items.AddRange(AddVelopackFeatures());
-            items.Add(Enabled());
+            items.Add(RichPresenceEnabled());
             items.Add(RunOnStartup());
             items.Add(HideTray());
         }
@@ -76,14 +77,13 @@ public class RichPresence_Tray
         if (AutoUpdate.UpdateManager is { IsInstalled: false })
             return []; // We're using Standalone
 
-        // Index 1 is right under the program name header and under the separator
         if (AutoUpdate.HasPendingUpdate.Value)
-            Items?.Insert(1, AddPendingUpdateMessage());
+            _contextMenu.InsertThemed(GetUpdateTargetIndex(), AddPendingUpdateMessage());
         else
             AutoUpdate.HasPendingUpdate
                 .Where(x => x)
                 .ObserveOn(SynchronizationContext.Current!)
-                .Subscribe(_ => Items?.Insert(1, AddPendingUpdateMessage()));
+                .Subscribe(_ => _contextMenu.InsertThemed(GetUpdateTargetIndex(), AddPendingUpdateMessage()));
 
         var downloadPreReleases = new ToolStripMenuItem("Download Pre-Releases");
         downloadPreReleases.Checked = Arguments.CheckPreReleases;
@@ -92,7 +92,7 @@ public class RichPresence_Tray
         {
             var enabled = !downloadPreReleases.Checked;
 
-            ChangeEnabledStateOnStartupIfNecessary(enabled);
+            ChangeBranchStateOnStartupIfNecessary(enabled);
 
             downloadPreReleases.Checked = Features.CheckPreReleases = enabled;
             if (enabled)
@@ -100,11 +100,13 @@ public class RichPresence_Tray
         };
 
         return [downloadPreReleases];
+        int GetUpdateTargetIndex() => Items.Count;
     }
 
     private static ToolStripMenuItem AddPendingUpdateMessage()
     {
-        var pendingUpdate = new ToolStripMenuItem("Apply Pending Update");
+        Log.Verbose("We have a pending update scheduled!");
+        var pendingUpdate = new RiotMenuItem("Apply Pending Update") { HighlightColor = RiotContextMenuDefaults.ContextMenuStripHoverColor };
         pendingUpdate.Click += (_, _) =>
         {
             if (AutoUpdate.UpdateManager is not { } manager)
@@ -150,7 +152,7 @@ public class RichPresence_Tray
         }
     }
 
-    private static ToolStripMenuItem Enabled()
+    private static ToolStripMenuItem RichPresenceEnabled()
     {
         var enabledItem = new ToolStripMenuItem("Enabled");
 
