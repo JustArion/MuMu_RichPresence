@@ -55,10 +55,11 @@ internal static class AutoUpdate
 
             HasPendingUpdate.OnNext(true);
 
+            // Log.Information("Applying updates!");
             await manager.DownloadUpdatesAsync(update);
 
             Log.Information("Updates are ready to be installed and will be applied on next restart ({Version})", update.TargetFullRelease.Version);
-            // manager.ApplyUpdatesAndRestart(update);
+            // manager.ApplyUpdatesAndRestart(update, ["--silent"]);
         }
         catch (Exception e)
         {
