@@ -78,5 +78,5 @@ public readonly struct LaunchArgs
     }
 
     private static bool Contains(string key, string[] cliArgs) => cliArgs.Contains($"--{key = ToKebabCase(key)}", StringComparer.InvariantCultureIgnoreCase) || Environment.GetEnvironmentVariable(key) is not null;
-    internal static string ToKebabCase(string str) => str.ToLower().Replace(' ', '-');
+    internal static string ToKebabCase(string str) => str.ToLowerInvariant().Replace(' ', '-');
 }
