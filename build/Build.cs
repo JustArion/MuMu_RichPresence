@@ -64,72 +64,13 @@ class Build : FalloutBuild, ICreateGitHubRelease, IHasArtifacts
     public static int Main () => Execute<Build>(x => x.Velopack);
 
     Target TaggedPreRelease => _ => _
-        .DependsOn(Velopack)
-        .DependsOn(Test)
-        .Unlisted()
-        .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(Actions.Token))
-        .OnlyWhenStatic(() => IsServerBuild)
-        .Executes(async () =>
-        {
-            // https://github.com/Fallout-build/Fallout/blob/develop/src/Fallout.Components/ICreateGitHubRelease.cs#L36
-            GitHubTasks.GitHubClient.Credentials = new(Actions.Token);
-
-            var releases = GitHubTasks.GitHubClient.Repository.Release;
-            var release = await GetOrCreateRelease(GetVersionTag(), true);
-
-            var uploadTasks = AssetFiles.Select(async x =>
-            {
-                await using var assetFile = File.OpenRead(x);
-                var asset = new ReleaseAssetUpload
-                {
-                    FileName = x.Name,
-                    ContentType = "application/octet-stream",
-                    RawData = assetFile
-                };
-
-                await releases.UploadAsset(release, asset);
-            }).ToArray();
-
-            Task.WaitAll(uploadTasks);
-
-            Log.Information("All Assets uploaded!");
-        });
-
-    Target UpdateChangelog => _ => _
-        .Unlisted()
-        .Executes(() =>
-        {
-            var unreleasedNotes = ReadChangelog(ChangelogPath).Unreleased;
-            var noNewChanges = unreleasedNotes?.EndIndex <= unreleasedNotes?.StartIndex;
-            if (unreleasedNotes == null || noNewChanges)
-                return;
-
-            // Moves the changes in Unreleased to the latest tag
-            FinalizeChangelog(ChangelogPath, GetVersion(), Repository);
-        });
-
-    Target PushChangelog => _ => _
-        .Unlisted()
-        .Executes(() =>
-        {
-            var defaultBranch = Git("remote show origin")
-                .FirstOrDefault(x => x.Text.Trim().StartsWith("HEAD branch:"))
-                .Text.Split(':')[1]
-                .Trim();
-            
-            Git($"config --global user.name {Quote("github-actions[bot]")}");
-            Git($"config --global user.email {Quote("github-actions[bot]@users.noreply.github.com")}");
-            
-            Git($"add {ChangelogPath}");
-            Git($"commit -m {Quote($"chore: {Path.GetFileName(ChangelogPath)} for {GetVersion()}")}");
-            Git($"push origin HEAD:{defaultBranch}");
-        });
+        .DependsOn(GithubPreRelease);
     
-    Target TaggedRelease => _ => _
+    Target GithubPreRelease => _ => _
+        .Unlisted()
         .DependsOn(Velopack)
         .DependsOn(Test)
-        .Unlisted()
-        .OnlyWhenDynamic(()=> !string.IsNullOrWhiteSpace(Actions.Token))
+        .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(Actions.Token))
         .OnlyWhenStatic(() => IsServerBuild)
         .Executes(async () =>
         {
@@ -162,10 +103,90 @@ class Build : FalloutBuild, ICreateGitHubRelease, IHasArtifacts
             Task.WaitAll(uploadTasks);
             
             Log.Information("All Assets uploaded!");
-
-            Execute<Build>(x => x.UpdateChangelog);
-            Execute<Build>(x => x.PushChangelog);
         });
+    
+    Target GithubRelease => _ => _
+        .Unlisted()
+        .DependsOn(Velopack)
+        .DependsOn(Test)
+        .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(Actions.Token))
+        .OnlyWhenStatic(() => IsServerBuild)
+        .Executes(async () =>
+        {
+            // https://github.com/Fallout-build/Fallout/blob/develop/src/Fallout.Components/ICreateGitHubRelease.cs#L36
+            GitHubTasks.GitHubClient.Credentials = new(Actions.Token);
+
+            var releases = GitHubTasks.GitHubClient.Repository.Release;
+            var release = await GetOrCreateRelease(GetVersion());
+
+            var assets = release.Assets;
+            var uploadTasks = AssetFiles.Select(async x =>
+            {
+                if (assets.FirstOrDefault(y => x.Name == y.Name) != null)
+                {
+                    Log.Warning("Duplicate release artifact found for {Name}", x.Name);
+                    return;
+                }
+                
+                await using var assetFile = File.OpenRead(x);
+                var asset = new ReleaseAssetUpload
+                {
+                    FileName = x.Name,
+                    ContentType = "application/octet-stream",
+                    RawData = assetFile
+                };
+
+                await releases.UploadAsset(release, asset);
+            }).ToArray();
+            
+            Task.WaitAll(uploadTasks);
+            
+            Log.Information("All Assets uploaded!");
+        });
+
+    Target UpdateChangelog => _ => _
+        .Unlisted()
+        .After(GithubRelease)
+        .Executes(() =>
+        {
+            var unreleasedNotes = ReadChangelog(ChangelogPath).Unreleased;
+            var noNewChanges = unreleasedNotes?.EndIndex <= unreleasedNotes?.StartIndex;
+            if (unreleasedNotes == null || noNewChanges)
+                return;
+
+            // Moves the changes in Unreleased to the latest tag
+            FinalizeChangelog(ChangelogPath, GetVersion(), Repository);
+        });
+
+    Target PushChangelog => _ => _
+        .Unlisted()
+        .DependsOn(UpdateChangelog)
+        .OnlyWhenStatic(() => IsServerBuild)
+        .Executes(() =>
+        {
+            // There's nothing to commit
+            if (Git($"status --porcelain {Quote(ChangelogPath)}").Count == 0)
+                return;
+
+            var defaultBranch = Git("remote show origin")
+                .FirstOrDefault(x => x.Text.Trim().StartsWith("HEAD branch:"))
+                .Text.Split(':')[1]
+                .Trim();
+
+            Git($"config --global user.name {Quote("github-actions[bot]")}");
+            Git($"config --global user.email {Quote("github-actions[bot]@users.noreply.github.com")}");
+
+            Git($"add {Quote(ChangelogPath)}");
+            Git($"commit -m {Quote($"chore: {Path.GetFileName(ChangelogPath)} for {GetVersion()}")}");
+            Git($"push origin HEAD:{defaultBranch}");
+        });
+
+    Target TaggedRelease => _ => _
+        .Unlisted()
+        .DependsOn(GithubRelease)
+        .DependsOn(PushChangelog)
+        .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(Actions.Token))
+        .OnlyWhenStatic(() => IsServerBuild);
 
     private async Task<Release> GetOrCreateRelease(string name, bool preRelease = false)
     {
