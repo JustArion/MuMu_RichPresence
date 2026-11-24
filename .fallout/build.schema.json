@@ -26,6 +26,8 @@
       "enum": [
         "Clean",
         "CreateGitHubRelease",
+        "GithubPreRelease",
+        "GithubRelease",
         "InstallOrUpdateVelopack",
         "PushChangelog",
         "Restore",

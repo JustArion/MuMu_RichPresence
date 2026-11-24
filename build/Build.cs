@@ -1,4 +1,5 @@
 #nullable disable
+using System.Text.RegularExpressions;
 using Extensions;
 
 [
@@ -58,7 +59,7 @@ using Extensions;
         CacheKeyFiles = ["**/global.json", "**/*.csproj", "**/Directory.Packages.props", "**/packages.lock.json"],
         Lfs = true)
 ]
-class Build : FalloutBuild, ICreateGitHubRelease, IHasArtifacts
+partial class Build : FalloutBuild, ICreateGitHubRelease, IHasArtifacts
 {
     public Build() => NoLogo = true;
     public static int Main () => Execute<Build>(x => x.Velopack);
@@ -72,7 +73,7 @@ class Build : FalloutBuild, ICreateGitHubRelease, IHasArtifacts
         .DependsOn(Test)
         .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(Actions.Token))
         .OnlyWhenStatic(() => IsServerBuild)
-        .Executes(() => UploadGithubRelease(preRelease: true));
+        .Executes(async () => await UploadGithubRelease(preRelease: true));
 
     Target GithubRelease => _ => _
         .Unlisted()
@@ -80,7 +81,7 @@ class Build : FalloutBuild, ICreateGitHubRelease, IHasArtifacts
         .DependsOn(Test)
         .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(Actions.Token))
         .OnlyWhenStatic(() => IsServerBuild)
-        .Executes(() => UploadGithubRelease(preRelease: false));
+        .Executes(async () => await UploadGithubRelease(preRelease: false));
 
     async Task UploadGithubRelease(bool preRelease)
     {
@@ -88,7 +89,7 @@ class Build : FalloutBuild, ICreateGitHubRelease, IHasArtifacts
         GitHubTasks.GitHubClient.Credentials = new(Actions.Token);
 
         var releases = GitHubTasks.GitHubClient.Repository.Release;
-        var release = await GetOrCreateRelease(GetVersion(), preRelease);
+        var release = await GetOrCreateRelease(GetVersionTag(), preRelease);
 
         var assets = release.Assets;
         var uploadTasks = AssetFiles.Select(async x =>
@@ -109,23 +110,29 @@ class Build : FalloutBuild, ICreateGitHubRelease, IHasArtifacts
             });
         }).ToArray();
 
-        Task.WaitAll(uploadTasks);
+        await Task.WhenAll(uploadTasks);
         Log.Information("All Assets uploaded!");
     }
 
     Target UpdateChangelog => _ => _
         .Unlisted()
         .After(GithubRelease)
-        .Executes(() =>
-        {
-            var unreleasedNotes = ReadChangelog(ChangelogPath).Unreleased;
-            var noNewChanges = unreleasedNotes?.EndIndex <= unreleasedNotes?.StartIndex;
-            if (unreleasedNotes == null || noNewChanges)
-                return;
+        .Executes(UpdateChangelogCore);
 
-            // Moves the changes in Unreleased to the latest tag
-            FinalizeChangelog(ChangelogPath, GetVersion(), Repository);
-        });
+    void UpdateChangelogCore()
+    {
+        var unreleasedNotes = ReadChangelog(ChangelogPath).Unreleased;
+        var noNewChanges = unreleasedNotes?.EndIndex <= unreleasedNotes?.StartIndex;
+        if (unreleasedNotes == null || noNewChanges)
+            return;
+
+        // Moves the changes in Unreleased to the latest tag
+        FinalizeChangelog(ChangelogPath, GetVersion(), Repository);
+            
+        var changelog = File.ReadAllText(ChangelogPath);
+        changelog = VersionComparisonRegex().Replace(changelog, "v");
+        File.WriteAllText(ChangelogPath, changelog);
+    }
 
     Target PushChangelog => _ => _
         .Unlisted()
@@ -133,21 +140,29 @@ class Build : FalloutBuild, ICreateGitHubRelease, IHasArtifacts
         .OnlyWhenStatic(() => IsServerBuild)
         .Executes(() =>
         {
-            // There's nothing to commit
-            if (Git($"status --porcelain {Quote(ChangelogPath)}").Count == 0)
-                return;
-
             var defaultBranch = Git("remote show origin")
                 .FirstOrDefault(x => x.Text.Trim().StartsWith("HEAD branch:"))
                 .Text.Split(':')[1]
                 .Trim();
-
+            
             Git($"config --global user.name {Quote("github-actions[bot]")}");
             Git($"config --global user.email {Quote("github-actions[bot]@users.noreply.github.com")}");
+            
+            // We're discarding the tagged-commit, then reapplying the update on the latest default branch
+            // We're doing this in the case of a push being made after a tagged release was made but before the workflow completes
+            // Which could cause this target to fail (At least in theory lol)
+            Git($"checkout -- {Quote(ChangelogPath)}");
+            Git($"fetch origin {defaultBranch}");
+            Git($"checkout -B {defaultBranch} origin/{defaultBranch}");
+            UpdateChangelogCore();
+
+            // There's nothing to commit
+            if (Git($"status --porcelain {Quote(ChangelogPath)}").Count == 0)
+                return;
 
             Git($"add {Quote(ChangelogPath)}");
             Git($"commit -m {Quote($"chore: {Path.GetFileName(ChangelogPath)} for {GetVersion()}")}");
-            Git($"push origin HEAD:{defaultBranch}");
+            Git($"push origin {defaultBranch}");
         });
 
     Target TaggedRelease => _ => _
@@ -314,4 +329,6 @@ class Build : FalloutBuild, ICreateGitHubRelease, IHasArtifacts
     private static string StripPrefixes(string str) => str?.TrimStart('v').TrimStart('p');
 
     private static string Quote(string str) => $"\"{str}\"";
+    [GeneratedRegex(@"(?<=/compare/|\.\.\.)(?=\d)")]
+    private static partial Regex VersionComparisonRegex();
 }
