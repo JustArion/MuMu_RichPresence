@@ -9,6 +9,7 @@
         <FalloutRootDirectory>..</FalloutRootDirectory>
         <FalloutScriptDirectory>..</FalloutScriptDirectory>
         <IsPackable>false</IsPackable>
+        <NuGetAudit>false</NuGetAudit>
     </PropertyGroup>
 
     <ItemGroup>
