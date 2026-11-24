@@ -72,77 +72,46 @@ class Build : FalloutBuild, ICreateGitHubRelease, IHasArtifacts
         .DependsOn(Test)
         .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(Actions.Token))
         .OnlyWhenStatic(() => IsServerBuild)
-        .Executes(async () =>
-        {
-            // https://github.com/Fallout-build/Fallout/blob/develop/src/Fallout.Components/ICreateGitHubRelease.cs#L36
-            GitHubTasks.GitHubClient.Credentials = new(Actions.Token);
+        .Executes(() => UploadGithubRelease(preRelease: true));
 
-            var releases = GitHubTasks.GitHubClient.Repository.Release;
-            var release = await GetOrCreateRelease(GetVersion());
-
-            var assets = release.Assets;
-            var uploadTasks = AssetFiles.Select(async x =>
-            {
-                if (assets.FirstOrDefault(y => x.Name == y.Name) != null)
-                {
-                    Log.Warning("Duplicate release artifact found for {Name}", x.Name);
-                    return;
-                }
-                
-                await using var assetFile = File.OpenRead(x);
-                var asset = new ReleaseAssetUpload
-                {
-                    FileName = x.Name,
-                    ContentType = "application/octet-stream",
-                    RawData = assetFile
-                };
-
-                await releases.UploadAsset(release, asset);
-            }).ToArray();
-            
-            Task.WaitAll(uploadTasks);
-            
-            Log.Information("All Assets uploaded!");
-        });
-    
     Target GithubRelease => _ => _
         .Unlisted()
         .DependsOn(Velopack)
         .DependsOn(Test)
         .OnlyWhenDynamic(() => !string.IsNullOrWhiteSpace(Actions.Token))
         .OnlyWhenStatic(() => IsServerBuild)
-        .Executes(async () =>
+        .Executes(() => UploadGithubRelease(preRelease: false));
+
+    async Task UploadGithubRelease(bool preRelease)
+    {
+        // https://github.com/Fallout-build/Fallout/blob/develop/src/Fallout.Components/ICreateGitHubRelease.cs#L36
+        GitHubTasks.GitHubClient.Credentials = new(Actions.Token);
+
+        var releases = GitHubTasks.GitHubClient.Repository.Release;
+        var release = await GetOrCreateRelease(GetVersion(), preRelease);
+
+        var assets = release.Assets;
+        var uploadTasks = AssetFiles.Select(async x =>
         {
-            // https://github.com/Fallout-build/Fallout/blob/develop/src/Fallout.Components/ICreateGitHubRelease.cs#L36
-            GitHubTasks.GitHubClient.Credentials = new(Actions.Token);
-
-            var releases = GitHubTasks.GitHubClient.Repository.Release;
-            var release = await GetOrCreateRelease(GetVersion());
-
-            var assets = release.Assets;
-            var uploadTasks = AssetFiles.Select(async x =>
+            var name = x.Name.Replace(' ', '.'); // Github replaces spaces with dots
+            if (assets.Any(y => y.Name == name))
             {
-                if (assets.FirstOrDefault(y => x.Name == y.Name) != null)
-                {
-                    Log.Warning("Duplicate release artifact found for {Name}", x.Name);
-                    return;
-                }
-                
-                await using var assetFile = File.OpenRead(x);
-                var asset = new ReleaseAssetUpload
-                {
-                    FileName = x.Name,
-                    ContentType = "application/octet-stream",
-                    RawData = assetFile
-                };
+                Log.Warning("Duplicate release artifact found for {Name}", name);
+                return;
+            }
 
-                await releases.UploadAsset(release, asset);
-            }).ToArray();
-            
-            Task.WaitAll(uploadTasks);
-            
-            Log.Information("All Assets uploaded!");
-        });
+            await using var assetFile = File.OpenRead(x);
+            await releases.UploadAsset(release, new ReleaseAssetUpload
+            {
+                FileName = x.Name,
+                ContentType = "application/octet-stream",
+                RawData = assetFile
+            });
+        }).ToArray();
+
+        Task.WaitAll(uploadTasks);
+        Log.Information("All Assets uploaded!");
+    }
 
     Target UpdateChangelog => _ => _
         .Unlisted()
